@@ -1,6 +1,7 @@
 package com.nhom5.backend.controller;
 
 import com.nhom5.backend.dto.RegisterRequest;
+import com.nhom5.backend.dto.VerifyOtpRequest;
 import com.nhom5.backend.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,16 @@ public class AuthController {
     public ResponseEntity<String> register(@RequestBody RegisterRequest request) {
         try {
             String result = authService.register(request);
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<String> verifyOtp(@RequestBody VerifyOtpRequest request) {
+        try {
+            String result = authService.verifyOtp(request);
             return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
