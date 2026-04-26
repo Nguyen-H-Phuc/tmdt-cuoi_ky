@@ -1,5 +1,7 @@
 package com.nhom5.backend.service;
 
+import com.nhom5.backend.dto.LoginRequest;
+import com.nhom5.backend.dto.LoginResponse;
 import com.nhom5.backend.dto.RegisterRequest;
 import com.nhom5.backend.dto.VerifyOtpRequest;
 import com.nhom5.backend.entity.LocalAccount;
@@ -22,6 +24,7 @@ public class AuthService {
     private final LocalAccountRepository localAccountRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final JwtService jwtService;
 
     @Transactional
     public String register(RegisterRequest request) {
@@ -85,5 +88,26 @@ public class AuthService {
         localAccountRepository.save(localAccount);
 
         return "Xác thực tài khoản thành công! Bây giờ bạn có thể đăng nhập.";
+    }
+
+    public LoginResponse login(LoginRequest request) {
+        // 1. Check User exist
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Email hoặc mật khẩu không đúng!"));
+
+        // 2. Check user active
+        if (!user.getIsActive()) {
+            throw new RuntimeException("Tài khoản chưa được kích hoạt OTP!");
+        }
+
+        // 3. Check password
+        LocalAccount localAccount = localAccountRepository.findById(user.getUserId()).get();
+        if (!passwordEncoder.matches(request.getPassword(), localAccount.getPasswordHash())) {
+            throw new RuntimeException("Email hoặc mật khẩu không đúng!");
+        }
+
+        // 4. Create and return JWT
+        String token = jwtService.generateToken(user.getEmail());
+        return new LoginResponse(token, user.getFullName(), user.getRole().name());
     }
 }

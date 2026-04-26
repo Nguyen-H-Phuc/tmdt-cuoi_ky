@@ -1,5 +1,6 @@
 package com.nhom5.backend.controller;
 
+import com.nhom5.backend.dto.LoginRequest;
 import com.nhom5.backend.dto.RegisterRequest;
 import com.nhom5.backend.dto.VerifyOtpRequest;
 import com.nhom5.backend.service.AuthService;
@@ -30,6 +31,15 @@ public class AuthController {
         try {
             String result = authService.verifyOtp(request);
             return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        try {
+            return ResponseEntity.ok(authService.login(request));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
