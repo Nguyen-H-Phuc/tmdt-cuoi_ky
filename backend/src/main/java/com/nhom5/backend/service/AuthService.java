@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.Random;
 
 @Service
@@ -28,32 +29,50 @@ public class AuthService {
 
     @Transactional
     public String register(RegisterRequest request) {
-        // 1. Check Email
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email đã được sử dụng!");
+        // 1. Check email exist
+        Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
+
+        User user;
+        if (existingUser.isPresent()) {
+            user = existingUser.get();
+
+            // Block them from registering again
+            if (user.getIsActive()) {
+                throw new RuntimeException("Email đã được sử dụng và xác thực!");
+            }
+
+            // If the user already exists but is NOT yet activated, Update the information
+            user.setFullName(request.getFullName());
+            user.setPhone(request.getPhone());
+        } else {
+            user = new User();
+            user.setFullName(request.getFullName());
+            user.setEmail(request.getEmail());
+            user.setPhone(request.getPhone());
+            user.setIsActive(false);
         }
 
-        // 2. Create user
-        User user = new User();
-        user.setFullName(request.getFullName());
-        user.setEmail(request.getEmail());
-        user.setPhone(request.getPhone());
-        user.setIsActive(false); // Đợi verify OTP
         User savedUser = userRepository.save(user);
 
-        // Create OTP
+        // 2. Process the local_accounts table (Update the new password and new OTP code)
         String otp = String.format("%06d", new Random().nextInt(999999));
 
-        // 3. Create local account
-        LocalAccount localAccount = new LocalAccount();
+        // Find your old local account or create a new one if you don't already have one.
+        LocalAccount localAccount = localAccountRepository.findById(savedUser.getUserId())
+                .orElse(new LocalAccount());
+
         localAccount.setUser(savedUser);
         localAccount.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         localAccount.setVerificationCode(otp);
         localAccount.setCodeExpiredAt(LocalDateTime.now().plusMinutes(5));
+        localAccount.setIsEmailVerified(false);
+
         localAccountRepository.save(localAccount);
+
+        // 3. Resend Email OTP
         emailService.sendOtpEmail(request.getEmail(), otp);
 
-        return "Đăng ký thành công! Vui lòng kiểm tra email để lấy mã OTP.";
+        return "Mã xác thực mới đã được gửi đến email của bạn!";
     }
 
     @Transactional
