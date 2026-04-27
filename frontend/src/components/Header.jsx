@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from 'react-router-dom';
+import logo from '../assets/logo.png';
 import {
   Menu,
   MapPin,
@@ -9,12 +11,19 @@ import {
   MessageCircle,
   User,
   ChevronDown,
-  PlusSquare
 } from 'lucide-react';
 import '../index.css';
 
 const Header = () => {
-  const [searchValue, setSearchValue] = useState('áo');
+  const [searchValue, setSearchValue] = useState('');
+  const navigate = useNavigate();
+
+  const [isLogin, setIsLogin] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsLogin(!!token);
+  }, []);
 
   return (
       <header className="w-full bg-white border-b border-gray-100 sticky top-0 z-50">
@@ -27,8 +36,9 @@ const Header = () => {
               <Menu size={24} className="text-gray-800" />
             </button>
             <img
-                src="https://placehold.co/104x56"
-                alt="Chợ Tốt"
+                src={logo}
+                alt="Chợ Sinh Viên"
+                onClick={() => navigate('/')}
                 className="h-10 w-auto object-contain cursor-pointer"
             />
           </div>
@@ -73,22 +83,23 @@ const Header = () => {
             </div>
 
             {/* Login Button */}
-            <button className="text-sm font-semibold px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors hidden sm:block">
-              Đăng nhập
-            </button>
+            {!isLogin && (
+              <button
+                onClick={() => navigate('/login')}
+                className="px-3 py-2 hidden sm:flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 transition-colors">
+                <span className="text-sm font-semibold text-gray-900">Đăng nhập</span>
+              </button>
+            )}
 
             {/* Đăng tin Button - Màu vàng đặc trưng */}
-            <button className="flex items-center gap-1 bg-[#FFD400] hover:bg-[#e6bf00] px-4 py-2 rounded-lg transition-all shadow-sm">
-              <PlusSquare size={18} className="hidden md:block" />
-              <span className="text-sm font-bold text-gray-900">ĐĂNG TIN</span>
+            <button className="px-4 py-2 sm:flex items-center justify-center gap-1 bg-[#FFD400] hover:bg-[#e6bf00] rounded-full transition-all shadow-sm">
+              <span className="text-sm font-semibold text-gray-900">Đăng tin</span>
             </button>
 
             {/* User Profile Dropdown */}
-            <button className="flex items-center gap-1 p-1 hover:bg-gray-100 rounded-full border border-gray-200 transition-colors">
-              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-                <User size={20} className="text-gray-500 mt-1" />
-              </div>
-              <ChevronDown size={16} className="hidden md:block text-gray-600" />
+            <button className="w-[77px] h-10 flex items-center justify-center gap-2 hover:bg-gray-100 rounded-full border border-gray-200 transition-colors">
+              <User size={18} className="text-gray-900"/>
+              <ChevronDown size={18} className="hidden md:block text-gray-900"/>
             </button>
           </div>
         </div>
