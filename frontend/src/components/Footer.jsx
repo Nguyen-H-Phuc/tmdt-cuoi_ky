@@ -1,6 +1,10 @@
 import React from 'react';
 import { SiFacebook, SiYoutube } from 'react-icons/si';
 import { LuMail, LuPhone, LuMapPin } from 'react-icons/lu';
+import app_store from '../assets/app-store.png';
+import play_store from '../assets/play-store.png';
+import qr_code from '../assets/qr-code.png'
+import '../index.css';
 
 const Footer = () => {
     const footerLinks = {
@@ -21,7 +25,7 @@ const Footer = () => {
     };
 
     return (
-        <footer className="w-full bg-white border-t border-gray-100 font-['Reddit_Sans']">
+        <footer className="w-full bg-white border-t border-gray-100">
             {/* Upper Footer: 4 columns on desktop */}
             <div className="max-w-[1200px] mx-auto px-4 py-10">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -31,11 +35,11 @@ const Footer = () => {
                         <h4 className="font-bold text-[#222222] text-sm uppercase">Tải ứng dụng Chợ Tốt</h4>
                         <div className="flex gap-4 items-center">
                             <div className="w-[87px] h-[87px] bg-gray-100 rounded-lg flex items-center justify-center">
-                                <img src="https://placehold.co/87x87" alt="QR Code" className="w-full h-full p-1" />
+                                <img src={qr_code} alt="QR Code" className="w-full h-full p-1" />
                             </div>
                             <div className="flex flex-col gap-2">
-                                <img src="https://placehold.co/116x39" alt="App Store" className="h-[35px] w-auto cursor-pointer" />
-                                <img src="https://placehold.co/116x39" alt="Google Play" className="h-[35px] w-auto cursor-pointer" />
+                                <img src={app_store} alt="App Store" className="h-[35px] w-auto cursor-pointer" />
+                                <img src={play_store} alt="Google Play" className="h-[35px] w-auto cursor-pointer" />
                             </div>
                         </div>
                     </div>
