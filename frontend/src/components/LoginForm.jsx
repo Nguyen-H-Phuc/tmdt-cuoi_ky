@@ -3,7 +3,7 @@ import { FcGoogle } from "react-icons/fc";
 import { SiFacebook } from "react-icons/si";
 
 const LoginForm = () => {
-    const [email, setEmail] = useState('');
+    const [email, password] = useState('');
 
     const handleLogin = (e) => {
         e.preventDefault();
@@ -60,6 +60,28 @@ const LoginForm = () => {
                     placeholder="Email"
                     className="w-[400px] h-[48px] border border-[#DADADA] rounded-xl outline-none pl-4 focus:border-[#FFBA00] transition-all bg-white text-[14px] text-[#222222] placeholder:text-[#8C8C8C]"
                 />
+
+                <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Mật khẩu"
+                    className="w-[400px] h-[48px] border border-[#DADADA] rounded-xl outline-none pl-4 focus:border-[#FFBA00] transition-all bg-white text-[14px] text-[#222222] placeholder:text-[#8C8C8C]"
+                />
+
+                <div className="w-[400px] text-right -mt-2">
+                    <a href="#" className="text-[14px] text-[#1877F2] hover:underline">
+                        Quên mật khẩu?
+                    </a>
+                </div>
+
+                <div className="text-[14px] text-[#666666]">
+                    Chưa có tài khoản?{" "}
+                    <a href="/register" className="text-[#1877F2] font-semibold hover:underline">
+                        Đăng ký mới
+                    </a>
+                </div>
 
                 {/* Nút Tiếp tục: 400x48 */}
                 <button
