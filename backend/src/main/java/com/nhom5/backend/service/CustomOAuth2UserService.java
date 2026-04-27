@@ -26,24 +26,41 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
-        // Lấy thông tin từ Google
+        // Xác định đang dùng Google hay Facebook
+        String clientRegistrationId = userRequest.getClientRegistration().getRegistrationId();
         Map<String, Object> attributes = oAuth2User.getAttributes();
         String email = (String) attributes.get("email");
         String name = (String) attributes.get("name");
-        String providerId = (String) attributes.get("sub"); // Google ID
-        String picture = (String) attributes.get("picture");
+        String providerId = clientRegistrationId.equals("google")
+                ? (String) attributes.get("sub")
+                : (String) attributes.get("id");
 
-        // 1. Tìm hoặc tạo User
+        // Xử lý ảnh đại diện (Facebook có cấu trúc lồng nhau)
+        // Tính toán URL ảnh đại diện trước
+        String tempPicture = ""; // Biến tạm để tính toán
+        if (clientRegistrationId.equals("google")) {
+            tempPicture = (String) attributes.get("picture");
+        } else if (clientRegistrationId.equals("facebook")) {
+            Map<String, Object> pictureObj = (Map<String, Object>) attributes.get("picture");
+            if (pictureObj != null) {
+                Map<String, Object> dataObj = (Map<String, Object>) pictureObj.get("data");
+                tempPicture = (String) dataObj.get("url");
+            }
+        }
+
+        final String picture = tempPicture;
+
+        // Sử dụng trong userRepository.findByEmail
         User user = userRepository.findByEmail(email).orElseGet(() -> {
             User newUser = new User();
             newUser.setEmail(email);
             newUser.setFullName(name);
             newUser.setAvatar(picture);
-            newUser.setIsActive(true); // Mặc định true vì Google đã verify email rồi
+            newUser.setIsActive(true);
             return userRepository.save(newUser);
         });
 
-        // 2. Liên kết với SocialAccount nếu chưa có
+        // Liên kết với SocialAccount nếu chưa có
         if (socialAccountRepository.findByProviderAndProviderId(SocialAccount.Provider.google, providerId).isEmpty()) {
             SocialAccount socialAccount = new SocialAccount();
             socialAccount.setUser(user);
