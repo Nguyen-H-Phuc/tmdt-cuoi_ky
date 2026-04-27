@@ -1,19 +1,22 @@
 package com.nhom5.backend.controller;
 
 import com.nhom5.backend.dto.LoginRequest;
-import com.nhom5.backend.dto.LoginResponse;
 import com.nhom5.backend.dto.RegisterRequest;
 import com.nhom5.backend.dto.VerifyOtpRequest;
 import com.nhom5.backend.entity.User;
 import com.nhom5.backend.repository.UserRepository;
 import com.nhom5.backend.service.AuthService;
 import com.nhom5.backend.service.JwtService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -55,26 +58,24 @@ public class AuthController {
     }
 
     @GetMapping("/oauth2-success")
-    public ResponseEntity<?> oauth2Success(@AuthenticationPrincipal OAuth2User principal) {
+    public void oauth2Success(@AuthenticationPrincipal OAuth2User principal, HttpServletResponse response) throws IOException {
         if (principal == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Đăng nhập Google thất bại");
+            response.sendRedirect("http://localhost:5173/login?error=unauthorized");
+            return;
         }
 
-        // Lấy email từ principal (thông tin Google trả về)
         String email = principal.getAttribute("email");
-
-        // Tìm user trong DB (vì CustomOAuth2UserService đã lưu user này rồi)
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Lỗi hệ thống sau khi login Social"));
 
-        // Tạo JWT Token dựa trên email
         String token = jwtService.generateToken(user.getEmail());
 
-        // Trả về thông tin cho Frontend giống hệt lúc login Local
-        return ResponseEntity.ok(new LoginResponse(
+        // Chuyển hướng người dùng quay lại React kèm Token trên URL
+        String redirectUrl = String.format("http://localhost:5173/?token=%s&fullName=%s&role=%s",
                 token,
-                user.getFullName(),
-                user.getRole().name()
-        ));
+                URLEncoder.encode(user.getFullName(), StandardCharsets.UTF_8),
+                user.getRole().name());
+
+        response.sendRedirect(redirectUrl);
     }
 }

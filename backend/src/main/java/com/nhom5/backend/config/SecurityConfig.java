@@ -11,6 +11,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -28,17 +31,25 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/login/**", "/oauth2/**").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Không dùng Session
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class) // Chèn máy soát vé vào đây
-                .oauth2Login(oauth -> oauth
-                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                        .defaultSuccessUrl("/api/auth/oauth2-success", true)
-                );
+            .cors(cors -> cors.configurationSource(request -> {
+                var corsConfiguration = new CorsConfiguration();
+                corsConfiguration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
+                corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                corsConfiguration.setAllowedHeaders(List.of("*"));
+                corsConfiguration.setAllowCredentials(true);
+                return corsConfiguration;
+            }))
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/api/auth/**", "/login/**", "/oauth2/**").permitAll()
+                    .anyRequest().authenticated()
+            )
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)) // Không dùng Session
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class) // Chèn máy soát vé vào đây
+            .oauth2Login(oauth -> oauth
+                    .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                    .defaultSuccessUrl("/api/auth/oauth2-success", true)
+            );
         return http.build();
     }
 }

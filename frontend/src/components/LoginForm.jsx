@@ -1,14 +1,53 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FcGoogle } from "react-icons/fc";
 import { SiFacebook } from "react-icons/si";
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const LoginForm = () => {
-    const [email, password] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const navigate = useNavigate();
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        console.log("Đang đăng nhập với email:", email);
+        try {
+            const response = await axios.post("http://localhost:8080/api/auth/login", {
+                email: email,
+                password: password
+            });
+
+            // Backend trả về LoginResponse (token, fullName, role)
+            const data = response.data;
+
+            // Lưu token vào localStorage để dùng cho các request sau
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("user", JSON.stringify(data));
+
+            navigate("/"); // Chuyển về trang chủ
+            window.location.reload(); // Reload để Header cập nhật trạng thái user
+        } catch (error) {
+            alert(error.response?.data || "Đăng nhập thất bại. Kiểm tra lại email/mật khẩu.");
+        }
     };
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+
+        const token = params.get("token");
+        const fullName = params.get("fullName");
+        const role = params.get("role");
+
+        if (token) {
+            localStorage.setItem("token", token);
+
+            localStorage.setItem(
+                "user",
+                JSON.stringify({ token, fullName, role })
+            );
+
+            navigate("/", { replace: true });
+        }
+    }, [navigate]);
 
     return (
         <div className="w-[480px] bg-white rounded-2xl shadow-[0px_4px_16px_rgba(34,34,34,0.12)] p-10 flex flex-col items-center">
@@ -22,6 +61,7 @@ const LoginForm = () => {
                 {/* Nút Google: 400x48 */}
                 <button
                     type="button"
+                    onClick={() => window.location.href = "http://localhost:8080/oauth2/authorization/google"}
                     className="w-[400px] h-[48px] flex items-center px-4 rounded-full border border-[#DADADA] hover:bg-gray-50 transition-all group"
                 >
                     <FcGoogle className="text-[24px]" />
@@ -33,6 +73,7 @@ const LoginForm = () => {
                 {/* Nút Facebook: 400x48 */}
                 <button
                     type="button"
+                    onClick={() => window.location.href = "http://localhost:8080/oauth2/authorization/facebook"}
                     className="w-[400px] h-[48px] flex items-center px-4 rounded-full border border-[#DADADA] hover:bg-gray-50 transition-all"
                 >
                     <SiFacebook className="text-[#1877F2] text-[24px]" />
@@ -65,7 +106,7 @@ const LoginForm = () => {
                     type="password"
                     required
                     value={password}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="Mật khẩu"
                     className="w-[400px] h-[48px] border border-[#DADADA] rounded-xl outline-none pl-4 focus:border-[#FFBA00] transition-all bg-white text-[14px] text-[#222222] placeholder:text-[#8C8C8C]"
                 />
