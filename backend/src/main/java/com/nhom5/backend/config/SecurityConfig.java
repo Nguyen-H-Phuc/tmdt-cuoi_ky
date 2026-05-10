@@ -31,18 +31,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(request -> {
-                var corsConfiguration = new CorsConfiguration();
-                corsConfiguration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
-                corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                corsConfiguration.setAllowedHeaders(List.of("*"));
-                corsConfiguration.setAllowCredentials(true);
-                return corsConfiguration;
-            }))
+                .cors(cors -> cors.configurationSource(request -> {
+                    var corsConfiguration = new CorsConfiguration();
+                    // CHO PHÉP TẤT CẢ - ĐỂ TEST CHO DỄ
+                    corsConfiguration.setAllowedOriginPatterns(List.of("*"));
+                    corsConfiguration.setAllowedMethods(List.of("*")); // Cho phép mọi phương thức GET, POST...
+                    corsConfiguration.setAllowedHeaders(List.of("*")); // Cho phép mọi Header
+                    corsConfiguration.setAllowCredentials(true);
+                    return corsConfiguration;
+                }))
             .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/api/auth/**", "/login/**", "/oauth2/**").permitAll()
-                    .anyRequest().authenticated()
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**", "/login/**", "/oauth2/**", "/api/statistics/**").permitAll()
+                        .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)) // Không dùng Session
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class) // Chèn máy soát vé vào đây
