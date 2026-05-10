@@ -41,8 +41,8 @@ public class SecurityConfig {
                     return corsConfiguration;
                 }))
             .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/login/**", "/oauth2/**", "/api/statistics/**").permitAll()
+            .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**", "/login/**", "/oauth2/**", "/api/statistics/**", "/api/products/**", "/api/categories/**").permitAll()
                         .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)) // Không dùng Session
