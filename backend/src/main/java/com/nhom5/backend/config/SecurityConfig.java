@@ -33,7 +33,6 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(request -> {
                     var corsConfiguration = new CorsConfiguration();
-                    // CHO PHÉP TẤT CẢ - ĐỂ TEST CHO DỄ
                     corsConfiguration.setAllowedOriginPatterns(List.of("*"));
                     corsConfiguration.setAllowedMethods(List.of("*")); // Cho phép mọi phương thức GET, POST...
                     corsConfiguration.setAllowedHeaders(List.of("*")); // Cho phép mọi Header
