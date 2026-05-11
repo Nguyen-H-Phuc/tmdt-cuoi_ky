@@ -15,14 +15,16 @@ import {
 import '../index.css';
 
 import { useAuth } from "../context/AuthContext.jsx";
+import PopupProfile from "./PopupProfile.jsx";
 
 const Header = () => {
   const [searchValue, setSearchValue] = useState('');
   const navigate = useNavigate();
   const { isLogin } = useAuth();
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
 
   return (
-      <header className="w-full bg-white border-b border-gray-100 sticky top-0 z-50">
+      <header className="w-full bg-white border-b border-gray-100 sticky top-0 z-50 relative">
         {/* Container giới hạn chiều rộng tối đa 1920px */}
         <div className="max-w-[1920px] mx-auto h-16 px-4 md:px-6 flex items-center justify-between gap-4">
 
@@ -93,12 +95,23 @@ const Header = () => {
             </button>
 
             {/* User Profile Dropdown */}
-            <button className="w-[77px] h-10 flex items-center justify-center gap-2 hover:bg-gray-100 rounded-full border border-gray-200 transition-colors">
-              <User size={18} className="text-gray-900"/>
-              <ChevronDown size={18} className="hidden md:block text-gray-900"/>
-            </button>
+            {isLogin && (
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsPopupOpen(!isPopupOpen);
+                  }}
+                  className={`w-[77px] h-10 flex items-center justify-center gap-2 rounded-full border border-gray-200 transition-colors ${isPopupOpen ? 'bg-gray-100' : 'hover:bg-gray-100'}`}
+                >
+                  <User size={18} className="text-gray-900"/>
+                  <ChevronDown size={18} className="hidden md:block text-gray-900"/>
+                </button>
+            )}
           </div>
         </div>
+
+        {/* Popup Profile - Moved outside to prevent clipping */}
+        {isLogin && <PopupProfile isOpen={isPopupOpen} onClose={() => setIsPopupOpen(false)} />}
 
         {/* Mobile Search Bar (Chỉ hiện trên mobile dưới thanh chính) */}
         <div className="p-2 sm:hidden border-t border-gray-50">
