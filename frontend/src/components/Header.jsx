@@ -18,10 +18,10 @@ import { useAuth } from "../context/AuthContext.jsx";
 import PopupProfile from "./PopupProfile.jsx";
 
 const Header = () => {
-  const [searchValue, setSearchValue] = useState('');
-  const navigate = useNavigate();
   const { isLogin } = useAuth();
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+  const navigate = useNavigate();
 
   return (
       <header className="w-full bg-white border-b border-gray-100 sticky top-0 z-50 relative">
