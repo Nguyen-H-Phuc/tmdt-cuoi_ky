@@ -27,4 +27,19 @@ public class ProductController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @GetMapping("/newest")
+    public ResponseEntity<List<Product>> getNewestProducts() {
+        return ResponseEntity.ok(productRepository.findTop10ByOrderByCreatedAtDesc());
+    }
+
+    @GetMapping("/most-viewed")
+    public ResponseEntity<List<Product>> getMostViewedProducts() {
+        return ResponseEntity.ok(productRepository.findTop10ByOrderByViewCountDesc());
+    }
+
+    @GetMapping("/best-selling")
+    public ResponseEntity<List<Product>> getBestSellingProducts() {
+        return ResponseEntity.ok(productRepository.findTop10BestSelling());
+    }
 }

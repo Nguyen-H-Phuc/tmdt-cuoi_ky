@@ -129,7 +129,7 @@ const PopupProfile = ({ isOpen, onClose }) => {
                     />
 
                     <SectionHeader title="Khác" />
-                    <MenuItem label="Cài đặt tài khoản" icon={ICONS.HISTORY} />
+                    <MenuItem label="Cài đặt tài khoản" icon={ICONS.HISTORY} onClick={() => { navigate('/profile'); onClose(); }} />
                     <MenuItem label="Đăng xuất" icon={ICONS.LOGOUT} isLogout onClick={handleLogout} />
                     {/* Padding bottom to ensure space */}
                     <div className="h-4"></div>

@@ -143,17 +143,28 @@ ALTER TABLE messages ADD INDEX (sent_at);
 
 ALTER TABLE conversations ADD COLUMN last_message_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
+ALTER TABLE categories ADD COLUMN category_image VARCHAR(255) DEFAULT 'default.png';
+
 -- ==============================================
 -- THÊM DỮ LIỆU MẪU (DUMMY DATA)
 -- ==============================================
 
 -- 1. Thêm danh mục
-INSERT INTO categories (category_id, category_name) VALUES 
-(1, 'Bất động sản'),
-(2, 'Xe cộ'),
-(3, 'Đồ điện tử'),
-(4, 'Thời trang, Đồ dùng cá nhân'),
-(5, 'Nội ngoại thất, Đồ gia dụng');
+INSERT INTO categories (category_name, category_image) VALUES
+    ('Bất động sản', 'home.png'),
+    ('Xe cộ', 'vehicle.png'),
+    ('Thú cưng', 'pet.png'),
+    ('Đồ gia dụng, nội thất, cây cảnh', 'appliance.png'),
+    ('Giải trí, Thể thao, Sở thích', 'entertainment.png'),
+    ('Mẹ và bé', 'mom-and-baby.png'),
+    ('Dịch vụ, Du lịch', 'tourism.png'),
+    ('Cho tặng miễn phí', 'gift.png'),
+    ('Việc làm', 'job.png'),
+    ('Đồ điện tử', 'electronic.png'),
+    ('Tủ lạnh, máy lạnh, máy giặt', 'household-electronics.png'),
+    ('Thời trang, Đồ dùng cá nhân', 'fashion.png'),
+    ('Đồ ăn, thực phẩm và các loại khác', 'food.png'),
+    ('Dịch vụ chăm sóc nhà cửa', 'service.png');
 
 -- 2. Thêm người dùng (User)
 INSERT INTO users (user_id, full_name, email, phone, address, avatar, role, is_active) VALUES 
