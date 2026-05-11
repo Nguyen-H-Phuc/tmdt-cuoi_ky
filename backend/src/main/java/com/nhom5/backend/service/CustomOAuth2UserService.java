@@ -61,10 +61,14 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         });
 
         // Liên kết với SocialAccount nếu chưa có
-        if (socialAccountRepository.findByProviderAndProviderId(SocialAccount.Provider.google, providerId).isEmpty()) {
+// Chuyển đổi chuỗi "google"/"facebook" thành Enum tương ứng
+        SocialAccount.Provider providerEnum = clientRegistrationId.equals("google")
+                ? SocialAccount.Provider.google
+                : SocialAccount.Provider.facebook;
+        if (!socialAccountRepository.findByProviderAndProviderId(providerEnum, providerId).isPresent()) {
             SocialAccount socialAccount = new SocialAccount();
             socialAccount.setUser(user);
-            socialAccount.setProvider(SocialAccount.Provider.google);
+            socialAccount.setProvider(providerEnum);
             socialAccount.setProviderId(providerId);
             socialAccount.setEmail(email);
             socialAccountRepository.save(socialAccount);
