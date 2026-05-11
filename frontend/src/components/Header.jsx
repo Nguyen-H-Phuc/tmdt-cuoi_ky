@@ -14,16 +14,12 @@ import {
 } from 'lucide-react';
 import '../index.css';
 
+import { useAuth } from "../context/AuthContext.jsx";
+
 const Header = () => {
   const [searchValue, setSearchValue] = useState('');
   const navigate = useNavigate();
-
-  const [isLogin, setIsLogin] = useState(false);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsLogin(!!token);
-  }, []);
+  const { isLogin } = useAuth();
 
   return (
       <header className="w-full bg-white border-b border-gray-100 sticky top-0 z-50">
