@@ -26,67 +26,67 @@ const Header = () => {
   return (
       <header className="w-full bg-white border-b border-gray-100 sticky top-0 z-50 relative">
         {/* Container giới hạn chiều rộng tối đa 1920px */}
-        <div className="max-w-[1920px] mx-auto h-16 px-4 md:px-6 flex items-center justify-between gap-4">
+        <div className="max-w-[1920px] mx-auto h-14 px-4 md:px-6 flex items-center justify-between gap-4">
 
           {/* LEFT: Logo & Menu Icon */}
-          <div className="flex items-center gap-2 md:gap-4 shrink-0">
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <Menu size={24} className="text-gray-800" />
+          <div className="flex items-center gap-2 md:gap-3 shrink-0">
+            <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
+              <Menu size={20} className="text-gray-800" />
             </button>
             <img
                 src={logo}
                 alt="Chợ Sinh Viên"
                 onClick={() => navigate('/')}
-                className="h-10 w-auto object-contain cursor-pointer"
+                className="h-8 w-auto object-contain cursor-pointer"
             />
           </div>
 
           {/* MIDDLE: Search Bar */}
-          <div className="flex-1 max-w-4xl hidden sm:flex items-center gap-0">
-            <div className="h-10 flex items-center gap-1 bg-[#F4F4F4] rounded-l-full px-4 border-r border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors shrink-0">
-              <MapPin size={18} className="text-[#FFBA00]" fill="currentColor" fillOpacity={0.2} />
-              <span className="text-sm font-semibold whitespace-nowrap hidden lg:inline">Toàn quốc</span>
-              <ChevronDown size={14} />
+          <div className="flex-1 max-w-2xl hidden sm:flex items-center gap-0">
+            <div className="h-9 flex items-center gap-1 bg-[#F4F4F4] rounded-l-full px-4 border-r border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors shrink-0">
+              <MapPin size={16} className="text-[#FFBA00]" fill="currentColor" fillOpacity={0.2} />
+              <span className="text-xs font-semibold whitespace-nowrap hidden lg:inline">Toàn quốc</span>
+              <ChevronDown size={12} />
             </div>
 
-            <div className="flex-1 h-10 flex items-center bg-[#F4F4F4] rounded-r-full px-3 relative group">
-              <Search size={18} className="text-gray-500 shrink-0" />
+            <div className="flex-1 h-9 flex items-center bg-[#F4F4F4] rounded-r-full px-3 relative group border border-transparent focus-within:border-[#FFBA00] transition-all">
+              <Search size={16} className="text-gray-500 shrink-0" />
               <input
                   type="text"
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
-                  placeholder="Tìm kiếm trên Chợ Tốt"
-                  className="bg-transparent w-full h-full px-2 text-sm outline-none text-gray-800"
+                  placeholder="Tìm kiếm trên Chợ Sinh Viên"
+                  className="bg-transparent w-full h-full px-2 text-xs outline-none text-gray-800"
               />
               {searchValue && (
                   <button
                       onClick={() => setSearchValue('')}
                       className="p-1 hover:bg-gray-300 rounded-full transition-colors"
                   >
-                    <X size={14} className="text-gray-600" />
+                    <X size={12} className="text-gray-600" />
                   </button>
               )}
             </div>
           </div>
 
-          {/* RIGHT: Actions */}
-          <div className="flex items-center gap-1 md:gap-3 shrink-0">
+            {/* RIGHT: Actions */}
+          <div className="flex items-center gap-2 shrink-0">
             <div className="hidden lg:flex items-center gap-1">
-              <HeaderButton icon={<Heart size={20} />} />
-              <HeaderButton icon={<Bell size={20} />} />
-              <HeaderButton icon={<MessageCircle size={20} />} label="Liên hệ" />
+              <HeaderButton icon={<Heart size={18} />} />
+              <HeaderButton icon={<Bell size={18} />} />
+              <HeaderButton icon={<MessageCircle size={18} />} label="Liên hệ" />
             </div>
 
             {!isLogin && (
                 <button
                     onClick={() => navigate('/login')}
-                    className="px-3 py-2 hidden sm:flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 transition-colors">
-                  <span className="text-sm font-semibold text-gray-900">Đăng nhập</span>
+                    className="h-9 px-4 hidden sm:flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 transition-colors">
+                  <span className="text-xs font-bold text-gray-900">Đăng nhập</span>
                 </button>
             )}
 
-            <button className="px-4 py-2 sm:flex items-center justify-center gap-1 bg-[#FFD400] hover:bg-[#e6bf00] rounded-full transition-all shadow-sm">
-              <span className="text-sm font-semibold text-gray-900">Đăng tin</span>
+            <button className="h-9 px-4 sm:flex items-center justify-center gap-1 bg-[#FFD400] hover:bg-[#e6bf00] rounded-full transition-all shadow-sm">
+              <span className="text-xs font-bold text-gray-900">Đăng tin</span>
             </button>
 
             {/* User Profile Dropdown */}
@@ -96,10 +96,10 @@ const Header = () => {
                     e.stopPropagation();
                     setIsPopupOpen(!isPopupOpen);
                   }}
-                  className={`w-[77px] h-10 flex items-center justify-center gap-2 rounded-full border border-gray-200 transition-colors ${isPopupOpen ? 'bg-gray-100' : 'hover:bg-gray-100'}`}
+                  className={`h-9 w-12 md:w-16 flex items-center justify-center gap-1 rounded-full border border-gray-200 transition-colors ${isPopupOpen ? 'bg-gray-100' : 'hover:bg-gray-100'}`}
                 >
                   <User size={18} className="text-gray-900"/>
-                  <ChevronDown size={18} className="hidden md:block text-gray-900"/>
+                  <ChevronDown size={14} className="hidden md:block text-gray-900"/>
                 </button>
             )}
           </div>
@@ -124,11 +124,11 @@ const Header = () => {
 };
 
 const HeaderButton = ({ icon, label }) => (
-    <button className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-full transition-colors group">
+    <button className={`h-9 flex items-center justify-center gap-2 hover:bg-gray-100 rounded-full transition-colors group ${label ? 'px-4' : 'w-9'}`}>
     <span className="text-gray-700 group-hover:text-black">
       {icon}
     </span>
-      {label && <span className="text-sm font-semibold text-gray-700">{label}</span>}
+      {label && <span className="text-xs font-bold text-gray-700">{label}</span>}
     </button>
 );
 
