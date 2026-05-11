@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import logo from '../assets/logo.png';
 import {
   Menu,
@@ -41,16 +41,14 @@ const Header = () => {
             />
           </div>
 
-          {/* MIDDLE: Search Bar (Responsive: ẩn bớt trên mobile cực nhỏ) */}
+          {/* MIDDLE: Search Bar */}
           <div className="flex-1 max-w-4xl hidden sm:flex items-center gap-0">
-            {/* Location Selector */}
             <div className="h-10 flex items-center gap-1 bg-[#F4F4F4] rounded-l-full px-4 border-r border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors shrink-0">
               <MapPin size={18} className="text-[#FFBA00]" fill="currentColor" fillOpacity={0.2} />
               <span className="text-sm font-semibold whitespace-nowrap hidden lg:inline">Toàn quốc</span>
               <ChevronDown size={14} />
             </div>
 
-            {/* Input Search */}
             <div className="flex-1 h-10 flex items-center bg-[#F4F4F4] rounded-r-full px-3 relative group">
               <Search size={18} className="text-gray-500 shrink-0" />
               <input
@@ -73,23 +71,20 @@ const Header = () => {
 
           {/* RIGHT: Actions */}
           <div className="flex items-center gap-1 md:gap-3 shrink-0">
-            {/* Icons chỉ hiện trên desktop/tablet */}
             <div className="hidden lg:flex items-center gap-1">
               <HeaderButton icon={<Heart size={20} />} />
               <HeaderButton icon={<Bell size={20} />} />
               <HeaderButton icon={<MessageCircle size={20} />} label="Liên hệ" />
             </div>
 
-            {/* Login Button */}
             {!isLogin && (
-              <button
-                onClick={() => navigate('/login')}
-                className="px-3 py-2 hidden sm:flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 transition-colors">
-                <span className="text-sm font-semibold text-gray-900">Đăng nhập</span>
-              </button>
+                <button
+                    onClick={() => navigate('/login')}
+                    className="px-3 py-2 hidden sm:flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 transition-colors">
+                  <span className="text-sm font-semibold text-gray-900">Đăng nhập</span>
+                </button>
             )}
 
-            {/* Đăng tin Button - Màu vàng đặc trưng */}
             <button className="px-4 py-2 sm:flex items-center justify-center gap-1 bg-[#FFD400] hover:bg-[#e6bf00] rounded-full transition-all shadow-sm">
               <span className="text-sm font-semibold text-gray-900">Đăng tin</span>
             </button>
@@ -113,7 +108,7 @@ const Header = () => {
         {/* Popup Profile - Moved outside to prevent clipping */}
         {isLogin && <PopupProfile isOpen={isPopupOpen} onClose={() => setIsPopupOpen(false)} />}
 
-        {/* Mobile Search Bar (Chỉ hiện trên mobile dưới thanh chính) */}
+        {/* Mobile Search Bar */}
         <div className="p-2 sm:hidden border-t border-gray-50">
           <div className="flex items-center bg-[#F4F4F4] rounded-lg px-3 h-10">
             <Search size={18} className="text-gray-400" />
@@ -128,7 +123,6 @@ const Header = () => {
   );
 };
 
-// Sub-component cho các nút icon trên Header
 const HeaderButton = ({ icon, label }) => (
     <button className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-full transition-colors group">
     <span className="text-gray-700 group-hover:text-black">
