@@ -15,6 +15,7 @@ import {
 import '../index.css';
 
 import { useAuth } from "../context/AuthContext.jsx";
+import PopupProfile from "./PopupProfile.jsx";
 
 const Header = () => {
   const { isLogin } = useAuth();
@@ -22,17 +23,9 @@ const Header = () => {
   const [searchValue, setSearchValue] = useState('');
   const navigate = useNavigate();
 
-  // Hàm đăng xuất
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    setIsLogin(false);
-    setIsDropdownOpen(false);
-    navigate('/');
-    window.location.reload();
-  };
-
   return (
-      <header className="w-full bg-white border-b border-gray-100 sticky top-0 z-50">
+      <header className="w-full bg-white border-b border-gray-100 sticky top-0 z-50 relative">
+        {/* Container giới hạn chiều rộng tối đa 1920px */}
         <div className="max-w-[1920px] mx-auto h-16 px-4 md:px-6 flex items-center justify-between gap-4">
 
           {/* LEFT: Logo & Menu Icon */}
@@ -96,57 +89,24 @@ const Header = () => {
               <span className="text-sm font-semibold text-gray-900">Đăng tin</span>
             </button>
 
-            {/* MỚI: User Profile Dropdown với logic CLICK */}
+            {/* User Profile Dropdown */}
             {isLogin && (
-                <div className="relative">
-                  <button
-                      onClick={() => setIsDropdownOpen(!isDropdownOpen)} // Click để đóng/mở
-                      className={`w-[77px] h-10 flex items-center justify-center gap-2 rounded-full border transition-colors ${isDropdownOpen ? 'bg-gray-100 border-gray-400' : 'hover:bg-gray-100 border-gray-200'}`}
-                  >
-                    <User size={18} className="text-gray-900"/>
-                    <ChevronDown size={18} className={`hidden md:block text-gray-900 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}/>
-                  </button>
-
-                  {/* Menu Dropdown */}
-                  {isDropdownOpen && (
-                      <>
-                        {/* Lớp phủ ẩn để click ra ngoài là đóng menu */}
-                        <div
-                            className="fixed inset-0 z-40"
-                            onClick={() => setIsDropdownOpen(false)}
-                        ></div>
-
-                        <div className="absolute right-0 mt-2 w-52 bg-white border border-gray-100 rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.1)] py-2 z-50 animate-in fade-in zoom-in duration-200">
-                          <Link
-                              to="/profile"
-                              onClick={() => setIsDropdownOpen(false)}
-                              className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                          >
-                            Quản lý tài khoản
-                          </Link>
-
-                          <Link
-                              to="/dashboard"
-                              onClick={() => setIsDropdownOpen(false)}
-                              className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                          >
-                            Thống kê doanh thu
-                          </Link>
-
-                          <hr className="my-1 border-gray-100" />
-
-                          <button
-                              onClick={handleLogout}
-                              className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium">
-                            Đăng xuất
-                          </button>
-                        </div>
-                      </>
-                  )}
-                </div>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsPopupOpen(!isPopupOpen);
+                  }}
+                  className={`w-[77px] h-10 flex items-center justify-center gap-2 rounded-full border border-gray-200 transition-colors ${isPopupOpen ? 'bg-gray-100' : 'hover:bg-gray-100'}`}
+                >
+                  <User size={18} className="text-gray-900"/>
+                  <ChevronDown size={18} className="hidden md:block text-gray-900"/>
+                </button>
             )}
           </div>
         </div>
+
+        {/* Popup Profile - Moved outside to prevent clipping */}
+        {isLogin && <PopupProfile isOpen={isPopupOpen} onClose={() => setIsPopupOpen(false)} />}
 
         {/* Mobile Search Bar */}
         <div className="p-2 sm:hidden border-t border-gray-50">

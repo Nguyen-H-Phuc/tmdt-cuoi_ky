@@ -78,4 +78,9 @@ public class AuthController {
 
         response.sendRedirect(redirectUrl);
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout() {
+        return ResponseEntity.ok("Đăng xuất thành công!");
+    }
 }
