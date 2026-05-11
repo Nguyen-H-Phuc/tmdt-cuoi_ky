@@ -14,16 +14,13 @@ import {
 } from 'lucide-react';
 import '../index.css';
 
-const Header = () => {
-  const [searchValue, setSearchValue] = useState('');
-  const [isLogin, setIsLogin] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // State quản lý menu
-  const navigate = useNavigate();
+import { useAuth } from "../context/AuthContext.jsx";
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsLogin(!!token);
-  }, []);
+const Header = () => {
+  const { isLogin } = useAuth();
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+  const navigate = useNavigate();
 
   // Hàm đăng xuất
   const handleLogout = () => {

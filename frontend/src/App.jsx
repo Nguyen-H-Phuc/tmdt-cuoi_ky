@@ -1,4 +1,6 @@
-import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useAuth } from './context/AuthContext.jsx';
 import LoginPage from "./pages/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import Footer from "./components/Footer.jsx";
@@ -7,9 +9,30 @@ import CategoryGrid from "./components/CategoryGrid.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import ProductListView from "./components/ProductListView.jsx";
 
+const SocialLoginHandler = () => {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { login } = useAuth();
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const token = params.get('token');
+        const fullName = params.get('fullName');
+        const role = params.get('role');
+
+        if (token) {
+            login(token, { fullName, role });
+            navigate('/', { replace: true });
+        }
+    }, [location, login, navigate]);
+
+    return null;
+};
+
 function App() {
   return (
       <Router>
+        <SocialLoginHandler />
         <Routes>
           <Route element={
             <div className="flex flex-col min-h-screen bg-gray-50">

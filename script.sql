@@ -1,5 +1,5 @@
 DROP DATABASE IF EXISTS tmdt_db;
-CREATE DATABASE tmdt_db;
+CREATE DATABASE tmdt_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE tmdt_db;
 CREATE TABLE users (
    user_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -177,4 +177,4 @@ VALUES(5, 'Nguyen Van Admin', 'a@gmail.com', '0900000000', NULL, NULL, 'member',
 
 INSERT INTO tmdt_db.local_accounts
 (user_id, password_hash, is_email_verified, verification_code, code_expired_at)
-VALUES(5, '$2a$10$0q.QX/A/VV8j6CMYTJuftuOl4EJAHJOjqmtcHRrkkt0KU.U6wYTu.', 1, NULL, NULL);
+VALUES(5, '$2a$10$0q.QX/A/VV8j6CMYTJuftuOl4EJAHJOjqmtcHRrkkt0KU.U6wYTu.', 1, NULL, NULL);
