@@ -90,9 +90,13 @@ const LoginForm = () => {
                 />
 
                 <div className="w-[400px] text-right -mt-2">
-                    <a href="#" className="text-[14px] text-[#1877F2] hover:underline">
+                    <button 
+                        type="button"
+                        onClick={() => navigate('/forgot-password')}
+                        className="text-[14px] text-[#1877F2] hover:underline"
+                    >
                         Quên mật khẩu?
-                    </a>
+                    </button>
                 </div>
 
                 <div className="text-[14px] text-[#666666]">

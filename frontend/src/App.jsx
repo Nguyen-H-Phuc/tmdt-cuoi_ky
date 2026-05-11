@@ -9,6 +9,8 @@ import DashboardPage from "./pages/DashboardPage.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import ProductListPage from "./pages/ProductListPage.jsx";
 import ProfilePage from "./pages/ProfilePage.jsx";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage.jsx";
+import ResetPasswordPage from "./pages/ResetPasswordPage.jsx";
 
 const SocialLoginHandler = () => {
     const location = useLocation();
@@ -21,7 +23,7 @@ const SocialLoginHandler = () => {
         const fullName = params.get('fullName');
         const role = params.get('role');
 
-        if (token) {
+        if (token && location.pathname !== '/reset-password') {
             login(token, { fullName, role });
             navigate('/', { replace: true });
         }
@@ -52,6 +54,8 @@ function App() {
 
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
         </Routes>
       </Router>
   );

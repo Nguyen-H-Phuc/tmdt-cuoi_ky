@@ -1,8 +1,6 @@
 package com.nhom5.backend.controller;
 
-import com.nhom5.backend.dto.LoginRequest;
-import com.nhom5.backend.dto.RegisterRequest;
-import com.nhom5.backend.dto.VerifyOtpRequest;
+import com.nhom5.backend.dto.*;
 import com.nhom5.backend.entity.User;
 import com.nhom5.backend.repository.UserRepository;
 import com.nhom5.backend.service.AuthService;
@@ -52,6 +50,26 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         try {
             return ResponseEntity.ok(authService.login(request));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        try {
+            String result = authService.forgotPassword(request);
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
+        try {
+            String result = authService.resetPassword(request);
+            return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
