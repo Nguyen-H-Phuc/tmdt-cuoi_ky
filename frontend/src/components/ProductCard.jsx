@@ -1,10 +1,12 @@
 import React from 'react';
 import { Heart, Image as ImageIcon, MapPin, MoreVertical } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const ProductCard = ({ product }) => {
     // Giả sử dữ liệu được truyền vào qua prop 'product'
     // Nếu chưa có data thật, bạn có thể dùng các giá trị mặc định bên dưới
     const {
+        productId = 1,
         title = "Samsung Galaxy Note 10 5G Đen",
         subTitle = "Galaxy Note 10",
         price = "1.500.000 đ",
@@ -14,8 +16,14 @@ const ProductCard = ({ product }) => {
         imageUrl = "https://placehold.co/217x217"
     } = product || {};
 
+    const formattedPrice = typeof price === 'number' 
+        ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)
+        : price;
+
+    const displayLocation = product?.province || location;
+
     return (
-        <div className="w-full max-w-[220px] bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col overflow-hidden">
+        <Link to={`/product/${productId}`} className="w-full max-w-[220px] bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer flex flex-col overflow-hidden">
 
             {/* 1. Media Section */}
             <div className="relative aspect-square w-full">
@@ -26,7 +34,12 @@ const ProductCard = ({ product }) => {
                 />
 
                 {/* Nút Yêu thích */}
-                <button className="absolute top-2 right-2 p-1.5 bg-black/20 hover:bg-black/40 rounded-full text-white transition-colors">
+                <button 
+                    onClick={(e) => {
+                        e.preventDefault(); // Prevent navigating when clicking heart
+                    }}
+                    className="absolute top-2 right-2 p-1.5 bg-black/20 hover:bg-black/40 rounded-full text-white transition-colors"
+                >
                     <Heart size={20} strokeWidth={2} />
                 </button>
 
@@ -34,7 +47,7 @@ const ProductCard = ({ product }) => {
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 flex justify-between items-center text-white text-[11px] font-bold">
                     <span>{time}</span>
                     <div className="flex items-center gap-1">
-                        <span>{imageCount}</span>
+                        <span>{product?.images?.length || imageCount}</span>
                         <ImageIcon size={12} />
                     </div>
                 </div>
@@ -49,12 +62,12 @@ const ProductCard = ({ product }) => {
 
                 {/* Dòng máy */}
                 <p className="text-[13px] text-gray-500 truncate">
-                    {subTitle}
+                    {product?.category?.categoryName || subTitle}
                 </p>
 
                 {/* Giá tiền */}
                 <p className="text-base font-bold text-[#F0325E] mt-1">
-                    {price}
+                    {formattedPrice}
                 </p>
 
                 {/* Địa điểm & Thêm */}
@@ -62,15 +75,15 @@ const ProductCard = ({ product }) => {
                     <div className="flex items-start gap-1 text-gray-400 max-w-[85%]">
                         <MapPin size={14} className="mt-0.5 shrink-0" />
                         <span className="text-[12px] leading-4 line-clamp-2">
-              {location}
-            </span>
+                            {displayLocation}
+                        </span>
                     </div>
-                    <button className="text-gray-400 hover:text-black">
+                    <button className="text-gray-400 hover:text-black" onClick={(e) => e.preventDefault()}>
                         <MoreVertical size={18} />
                     </button>
                 </div>
             </div>
-        </div>
+        </Link>
     );
 };
 

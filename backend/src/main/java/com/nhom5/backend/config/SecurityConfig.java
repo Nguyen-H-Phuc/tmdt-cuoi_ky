@@ -39,20 +39,10 @@ public class SecurityConfig {
                     corsConfiguration.setAllowCredentials(true);
                     return corsConfiguration;
                 }))
-            .cors(cors -> cors.configurationSource(request -> {
-                var corsConfiguration = new CorsConfiguration();
-                corsConfiguration.setAllowedOriginPatterns(List.of("http://localhost:*"));
-                corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                corsConfiguration.setAllowedHeaders(List.of("*"));
-                corsConfiguration.setAllowCredentials(true);
-                return corsConfiguration;
-            }))
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/api/auth/**", "/login/**", "/oauth2/**", "/api/products/**", "/api/reviews/**", "/api/favorites/**", "/ws/**").permitAll()
+                    .requestMatchers("/api/auth/**", "/login/**", "/oauth2/**", "/api/products/**", "/api/reviews/**", "/api/favorites/**", "/ws/**", "/api/statistics/**", "/api/categories/**").permitAll()
                     .anyRequest().authenticated()
-                        .requestMatchers("/api/auth/**", "/login/**", "/oauth2/**", "/api/statistics/**", "/api/products/**", "/api/categories/**").permitAll()
-                        .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)) // Không dùng Session
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class) // Chèn máy soát vé vào đây

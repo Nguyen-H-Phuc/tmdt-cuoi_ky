@@ -18,13 +18,10 @@ public class Product {
     private Integer productId;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User user;
     private User seller;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
 
@@ -34,8 +31,6 @@ public class Product {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(precision = 10, scale = 2)
-    private BigDecimal price = BigDecimal.ZERO;
     private Double price = 0.0;
 
     private String imageUrl;
@@ -43,8 +38,6 @@ public class Product {
     private Integer viewCount = 0;
 
     private String status = "available";
-    @Enumerated(EnumType.STRING)
-    private Status status = Status.available;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 

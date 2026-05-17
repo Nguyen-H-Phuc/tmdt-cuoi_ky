@@ -12,27 +12,24 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
-@CrossOrigin("*")
 @CrossOrigin(origins = "*")
 public class ProductController {
 
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private ProductService productService;
+
     @GetMapping
     public ResponseEntity<List<Product>> getAllProducts() {
         return ResponseEntity.ok(productRepository.findAll());
     }
-    private ProductService productService;
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductDTO> getProduct(@PathVariable Integer id) {
         ProductDTO product = productService.getProductById(id);
         return ResponseEntity.ok(product);
-    public ResponseEntity<Product> getProductById(@PathVariable Integer id) {
-        return productRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/newest")
