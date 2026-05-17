@@ -31,6 +31,8 @@ const SocialLoginHandler = () => {
 
     return null;
 };
+import CategoryGrid from "./components/CategoryGrid.jsx";
+import ProductDetailPage from "./pages/ProductDetailPage.jsx";
 
 function App() {
   return (
@@ -50,6 +52,8 @@ function App() {
             <Route path="/products" element={<ProductListPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/" element={<CategoryGrid />} />
+            <Route path="/product/:id" element={<ProductDetailPage />} />
           </Route>
 
           <Route path="/register" element={<RegisterPage />} />

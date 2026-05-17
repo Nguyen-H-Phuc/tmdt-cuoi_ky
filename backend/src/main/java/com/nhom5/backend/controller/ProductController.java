@@ -2,6 +2,8 @@ package com.nhom5.backend.controller;
 
 import com.nhom5.backend.entity.Product;
 import com.nhom5.backend.repository.ProductRepository;
+import com.nhom5.backend.dto.ProductDTO;
+import com.nhom5.backend.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,11 +12,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
-@CrossOrigin("*")
+@CrossOrigin(origins = "*")
 public class ProductController {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private ProductService productService;
 
     @GetMapping
     public ResponseEntity<List<Product>> getAllProducts() {
@@ -22,10 +27,9 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable Integer id) {
-        return productRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ProductDTO> getProduct(@PathVariable Integer id) {
+        ProductDTO product = productService.getProductById(id);
+        return ResponseEntity.ok(product);
     }
 
     @GetMapping("/newest")
