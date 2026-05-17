@@ -4,6 +4,7 @@ import RegisterPage from "./pages/RegisterPage.jsx";
 import Footer from "./components/Footer.jsx";
 import Header from "./components/Header.jsx";
 import CategoryGrid from "./components/CategoryGrid.jsx";
+import ProductDetailPage from "./pages/ProductDetailPage.jsx";
 
 function App() {
   return (
@@ -19,7 +20,7 @@ function App() {
             </div>
           }>
             <Route path="/" element={<CategoryGrid />} />
-
+            <Route path="/product/:id" element={<ProductDetailPage />} />
           </Route>
 
           <Route path="/register" element={<RegisterPage />} />
