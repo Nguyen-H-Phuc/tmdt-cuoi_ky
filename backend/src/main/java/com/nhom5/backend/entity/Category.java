@@ -16,4 +16,7 @@ public class Category {
 
     @Column(nullable = false, length = 100)
     private String categoryName;
+
+    @Column(name = "category_image")
+    private String categoryImage;
 }

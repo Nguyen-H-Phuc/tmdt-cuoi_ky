@@ -1,22 +1,52 @@
 package com.nhom5.backend.controller;
 
+import com.nhom5.backend.entity.Product;
+import com.nhom5.backend.repository.ProductRepository;
 import com.nhom5.backend.dto.ProductDTO;
 import com.nhom5.backend.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/products")
+@CrossOrigin("*")
 @CrossOrigin(origins = "*")
 public class ProductController {
 
     @Autowired
+    private ProductRepository productRepository;
+
+    @GetMapping
+    public ResponseEntity<List<Product>> getAllProducts() {
+        return ResponseEntity.ok(productRepository.findAll());
+    }
     private ProductService productService;
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductDTO> getProduct(@PathVariable Integer id) {
         ProductDTO product = productService.getProductById(id);
         return ResponseEntity.ok(product);
+    public ResponseEntity<Product> getProductById(@PathVariable Integer id) {
+        return productRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/newest")
+    public ResponseEntity<List<Product>> getNewestProducts() {
+        return ResponseEntity.ok(productRepository.findTop10ByOrderByCreatedAtDesc());
+    }
+
+    @GetMapping("/most-viewed")
+    public ResponseEntity<List<Product>> getMostViewedProducts() {
+        return ResponseEntity.ok(productRepository.findTop10ByOrderByViewCountDesc());
+    }
+
+    @GetMapping("/best-selling")
+    public ResponseEntity<List<Product>> getBestSellingProducts() {
+        return ResponseEntity.ok(productRepository.findTop10BestSelling());
     }
 }

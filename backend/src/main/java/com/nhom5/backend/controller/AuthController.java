@@ -1,8 +1,6 @@
 package com.nhom5.backend.controller;
 
-import com.nhom5.backend.dto.LoginRequest;
-import com.nhom5.backend.dto.RegisterRequest;
-import com.nhom5.backend.dto.VerifyOtpRequest;
+import com.nhom5.backend.dto.*;
 import com.nhom5.backend.entity.User;
 import com.nhom5.backend.repository.UserRepository;
 import com.nhom5.backend.service.AuthService;
@@ -57,6 +55,26 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        try {
+            String result = authService.forgotPassword(request);
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
+        try {
+            String result = authService.resetPassword(request);
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @GetMapping("/oauth2-success")
     public void oauth2Success(@AuthenticationPrincipal OAuth2User principal, HttpServletResponse response) throws IOException {
         if (principal == null) {
@@ -77,5 +95,10 @@ public class AuthController {
                 user.getRole().name());
 
         response.sendRedirect(redirectUrl);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout() {
+        return ResponseEntity.ok("Đăng xuất thành công!");
     }
 }

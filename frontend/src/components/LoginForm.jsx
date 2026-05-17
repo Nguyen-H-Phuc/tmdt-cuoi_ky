@@ -1,13 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { FcGoogle } from "react-icons/fc";
 import { SiFacebook } from "react-icons/si";
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const LoginForm = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
+    const { login } = useAuth();
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -17,37 +19,13 @@ const LoginForm = () => {
                 password: password
             });
 
-            // Backend trả về LoginResponse (token, fullName, role)
             const data = response.data;
-
-            // Lưu token vào localStorage để dùng cho các request sau
-            localStorage.setItem("token", data.token);
-            localStorage.setItem("user", JSON.stringify(data));
-
-            navigate("/"); // Chuyển về trang chủ
-            window.location.reload(); // Reload để Header cập nhật trạng thái user
+            login(data.token, data);
+            navigate("/");
         } catch (error) {
             alert(error.response?.data || "Đăng nhập thất bại. Kiểm tra lại email/mật khẩu.");
         }
     };
-    useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-
-        const token = params.get("token");
-        const fullName = params.get("fullName");
-        const role = params.get("role");
-
-        if (token) {
-            localStorage.setItem("token", token);
-
-            localStorage.setItem(
-                "user",
-                JSON.stringify({ token, fullName, role })
-            );
-
-            navigate("/", { replace: true });
-        }
-    }, [navigate]);
 
     return (
         <div className="w-[480px] bg-white rounded-2xl shadow-[0px_4px_16px_rgba(34,34,34,0.12)] p-10 flex flex-col items-center">
@@ -112,9 +90,13 @@ const LoginForm = () => {
                 />
 
                 <div className="w-[400px] text-right -mt-2">
-                    <a href="#" className="text-[14px] text-[#1877F2] hover:underline">
+                    <button 
+                        type="button"
+                        onClick={() => navigate('/forgot-password')}
+                        className="text-[14px] text-[#1877F2] hover:underline"
+                    >
                         Quên mật khẩu?
-                    </a>
+                    </button>
                 </div>
 
                 <div className="text-[14px] text-[#666666]">

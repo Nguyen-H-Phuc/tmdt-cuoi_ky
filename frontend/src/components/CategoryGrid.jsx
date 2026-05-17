@@ -1,24 +1,53 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import CategoryCard from './CategoryCard';
 
-const CATEGORIES = [
-    { id: 1, name: "Bất động sản", image: "link_anh_1" },
-    { id: 2, name: "Xe cộ", image: "link_anh_2" },
-    // ... thêm đủ 16 danh mục như trong hình
-];
-
 const CategoryGrid = () => {
-    return (
-        <section className="w-full bg-[#F4F4F4] py-8 flex justify-center">
-            {/* Khung màu trắng 1200x324 */}
-            <div className="w-full max-w-300 min-h-81 bg-white rounded-xl shadow-sm p-6">
+    // State lưu dữ liệu từ API
+    const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-                {/* Grid System: 8 cột trên desktop, 4 cột trên mobile */}
-                <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-y gap-x">
-                    {CATEGORIES.map((cat) => (
-                        <CategoryCard key={cat.id} category={cat} />
-                    ))}
-                </div>
+    useEffect(() => {
+        // Gọi API từ Spring Boot backend
+        fetch('http://localhost:8080/api/categories')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Lỗi khi tải dữ liệu');
+                }
+                return response.json();
+            })
+            .then(data => {
+                setCategories(data);
+                setLoading(false);
+            })
+            .catch(error => {
+                console.error("Error fetching categories:", error);
+                setLoading(false);
+            });
+    }, []);
+
+    return (
+        <section className="w-full bg-[#F4F4F4] py-6 flex justify-center">
+            {/* Khung màu trắng 1200px (đồng bộ với ProductSection) */}
+            <div className="w-full max-w-[1200px] bg-white rounded-xl shadow-sm p-4 md:p-6">
+                
+                {loading ? (
+                    <div className="text-center text-gray-500 py-10 animate-pulse">
+                        Đang tải danh mục...
+                    </div>
+                ) : (
+                    /* Grid System: 8 cột, căn giữa và thu hẹp gap */
+                    <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-y-4 gap-x-2 justify-items-center">
+                        {categories.map((cat) => (
+                            <CategoryCard 
+                                key={cat.categoryId} 
+                                category={{
+                                    name: cat.categoryName,
+                                    imageUrl: `/assets/category/${cat.categoryImage}`
+                                }} 
+                            />
+                        ))}
+                    </div>
+                )}
 
             </div>
         </section>

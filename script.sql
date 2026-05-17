@@ -1,5 +1,6 @@
-CREATE DATABASE tmdt_db;
-
+DROP DATABASE IF EXISTS tmdt_db;
+CREATE DATABASE tmdt_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE tmdt_db;
 CREATE TABLE users (
    user_id INT PRIMARY KEY AUTO_INCREMENT,
    full_name VARCHAR(100) NOT NULL,
@@ -140,5 +141,51 @@ CREATE TABLE messages (
 -- Thêm index cho bảng Messages để load nhanh hơn
 ALTER TABLE messages ADD INDEX (sent_at);
 
--- Thêm trường để quản lý danh sách chat tốt hơn
 ALTER TABLE conversations ADD COLUMN last_message_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE categories ADD COLUMN category_image VARCHAR(255) DEFAULT 'default.png';
+
+-- ==============================================
+-- THÊM DỮ LIỆU MẪU (DUMMY DATA)
+-- ==============================================
+
+-- 1. Thêm danh mục
+INSERT INTO categories (category_name, category_image) VALUES
+    ('Bất động sản', 'home.png'),
+    ('Xe cộ', 'vehicle.png'),
+    ('Thú cưng', 'pet.png'),
+    ('Đồ gia dụng, nội thất, cây cảnh', 'appliance.png'),
+    ('Giải trí, Thể thao, Sở thích', 'entertainment.png'),
+    ('Mẹ và bé', 'mom-and-baby.png'),
+    ('Dịch vụ, Du lịch', 'tourism.png'),
+    ('Cho tặng miễn phí', 'gift.png'),
+    ('Việc làm', 'job.png'),
+    ('Đồ điện tử', 'electronic.png'),
+    ('Tủ lạnh, máy lạnh, máy giặt', 'household-electronics.png'),
+    ('Thời trang, Đồ dùng cá nhân', 'fashion.png'),
+    ('Đồ ăn, thực phẩm và các loại khác', 'food.png'),
+    ('Dịch vụ chăm sóc nhà cửa', 'service.png');
+
+-- 2. Thêm người dùng (User)
+INSERT INTO users (user_id, full_name, email, phone, address, avatar, role, is_active) VALUES 
+(1, 'Xe Máy Cũ Hải Nguyễn', 'hainguyen@example.com', '0901234567', 'Đà Nẵng', 'https://placehold.co/100x100/333333/FFFFFF?text=XM', 'member', TRUE),
+(2, 'Nhơn', 'nhon@example.com', '0987654321', 'Tp Hồ Chí Minh', 'https://placehold.co/100x100/FFCC00/000000?text=N', 'admin', TRUE),
+(3, 'Cửa Hàng Xưởng Thành Phát', 'thanhphat@example.com', '0912345678', 'Tp Hồ Chí Minh', 'https://placehold.co/100x100/ADD8E6/FFFFFF?text=CH', 'admin', TRUE),
+(4, 'Nội Thất Diễn Phát', 'dienphat@example.com', '0998877665', 'Tp Hồ Chí Minh', 'https://placehold.co/100x100/FFCC00/000000?text=N', 'admin', TRUE);
+
+-- 3. Thêm sản phẩm
+INSERT INTO products (product_id, user_id, category_id, title, description, price, image_url, view_count, status) VALUES 
+(1, 1, 2, 'Ex xuống áo 2010 vàng đen siêu đẹp nợ xấu đưa 8tr5', '2014 • Tay côn/Moto • Đã sử dụng. Máy êm ru, giấy tờ đầy đủ.', 26800000, 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=400&q=80', 120, 'available'),
+(2, 1, 2, 'Ex xuống áo 2010 xanh trắng spark nợ xấu đưa 10tr', '2014 • Tay côn/Moto • Đã sử dụng. Ngoại hình đẹp, bao thợ test.', 26800000, 'https://images.unsplash.com/photo-1568772585407-9361f9bfce87?auto=format&fit=crop&w=400&q=80', 85, 'available'),
+(3, 2, 4, 'Nghỉ bán thanh lý đồ Nam shop', 'Mới • Đồ nam. Chất vải mát, còn nhiều size.', 120000, 'https://images.unsplash.com/photo-1562157873-818bc0726f68?auto=format&fit=crop&w=400&q=80', 45, 'available'),
+(4, 3, 5, 'Tủ quần áo nhựa lắp ghép đa năng', 'Mới • Nhựa. Thiết kế thông minh, tiết kiệm diện tích.', 1900000, 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=400&q=80', 200, 'available'),
+(5, 4, 5, 'Tủ gỗ mdf thanh lý sale 50%', 'Mới • Gỗ. Gỗ chống ẩm, bền đẹp, thiết kế hiện đại.', 3000000, 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80', 310, 'available');
+
+-- 4. Thêm tài khoản admin/test
+INSERT INTO tmdt_db.users
+(user_id, full_name, email, phone, address, avatar, `role`, is_active, created_at, updated_at)
+VALUES(5, 'Nguyen Van Admin', 'a@gmail.com', '0900000000', NULL, NULL, 'member', 1, '2026-04-26 23:31:05.000', '2026-04-26 23:49:23.000');
+
+INSERT INTO tmdt_db.local_accounts
+(user_id, password_hash, is_email_verified, verification_code, code_expired_at)
+VALUES(5, '$2a$10$0q.QX/A/VV8j6CMYTJuftuOl4EJAHJOjqmtcHRrkkt0KU.U6wYTu.', 1, NULL, NULL);

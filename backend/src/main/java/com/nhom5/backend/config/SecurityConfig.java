@@ -31,6 +31,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                .cors(cors -> cors.configurationSource(request -> {
+                    var corsConfiguration = new CorsConfiguration();
+                    corsConfiguration.setAllowedOriginPatterns(List.of("*"));
+                    corsConfiguration.setAllowedMethods(List.of("*")); // Cho phép mọi phương thức GET, POST...
+                    corsConfiguration.setAllowedHeaders(List.of("*")); // Cho phép mọi Header
+                    corsConfiguration.setAllowCredentials(true);
+                    return corsConfiguration;
+                }))
             .cors(cors -> cors.configurationSource(request -> {
                 var corsConfiguration = new CorsConfiguration();
                 corsConfiguration.setAllowedOriginPatterns(List.of("http://localhost:*"));
@@ -43,6 +51,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/api/auth/**", "/login/**", "/oauth2/**", "/api/products/**", "/api/reviews/**", "/api/favorites/**", "/ws/**").permitAll()
                     .anyRequest().authenticated()
+                        .requestMatchers("/api/auth/**", "/login/**", "/oauth2/**", "/api/statistics/**", "/api/products/**", "/api/categories/**").permitAll()
+                        .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)) // Không dùng Session
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class) // Chèn máy soát vé vào đây

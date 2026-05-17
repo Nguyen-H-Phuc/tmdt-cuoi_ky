@@ -1,12 +1,11 @@
 package com.nhom5.backend.service;
 
-import com.nhom5.backend.dto.LoginRequest;
-import com.nhom5.backend.dto.LoginResponse;
-import com.nhom5.backend.dto.RegisterRequest;
-import com.nhom5.backend.dto.VerifyOtpRequest;
+import com.nhom5.backend.dto.*;
 import com.nhom5.backend.entity.LocalAccount;
+import com.nhom5.backend.entity.PasswordReset;
 import com.nhom5.backend.entity.User;
 import com.nhom5.backend.repository.LocalAccountRepository;
+import com.nhom5.backend.repository.PasswordResetRepository;
 import com.nhom5.backend.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -16,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Random;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -23,9 +23,68 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final LocalAccountRepository localAccountRepository;
+    private final PasswordResetRepository passwordResetRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final JwtService jwtService;
+
+    @Transactional
+    public String forgotPassword(ForgotPasswordRequest request) {
+        // 1. Check user exist
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Email không tồn tại trong hệ thống!"));
+
+        // 2. Generate token
+        String token = UUID.randomUUID().toString();
+
+        // 3. Clear old tokens and save new one
+        passwordResetRepository.deleteByEmail(request.getEmail());
+
+        PasswordReset passwordReset = new PasswordReset();
+        passwordReset.setEmail(request.getEmail());
+        passwordReset.setToken(token);
+        passwordReset.setExpiresAt(LocalDateTime.now().plusMinutes(15));
+        passwordResetRepository.save(passwordReset);
+
+        // 4. Send email
+        emailService.sendResetPasswordEmail(request.getEmail(), token);
+
+        return "Link đặt lại mật khẩu đã được gửi tới email của bạn!";
+    }
+
+    @Transactional
+    public String resetPassword(ResetPasswordRequest request) {
+        // 1. Check token valid
+        PasswordReset passwordReset = passwordResetRepository.findByToken(request.getToken())
+                .orElseThrow(() -> new RuntimeException("Link không hợp lệ hoặc đã hết hạn!"));
+
+        // 2. Check expire time
+        if (passwordReset.getExpiresAt().isBefore(LocalDateTime.now())) {
+            passwordResetRepository.delete(passwordReset);
+            throw new RuntimeException("Link đã hết hạn!");
+        }
+
+        // 3. Find user
+        User user = userRepository.findByEmail(passwordReset.getEmail())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng!"));
+
+        // 4. Update password
+        LocalAccount localAccount = localAccountRepository.findById(user.getUserId())
+                .orElse(new LocalAccount());
+        
+        if (localAccount.getUser() == null) {
+            localAccount.setUser(user);
+            localAccount.setIsEmailVerified(true);
+        }
+
+        localAccount.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        localAccountRepository.save(localAccount);
+
+        // 5. Delete token after use
+        passwordResetRepository.delete(passwordReset);
+
+        return "Đặt lại mật khẩu thành công!";
+    }
 
     @Transactional
     public String register(RegisterRequest request) {

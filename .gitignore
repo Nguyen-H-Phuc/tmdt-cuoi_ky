@@ -44,3 +44,4 @@ lerna-debug.log*
 .directory
 Thumbs.db
 HELP.md
+.agents/
