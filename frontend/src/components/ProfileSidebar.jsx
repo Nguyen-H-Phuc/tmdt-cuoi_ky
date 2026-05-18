@@ -7,12 +7,14 @@ import {
     Heart, 
     ShoppingBag, 
     LogOut,
-    CreditCard
+    CreditCard,
+    MessageCircle
 } from 'lucide-react';
 
 const ProfileSidebar = ({ activeTab, setActiveTab }) => {
     const menuItems = [
         { id: 'profile', icon: <User size={18} />, label: 'Thông tin cá nhân' },
+        { id: 'chat', icon: <MessageCircle size={18} />, label: 'Tin nhắn' },
         { id: 'orders', icon: <ShoppingBag size={18} />, label: 'Quản lý đơn hàng' },
         { id: 'favorites', icon: <Heart size={18} />, label: 'Sản phẩm yêu thích' },
         { id: 'notifications', icon: <Bell size={18} />, label: 'Thông báo' },
