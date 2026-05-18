@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Share2, MoreVertical, ChevronLeft, ChevronRight, Heart, MapPin, Clock, MessageCircle, Send, Check } from 'lucide-react';
 import SockJS from 'sockjs-client/dist/sockjs';
 import { Stomp } from '@stomp/stompjs';
+import { useAuth } from '../context/AuthContext';
 
 const ProductDetailPage = () => {
     const { id } = useParams();
@@ -24,8 +25,9 @@ const ProductDetailPage = () => {
     const [chatMessages, setChatMessages] = useState([]);
     const [chatInput, setChatInput] = useState('');
     
-    // Auth - Mock user
-    const currentUser = { userId: 3, fullName: "Khách hàng" };
+    // Auth - Real user from context
+    const { user: authUser } = useAuth();
+    const currentUser = authUser || { userId: 3, fullName: "Khách hàng" };
 
     useEffect(() => {
         const fetchProductData = async () => {
@@ -39,6 +41,22 @@ const ProductDetailPage = () => {
                 setReviews(reviewRes.data);
                 
                 setLoading(false);
+                
+                // Fetch chat history if any
+                if (currentUser && currentUser.userId && productRes.data.seller) {
+                    try {
+                        const convRes = await axios.get(`http://localhost:8080/api/chat/conversations/${currentUser.userId}`);
+                        const convs = convRes.data;
+                        // Find conversation for this product and seller
+                        const targetConv = convs.find(c => c.otherUser?.userId === productRes.data.seller.userId && c.product?.productId === parseInt(productId));
+                        if (targetConv) {
+                            const msgRes = await axios.get(`http://localhost:8080/api/chat/messages/${targetConv.conversationId}`);
+                            setChatMessages(msgRes.data);
+                        }
+                    } catch(err) {
+                        console.error("Error loading chat history", err);
+                    }
+                }
                 
                 // Setup WebSocket for chat
                 const socket = new SockJS('http://localhost:8080/ws');
@@ -106,6 +124,7 @@ const ProductDetailPage = () => {
             senderId: currentUser.userId,
             receiverId: product.seller.userId,
             content: chatInput,
+            productId: parseInt(productId)
         };
         
         if (stompClient && stompClient.connected) {
@@ -340,8 +359,17 @@ const ProductDetailPage = () => {
                                 Khung Chat
                             </div>
                             <div className="flex-1 p-3 overflow-y-auto bg-gray-50 flex flex-col gap-2">
+                                {/* Product Context Card inside chat */}
+                                <div className="bg-white p-2 rounded border mb-2 flex gap-2 items-center shadow-sm">
+                                    <img src={currentImageUrl} alt="Product" className="w-10 h-10 object-cover rounded" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[12px] font-medium text-gray-800 truncate">{product.title}</p>
+                                        <p className="text-[12px] text-red-500 font-bold">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}</p>
+                                    </div>
+                                </div>
+                                
                                 {chatMessages.length === 0 ? (
-                                    <div className="text-center text-[12px] text-gray-500 mt-10">
+                                    <div className="text-center text-[12px] text-gray-500 mt-6">
                                         Hãy gửi tin nhắn để hỏi thêm về sản phẩm!
                                     </div>
                                 ) : (
