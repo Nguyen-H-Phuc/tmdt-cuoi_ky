@@ -40,11 +40,21 @@ const ProductDetailPage = () => {
                 
                 setLoading(false);
                 
+                // Fetch chat history if product has seller
+                if (productRes.data.seller) {
+                    try {
+                        const chatRes = await axios.get(`http://localhost:8080/api/chat/messages/${currentUser.userId}/${productRes.data.seller.userId}`);
+                        setChatMessages(Array.isArray(chatRes.data) ? chatRes.data : []);
+                    } catch (err) {
+                        console.error("Error fetching chat history", err);
+                    }
+                }
+                
                 // Setup WebSocket for chat
                 const socket = new SockJS('http://localhost:8080/ws');
                 const client = Stomp.over(socket);
                 client.connect({}, () => {
-                    client.subscribe(`/user/${currentUser.userId}/queue/messages`, (msg) => {
+                    client.subscribe(`/queue/messages/${currentUser.userId}`, (msg) => {
                         const newMsg = JSON.parse(msg.body);
                         setChatMessages(prev => [...prev, newMsg]);
                     });
