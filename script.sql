@@ -145,6 +145,23 @@ ALTER TABLE conversations ADD COLUMN last_message_at TIMESTAMP DEFAULT CURRENT_T
 
 ALTER TABLE categories ADD COLUMN category_image VARCHAR(255) DEFAULT 'default.png';
 
+CREATE TABLE product_images (
+    image_id INT PRIMARY KEY AUTO_INCREMENT,
+    product_id INT NOT NULL,
+    image_url VARCHAR(255) NOT NULL,
+    is_main BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (product_id) REFERENCES products(product_id)
+);
+
+CREATE TABLE favorites (
+    favorite_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    product_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (product_id) REFERENCES products(product_id)
+);
+
 -- ==============================================
 -- THÊM DỮ LIỆU MẪU (DUMMY DATA)
 -- ==============================================

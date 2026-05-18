@@ -4,7 +4,7 @@ import ProductSection from '../components/ProductSection';
 
 const HomePage = () => {
     return (
-        <div className="container mx-auto max-w-6xl px-4">
+        <div className="container mx-auto max-w-6xl px-4 mt-6">
             {/* Danh mục nổi bật */}
             <CategoryGrid />
 
