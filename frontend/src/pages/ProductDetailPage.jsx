@@ -28,6 +28,8 @@ const ProductDetailPage = () => {
     const currentUser = { userId: 3, fullName: "Khách hàng" };
 
     useEffect(() => {
+        let activeClient = null;
+
         const fetchProductData = async () => {
             try {
                 // Fetch product details
@@ -53,10 +55,16 @@ const ProductDetailPage = () => {
                 // Setup WebSocket for chat
                 const socket = new SockJS('http://localhost:8080/ws');
                 const client = Stomp.over(socket);
+                activeClient = client;
                 client.connect({}, () => {
                     client.subscribe(`/queue/messages/${currentUser.userId}`, (msg) => {
                         const newMsg = JSON.parse(msg.body);
-                        setChatMessages(prev => [...prev, newMsg]);
+                        // Chỉ thêm tin nhắn nếu nó không trùng lặp với tin nhắn cuối
+                        setChatMessages(prev => {
+                            const isDuplicate = prev.some(m => m.sentAt === newMsg.sentAt && m.content === newMsg.content);
+                            if (isDuplicate) return prev;
+                            return [...prev, newMsg];
+                        });
                     });
                 });
                 setStompClient(client);
@@ -68,6 +76,12 @@ const ProductDetailPage = () => {
         };
 
         fetchProductData();
+
+        return () => {
+            if (activeClient && activeClient.connected) {
+                activeClient.disconnect();
+            }
+        };
     }, [productId]);
 
     const handleNextImage = () => {
