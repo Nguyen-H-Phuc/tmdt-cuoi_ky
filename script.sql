@@ -189,8 +189,8 @@ VALUES(5, 'Nguyen Van Admin', 'a@gmail.com', '0900000000', NULL, NULL, 'member',
 INSERT INTO tmdt_db.local_accounts
 (user_id, password_hash, is_email_verified, verification_code, code_expired_at)
 VALUES
-(1, '$2a$10$0q.QX/A/VV8j6CMYTJuftuOl4EJAHJOjqmtcHRrkkt0KU.U6wYTu.', 1, NULL, NULL),
-(2, '$2a$10$0q.QX/A/VV8j6CMYTJuftuOl4EJAHJOjqmtcHRrkkt0KU.U6wYTu.', 1, NULL, NULL),
-(3, '$2a$10$0q.QX/A/VV8j6CMYTJuftuOl4EJAHJOjqmtcHRrkkt0KU.U6wYTu.', 1, NULL, NULL),
-(4, '$2a$10$0q.QX/A/VV8j6CMYTJuftuOl4EJAHJOjqmtcHRrkkt0KU.U6wYTu.', 1, NULL, NULL),
-(5, '$2a$10$0q.QX/A/VV8j6CMYTJuftuOl4EJAHJOjqmtcHRrkkt0KU.U6wYTu.', 1, NULL, NULL);
+(1, '$2a$10$mRn.QAQT/vL5urT9sSbhCupPVDWDRk2QcLH18AJGnHyzNMmCUzlQ.', 1, NULL, NULL),
+(2, '$2a$10$mRn.QAQT/vL5urT9sSbhCupPVDWDRk2QcLH18AJGnHyzNMmCUzlQ.', 1, NULL, NULL),
+(3, '$2a$10$mRn.QAQT/vL5urT9sSbhCupPVDWDRk2QcLH18AJGnHyzNMmCUzlQ.', 1, NULL, NULL),
+(4, '$2a$10$mRn.QAQT/vL5urT9sSbhCupPVDWDRk2QcLH18AJGnHyzNMmCUzlQ.', 1, NULL, NULL),
+(5, '$2a$10$mRn.QAQT/vL5urT9sSbhCupPVDWDRk2QcLH18AJGnHyzNMmCUzlQ.', 1, NULL, NULL);
