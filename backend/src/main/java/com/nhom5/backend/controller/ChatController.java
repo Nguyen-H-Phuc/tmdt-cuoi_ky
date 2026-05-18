@@ -18,6 +18,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
+@Transactional
 public class ChatController {
 
     @Autowired
@@ -114,12 +116,22 @@ public class ChatController {
 
     // ----- WEBSOCKET -----
 
+    private Integer parseInteger(Object obj) {
+        if (obj == null) return null;
+        try {
+            // handle cases where JS sends 1.0 (double) or string
+            return Double.valueOf(obj.toString()).intValue();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     @MessageMapping("/chat.sendMessage")
     public void sendMessage(@Payload Map<String, Object> chatMessage) {
-        Integer senderId = (Integer) chatMessage.get("senderId");
-        Integer receiverId = (Integer) chatMessage.get("receiverId");
-        String content = (String) chatMessage.get("content");
-        Integer productId = (Integer) chatMessage.get("productId"); // Support initial product context
+        Integer senderId = parseInteger(chatMessage.get("senderId"));
+        Integer receiverId = parseInteger(chatMessage.get("receiverId"));
+        String content = chatMessage.get("content") != null ? chatMessage.get("content").toString() : null;
+        Integer productId = parseInteger(chatMessage.get("productId")); // Support initial product context
 
         if (senderId != null && receiverId != null && content != null) {
             User sender = userRepository.findById(senderId).orElse(null);

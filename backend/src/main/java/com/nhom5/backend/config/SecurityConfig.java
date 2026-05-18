@@ -41,7 +41,7 @@ public class SecurityConfig {
                 }))
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/api/auth/**", "/login/**", "/oauth2/**", "/api/products/**", "/api/reviews/**", "/api/favorites/**", "/ws/**", "/api/statistics/**", "/api/categories/**").permitAll()
+                    .requestMatchers("/api/auth/**", "/login/**", "/oauth2/**", "/api/products/**", "/api/reviews/**", "/api/favorites/**", "/ws/**", "/api/statistics/**", "/api/categories/**", "/api/chat/**").permitAll()
                     .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)) // Không dùng Session
