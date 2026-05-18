@@ -106,6 +106,7 @@ public class ChatController {
     
     // Helper mapper
     private UserDTO mapToUserDTO(User user) {
+        if (user == null) return null;
         UserDTO dto = new UserDTO();
         dto.setUserId(user.getUserId());
         dto.setFullName(user.getFullName());

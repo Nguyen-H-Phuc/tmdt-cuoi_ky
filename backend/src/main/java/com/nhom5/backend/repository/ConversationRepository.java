@@ -12,6 +12,6 @@ public interface ConversationRepository extends JpaRepository<Conversation, Inte
     @Query("SELECT c FROM Conversation c WHERE ((c.userOne.userId = :u1 AND c.userTwo.userId = :u2) OR (c.userOne.userId = :u2 AND c.userTwo.userId = :u1)) AND (c.product.productId = :productId OR (:productId IS NULL AND c.product IS NULL))")
     Optional<Conversation> findConversationBetweenUsersAndProduct(@Param("u1") Integer u1, @Param("u2") Integer u2, @Param("productId") Integer productId);
 
-    @Query("SELECT c FROM Conversation c WHERE c.userOne.userId = :userId OR c.userTwo.userId = :userId ORDER BY c.lastMessageAt DESC")
+    @Query("SELECT c FROM Conversation c LEFT JOIN FETCH c.userOne LEFT JOIN FETCH c.userTwo LEFT JOIN FETCH c.product WHERE c.userOne.userId = :userId OR c.userTwo.userId = :userId ORDER BY c.lastMessageAt DESC")
     List<Conversation> findByUserId(@Param("userId") Integer userId);
 }
