@@ -35,7 +35,7 @@ const ProductSection = ({ title, apiEndpoint }) => {
             <div className="w-full max-w-[1200px] bg-white rounded-xl shadow-sm p-4 md:p-6">
                 {/* Tiêu đề khu vực & Link xem tất cả */}
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-lg font-bold text-gray-800 uppercase border-b-2 border-[#FFBA00] inline-block pb-1">
+                    <h2 className="text-lg font-bold text-gray-800 uppercase border-b-2 border-brand-accent inline-block pb-1">
                         {title}
                     </h2>
                     <Link 

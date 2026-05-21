@@ -96,7 +96,7 @@ const RegisterForm = () => {
                     value={formData.fullName}
                     onChange={handleInputChange}
                     placeholder="Họ và tên *"
-                    className="w-[400px] h-[48px] border border-[#DADADA] rounded-xl px-4 outline-none focus:border-[#FFBA00] transition-all placeholder:text-gray-400 text-[14px]"
+                    className="w-[400px] h-[48px] border border-[#DADADA] rounded-xl px-4 outline-none focus:border-brand-accent transition-all placeholder:text-gray-400 text-[14px]"
                 />
 
                 {/* Input Email */}
@@ -107,7 +107,7 @@ const RegisterForm = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     placeholder="Email *"
-                    className="w-[400px] h-[48px] border border-[#DADADA] rounded-xl px-4 outline-none focus:border-[#FFBA00] transition-all placeholder:text-gray-400 text-[14px]"
+                    className="w-[400px] h-[48px] border border-[#DADADA] rounded-xl px-4 outline-none focus:border-brand-accent transition-all placeholder:text-gray-400 text-[14px]"
                 />
 
                 {/* Input Mật khẩu */}
@@ -118,7 +118,7 @@ const RegisterForm = () => {
                     value={formData.password}
                     onChange={handleInputChange}
                     placeholder="Mật khẩu *"
-                    className="w-[400px] h-[48px] border border-[#DADADA] rounded-xl px-4 outline-none focus:border-[#FFBA00] transition-all placeholder:text-gray-400 text-[14px]"
+                    className="w-[400px] h-[48px] border border-[#DADADA] rounded-xl px-4 outline-none focus:border-brand-accent transition-all placeholder:text-gray-400 text-[14px]"
                 />
 
                 {/* Password Criteria */}
@@ -144,7 +144,7 @@ const RegisterForm = () => {
                             type="checkbox"
                             checked={agreed}
                             onChange={() => setAgreed(!agreed)}
-                            className="w-5 h-5 accent-[#FFBA00] cursor-pointer rounded"
+                            className="w-5 h-5 accent-brand-accent cursor-pointer rounded"
                         />
                     </div>
                     <p className="text-[13px] leading-5 text-[#222222]">
@@ -158,7 +158,7 @@ const RegisterForm = () => {
                     disabled={!isFormValid || loading}
                     className={`w-[400px] h-[48px] text-[16px] font-bold rounded-xl transition-all ${
                         isFormValid && !loading
-                            ? "bg-[#FFBA00] text-black hover:brightness-105"
+                            ? "bg-brand-accent text-black hover:brightness-105"
                             : "bg-[#F4F4F4] text-[#8C8C8C] cursor-not-allowed"
                     }`}
                 >

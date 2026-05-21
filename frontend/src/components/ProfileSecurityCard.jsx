@@ -44,7 +44,7 @@ const ProfileSecurityCard = () => {
                 {/* Password Section */}
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-[#FFBA00]/10 rounded text-[#FFBA00]">
+                        <div className="p-1.5 bg-brand-accent/10 rounded text-brand-accent">
                             <Lock size={16} />
                         </div>
                         <h3 className="font-bold text-sm text-[#222222]">Thay đổi mật khẩu</h3>
@@ -60,7 +60,7 @@ const ProfileSecurityCard = () => {
                                     name="current"
                                     value={passwords.current}
                                     onChange={handlePasswordChange}
-                                    className="w-full h-12 pl-4 pr-12 border border-[#DADADA] rounded-xl outline-none focus:border-[#FFBA00] transition-all bg-white text-sm"
+                                    className="w-full h-12 pl-4 pr-12 border border-[#DADADA] rounded-xl outline-none focus:border-brand-accent transition-all bg-white text-sm"
                                     placeholder="••••••••"
                                 />
                                 <button 
@@ -82,7 +82,7 @@ const ProfileSecurityCard = () => {
                                     name="new"
                                     value={passwords.new}
                                     onChange={handlePasswordChange}
-                                    className="w-full h-12 pl-4 pr-12 border border-[#DADADA] rounded-xl outline-none focus:border-[#FFBA00] transition-all bg-white text-sm"
+                                    className="w-full h-12 pl-4 pr-12 border border-[#DADADA] rounded-xl outline-none focus:border-brand-accent transition-all bg-white text-sm"
                                     placeholder="••••••••"
                                 />
                                 <button 
@@ -104,7 +104,7 @@ const ProfileSecurityCard = () => {
                                     name="confirm"
                                     value={passwords.confirm}
                                     onChange={handlePasswordChange}
-                                    className="w-full h-10 pl-3 pr-10 border border-[#DADADA] rounded-lg outline-none focus:border-[#FFBA00] transition-all bg-white text-xs"
+                                    className="w-full h-10 pl-3 pr-10 border border-[#DADADA] rounded-lg outline-none focus:border-brand-accent transition-all bg-white text-xs"
                                     placeholder="••••••••"
                                 />
                                 <button 
@@ -119,7 +119,7 @@ const ProfileSecurityCard = () => {
 
                         <button
                             type="submit"
-                            className="mt-1 w-fit px-6 h-10 bg-[#FFBA00] text-black text-xs font-bold rounded-lg hover:brightness-105 shadow-sm transition-all"
+                            className="mt-1 w-fit px-6 h-10 bg-brand-primary hover:bg-brand-hover text-black text-xs font-bold rounded-lg hover:brightness-105 shadow-sm transition-all"
                         >
                             Cập nhật mật khẩu
                         </button>
@@ -129,7 +129,7 @@ const ProfileSecurityCard = () => {
                 {/* 2FA Section */}
                 <div className="pt-6 border-t border-gray-100 flex flex-col gap-4">
                     <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-[#FFBA00]/10 rounded text-[#FFBA00]">
+                        <div className="p-1.5 bg-brand-accent/10 rounded text-brand-accent">
                             <Smartphone size={16} />
                         </div>
                         <h3 className="font-bold text-sm text-[#222222]">Xác thực 2 lớp (2FA)</h3>
@@ -147,7 +147,7 @@ const ProfileSecurityCard = () => {
                                 </p>
                             </div>
                         </div>
-                        <button className="px-4 py-1.5 border-2 border-[#FFBA00] text-[#222222] text-xs font-bold rounded-lg hover:bg-[#FFBA00] transition-all">
+                        <button className="px-4 py-1.5 border-2 border-brand-accent text-[#222222] text-xs font-bold rounded-lg hover:bg-brand-accent transition-all">
                             Kích hoạt
                         </button>
                     </div>
@@ -156,7 +156,7 @@ const ProfileSecurityCard = () => {
                 {/* Devices Section */}
                 <div className="pt-8 border-t border-gray-100 flex flex-col gap-6">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-[#FFBA00]/10 rounded-lg text-[#FFBA00]">
+                        <div className="p-2 bg-brand-accent/10 rounded-lg text-brand-accent">
                             <Key size={20} />
                         </div>
                         <h3 className="font-bold text-[#222222]">Các thiết bị đang đăng nhập</h3>

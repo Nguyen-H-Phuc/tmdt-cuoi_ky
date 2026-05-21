@@ -24,7 +24,7 @@ const ProfileSidebar = ({ activeTab, setActiveTab }) => {
     return (
         <div className="w-full md:w-64 bg-white rounded-xl shadow-[0px_4px_16px_rgba(34,34,34,0.12)] overflow-hidden h-fit">
             {/* User Profile Summary */}
-            <div className="p-4 bg-[#FFBA00] flex flex-col items-center gap-2">
+            <div className="p-4 bg-brand-accent flex flex-col items-center gap-2">
                 <img 
                     src="https://api.dicebear.com/7.x/avataaars/svg?seed=Phuc" 
                     alt="Avatar" 
@@ -45,11 +45,11 @@ const ProfileSidebar = ({ activeTab, setActiveTab }) => {
                                 onClick={() => setActiveTab(item.id)}
                                 className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all ${
                                     activeTab === item.id 
-                                        ? 'bg-[#FFBA00]/10 text-[#222222] font-bold' 
+                                        ? 'bg-brand-accent/10 text-[#222222] font-bold' 
                                         : 'text-gray-600 hover:bg-gray-50 font-medium'
                                 }`}
                             >
-                                <span className={activeTab === item.id ? 'text-[#FFBA00]' : 'text-gray-400'}>
+                                <span className={activeTab === item.id ? 'text-brand-accent' : 'text-gray-400'}>
                                     {item.icon}
                                 </span>
                                 <span className="text-xs">{item.label}</span>

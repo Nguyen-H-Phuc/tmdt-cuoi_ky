@@ -84,7 +84,7 @@ const PopupProfile = ({ isOpen, onClose }) => {
                 <div className="shrink-0 p-4 flex flex-col items-center gap-3">
                     <div className="relative">
                         <img className="w-14 h-14 rounded-full border border-neutral-200 object-cover" src={avatarUrl} alt="Avatar" />
-                        <div className="absolute bottom-0 right-0 transform translate-x-1 translate-y-1 bg-[#FFBA00] rounded-full p-1 border-2 border-white">
+                        <div className="absolute bottom-0 right-0 transform translate-x-1 translate-y-1 bg-brand-accent rounded-full p-1 border-2 border-white">
                             {ICONS.EDIT}
                         </div>
                     </div>
@@ -106,7 +106,7 @@ const PopupProfile = ({ isOpen, onClose }) => {
                                 <div className="w-4 h-4 flex items-center justify-center scale-90">{ICONS.CHOTOT_COIN}</div>
                             </div>
                         </div>
-                        <button className="w-full h-7 bg-[#FFBA00] hover:bg-[#e6bf00] rounded-lg text-neutral-800 text-xs font-bold transition-all active:scale-[0.98]">
+                        <button className="w-full h-7 bg-brand-primary hover:bg-brand-hover rounded-lg text-neutral-800 text-xs font-bold transition-all active:scale-[0.98]">
                             Nạp ngay
                         </button>
                     </div>
