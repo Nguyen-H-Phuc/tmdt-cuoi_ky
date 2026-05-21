@@ -118,9 +118,6 @@ body {
 }
 
 /* Elegant Focus Rings for Accessibility */
-input:focus-visible, 
-select:focus-visible, 
-textarea:focus-visible, 
 button:focus-visible {
   outline: 2px solid var(--color-brand-accent);
   outline-offset: 2px;
