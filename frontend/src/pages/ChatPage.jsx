@@ -225,7 +225,7 @@ const ChatPage = () => {
                     <div className="flex-1 overflow-y-auto divide-y divide-neutral-50">
                         {loadingConvs ? (
                             <div className="flex flex-col items-center justify-center h-48 text-gray-400 text-xs gap-2">
-                                <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                                <div className="w-6 h-6 border-2 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
                                 <span>Đang tải danh sách...</span>
                             </div>
                         ) : filteredConversations.length === 0 ? (
@@ -243,7 +243,7 @@ const ChatPage = () => {
                                         onClick={() => setSelectedConv(conv)}
                                         className={`p-3.5 flex items-center gap-3.5 cursor-pointer transition-colors relative ${
                                             isSelected 
-                                                ? 'bg-neutral-50 border-l-4 border-[#FFBA00]' 
+                                                ? 'bg-neutral-50 border-l-4 border-brand-accent' 
                                                 : 'hover:bg-neutral-50/50'
                                         }`}
                                     >

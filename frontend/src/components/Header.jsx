@@ -44,12 +44,12 @@ const Header = () => {
           {/* MIDDLE: Search Bar */}
           <div className="flex-1 max-w-2xl hidden sm:flex items-center gap-0">
             <div className="h-9 flex items-center gap-1 bg-[#F4F4F4] rounded-l-full px-4 border-r border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors shrink-0">
-              <MapPin size={16} className="text-[#FFBA00]" fill="currentColor" fillOpacity={0.2} />
+              <MapPin size={16} className="text-brand-accent" fill="currentColor" fillOpacity={0.2} />
               <span className="text-xs font-semibold whitespace-nowrap hidden lg:inline">Toàn quốc</span>
               <ChevronDown size={12} />
             </div>
 
-            <div className="flex-1 h-9 flex items-center bg-[#F4F4F4] rounded-r-full px-3 relative group border border-transparent focus-within:border-[#FFBA00] transition-all">
+            <div className="flex-1 h-9 flex items-center bg-[#F4F4F4] rounded-r-full px-3 relative group border border-transparent focus-within:border-brand-accent transition-all">
               <Search size={16} className="text-gray-500 shrink-0" />
               <input
                   type="text"
@@ -89,7 +89,7 @@ const Header = () => {
                 </button>
             )}
 
-            <button className="h-9 px-4 sm:flex items-center justify-center gap-1 bg-[#FFD400] hover:bg-[#e6bf00] rounded-full transition-all shadow-sm">
+            <button className="h-9 px-4 sm:flex items-center justify-center gap-1 bg-brand-primary hover:bg-brand-hover rounded-full transition-all shadow-sm">
               <span className="text-xs font-bold text-gray-900">Đăng tin</span>
             </button>
 

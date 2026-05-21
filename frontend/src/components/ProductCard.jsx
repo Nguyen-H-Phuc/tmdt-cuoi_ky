@@ -66,7 +66,7 @@ const ProductCard = ({ product }) => {
                 </p>
 
                 {/* Giá tiền */}
-                <p className="text-base font-bold text-[#F0325E] mt-1">
+                <p className="text-base font-bold text-brand-price mt-1">
                     {formattedPrice}
                 </p>
 

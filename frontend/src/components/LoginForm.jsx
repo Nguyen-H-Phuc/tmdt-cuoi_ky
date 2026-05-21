@@ -77,7 +77,7 @@ const LoginForm = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Email"
-                    className="w-[400px] h-[48px] border border-[#DADADA] rounded-xl outline-none pl-4 focus:border-[#FFBA00] transition-all bg-white text-[14px] text-[#222222] placeholder:text-[#8C8C8C]"
+                    className="w-[400px] h-[48px] border border-[#DADADA] rounded-xl outline-none pl-4 focus:border-brand-accent transition-all bg-white text-[14px] text-[#222222] placeholder:text-[#8C8C8C]"
                 />
 
                 <input
@@ -86,7 +86,7 @@ const LoginForm = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Mật khẩu"
-                    className="w-[400px] h-[48px] border border-[#DADADA] rounded-xl outline-none pl-4 focus:border-[#FFBA00] transition-all bg-white text-[14px] text-[#222222] placeholder:text-[#8C8C8C]"
+                    className="w-[400px] h-[48px] border border-[#DADADA] rounded-xl outline-none pl-4 focus:border-brand-accent transition-all bg-white text-[14px] text-[#222222] placeholder:text-[#8C8C8C]"
                 />
 
                 <div className="w-[400px] text-right -mt-2">
@@ -112,7 +112,7 @@ const LoginForm = () => {
                     disabled={!email}
                     className={`w-[400px] h-[48px] text-[16px] font-bold rounded-lg transition-all ${
                         email
-                            ? "bg-[#FFBA00] text-black hover:brightness-105 shadow-sm"
+                            ? "bg-brand-accent text-black hover:brightness-105 shadow-sm"
                             : "bg-[#F4F4F4] text-[#8C8C8C] cursor-not-allowed"
                     }`}
                 >

@@ -54,7 +54,7 @@ const VerifyForm = ({ email, onBack, onSuccess }) => {
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                     placeholder="Nhập mã OTP (6 chữ số)"
-                    className="w-[400px] h-[48px] border border-[#DADADA] rounded-xl outline-none pl-4 focus:border-[#FFBA00] transition-all bg-white text-[14px] text-[#222222] placeholder:text-[#8C8C8C] text-center tracking-[0.5em] font-bold"
+                    className="w-[400px] h-[48px] border border-[#DADADA] rounded-xl outline-none pl-4 focus:border-brand-accent transition-all bg-white text-[14px] text-[#222222] placeholder:text-[#8C8C8C] text-center tracking-[0.5em] font-bold"
                 />
 
                 {error && <p className="text-red-500 text-[13px] w-[400px] text-center">{error}</p>}
@@ -65,7 +65,7 @@ const VerifyForm = ({ email, onBack, onSuccess }) => {
                     disabled={otp.length < 6 || loading}
                     className={`w-[400px] h-[48px] text-[16px] font-bold rounded-lg transition-all ${
                         otp.length === 6 && !loading
-                            ? "bg-[#FFBA00] text-black hover:brightness-105 shadow-sm"
+                            ? "bg-brand-accent text-black hover:brightness-105 shadow-sm"
                             : "bg-[#F4F4F4] text-[#8C8C8C] cursor-not-allowed"
                     }`}
                 >

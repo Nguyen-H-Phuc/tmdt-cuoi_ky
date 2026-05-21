@@ -217,7 +217,7 @@ const ProductDetailPage = () => {
                                         <div 
                                             key={i} 
                                             onClick={() => setCurrentImageIndex(i)}
-                                            className={`flex-shrink-0 w-16 h-16 rounded overflow-hidden cursor-pointer border-2 ${i === currentImageIndex ? 'border-orange-500' : 'border-transparent'}`}
+                                            className={`flex-shrink-0 w-16 h-16 rounded overflow-hidden cursor-pointer border-2 ${i === currentImageIndex ? 'border-brand-accent' : 'border-transparent'}`}
                                         >
                                             <img src={img} alt="Thumbnail" className="w-full h-full object-cover" />
                                         </div>
@@ -233,7 +233,7 @@ const ProductDetailPage = () => {
                             </h1>
                             
                             <div className="flex justify-between items-center mt-3">
-                                <span className="text-2xl font-bold text-[#d0021b]">
+                                <span className="text-2xl font-bold text-brand-price">
                                     {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
                                 </span>
                                 <div className="flex gap-3">
@@ -356,7 +356,7 @@ const ProductDetailPage = () => {
                                 </button>
                                 <button 
                                     onClick={() => document.getElementById('chat-input').focus()} 
-                                    className="w-full flex items-center justify-center gap-2 py-2.5 border border-[#ff8c00] text-[#ff8c00] font-bold rounded hover:bg-orange-50 transition"
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 border border-brand-accent text-brand-accent font-bold rounded hover:bg-brand-accent/5 transition"
                                 >
                                     <MessageCircle size={18} /> CHAT VỚI NGƯỜI BÁN
                                 </button>
@@ -385,7 +385,7 @@ const ProductDetailPage = () => {
                             {!currentUser?.userId ? (
                                 <div className="flex-1 flex flex-col items-center justify-center p-4 bg-gray-50 text-center">
                                     <p className="text-[13px] text-gray-500 mb-3">Vui lòng đăng nhập để bắt đầu trò chuyện với người bán.</p>
-                                    <Link to="/login" className="px-4 py-1.5 bg-[#FFBA00] text-black font-bold text-xs rounded hover:bg-[#e6bf00] transition">
+                                    <Link to="/login" className="px-4 py-1.5 bg-brand-primary text-black font-bold text-xs rounded hover:bg-brand-hover transition">
                                         Đăng nhập ngay
                                     </Link>
                                 </div>

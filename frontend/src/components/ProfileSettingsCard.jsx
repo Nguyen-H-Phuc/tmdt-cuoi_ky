@@ -73,7 +73,7 @@ const ProfileSettingsCard = () => {
                                 value={profile.fullName}
                                 onChange={handleChange}
                                 placeholder="Nhập họ và tên"
-                                className="w-full h-10 px-3 border border-[#DADADA] rounded-lg outline-none focus:border-[#FFBA00] transition-all bg-white text-xs text-[#222222]"
+                                className="w-full h-10 px-3 border border-[#DADADA] rounded-lg outline-none focus:border-brand-accent transition-all bg-white text-xs text-[#222222]"
                             />
                         </div>
 
@@ -89,7 +89,7 @@ const ProfileSettingsCard = () => {
                                 value={profile.phone}
                                 onChange={handleChange}
                                 placeholder="Nhập số điện thoại"
-                                className="w-full h-10 px-3 border border-[#DADADA] rounded-lg outline-none focus:border-[#FFBA00] transition-all bg-white text-xs text-[#222222]"
+                                className="w-full h-10 px-3 border border-[#DADADA] rounded-lg outline-none focus:border-brand-accent transition-all bg-white text-xs text-[#222222]"
                             />
                         </div>
 
@@ -105,7 +105,7 @@ const ProfileSettingsCard = () => {
                                 value={profile.email}
                                 onChange={handleChange}
                                 placeholder="Nhập email"
-                                className="w-full h-10 px-3 border border-[#DADADA] rounded-lg outline-none focus:border-[#FFBA00] transition-all bg-white text-xs text-[#222222]"
+                                className="w-full h-10 px-3 border border-[#DADADA] rounded-lg outline-none focus:border-brand-accent transition-all bg-white text-xs text-[#222222]"
                             />
                         </div>
 
@@ -121,7 +121,7 @@ const ProfileSettingsCard = () => {
                                 value={profile.address}
                                 onChange={handleChange}
                                 placeholder="Nhập địa chỉ"
-                                className="w-full h-10 px-3 border border-[#DADADA] rounded-lg outline-none focus:border-[#FFBA00] transition-all bg-white text-xs text-[#222222]"
+                                className="w-full h-10 px-3 border border-[#DADADA] rounded-lg outline-none focus:border-brand-accent transition-all bg-white text-xs text-[#222222]"
                             />
                         </div>
                     </div>
@@ -135,7 +135,7 @@ const ProfileSettingsCard = () => {
                             onChange={handleChange}
                             rows="3"
                             placeholder="Kể gì đó về bản thân bạn..."
-                            className="w-full p-3 border border-[#DADADA] rounded-lg outline-none focus:border-[#FFBA00] transition-all bg-white text-xs text-[#222222] resize-none"
+                            className="w-full p-3 border border-[#DADADA] rounded-lg outline-none focus:border-brand-accent transition-all bg-white text-xs text-[#222222] resize-none"
                         ></textarea>
                     </div>
 
@@ -149,7 +149,7 @@ const ProfileSettingsCard = () => {
                         </button>
                         <button
                             type="submit"
-                            className="px-6 h-10 bg-[#FFBA00] text-black text-xs font-bold rounded-lg hover:brightness-105 shadow-sm transition-all flex items-center gap-2"
+                            className="px-6 h-10 bg-brand-primary hover:bg-brand-hover text-black text-xs font-bold rounded-lg hover:brightness-105 shadow-sm transition-all flex items-center gap-2"
                         >
                             <Save size={16} />
                             Lưu thay đổi

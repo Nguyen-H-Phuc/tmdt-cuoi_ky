@@ -45,7 +45,7 @@ const ResetPasswordForm = () => {
                 </p>
                 <button
                     onClick={() => navigate('/login')}
-                    className="w-full h-10 bg-[#FFBA00] text-black text-sm font-bold rounded-lg hover:brightness-105 transition-all"
+                    className="w-full h-10 bg-brand-accent text-black text-sm font-bold rounded-lg hover:brightness-105 transition-all"
                 >
                     Đăng nhập ngay
                 </button>
@@ -95,7 +95,7 @@ const ResetPasswordForm = () => {
                             required
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
-                            className="w-full h-10 px-4 pr-10 border border-[#DADADA] rounded-lg outline-none focus:border-[#FFBA00] transition-all bg-white text-xs"
+                            className="w-full h-10 px-4 pr-10 border border-[#DADADA] rounded-lg outline-none focus:border-brand-accent transition-all bg-white text-xs"
                         />
                         <button 
                             type="button"
@@ -114,13 +114,13 @@ const ResetPasswordForm = () => {
                         required
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full h-10 px-4 border border-[#DADADA] rounded-lg outline-none focus:border-[#FFBA00] transition-all bg-white text-xs"
+                        className="w-full h-10 px-4 border border-[#DADADA] rounded-lg outline-none focus:border-brand-accent transition-all bg-white text-xs"
                     />
                 </div>
 
                 <button
                     type="submit"
-                    className="w-full h-10 bg-[#FFBA00] text-black text-xs font-bold rounded-lg hover:brightness-105 shadow-sm transition-all mt-2"
+                    className="w-full h-10 bg-brand-accent text-black text-xs font-bold rounded-lg hover:brightness-105 shadow-sm transition-all mt-2"
                 >
                     Đổi mật khẩu
                 </button>

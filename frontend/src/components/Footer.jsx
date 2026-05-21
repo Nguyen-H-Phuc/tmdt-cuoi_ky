@@ -49,7 +49,7 @@ const Footer = () => {
                         <h4 className="font-bold text-[#222222] text-sm uppercase">Hỗ trợ khách hàng</h4>
                         <ul className="flex flex-col gap-2">
                             {footerLinks.support.map((link) => (
-                                <li key={link} className="text-[#595959] text-sm hover:text-[#FFBA00] cursor-pointer transition-colors">
+                                <li key={link} className="text-[#595959] text-sm hover:text-brand-accent cursor-pointer transition-colors">
                                     {link}
                                 </li>
                             ))}
@@ -61,7 +61,7 @@ const Footer = () => {
                         <h4 className="font-bold text-[#222222] text-sm uppercase">Về Chợ Tốt</h4>
                         <ul className="flex flex-col gap-2">
                             {footerLinks.about.map((link) => (
-                                <li key={link} className="text-[#595959] text-sm hover:text-[#FFBA00] cursor-pointer transition-colors">
+                                <li key={link} className="text-[#595959] text-sm hover:text-brand-accent cursor-pointer transition-colors">
                                     {link}
                                 </li>
                             ))}
