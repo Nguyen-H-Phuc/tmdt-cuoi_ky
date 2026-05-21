@@ -71,7 +71,16 @@ public class ReviewController {
         review.setReviewer(user);
         review.setProduct(product);
         review.setComment(content);
-        review.setRating(5); // default or from request
+        
+        Integer rating = 5;
+        if (request.get("rating") != null) {
+            try {
+                rating = Integer.parseInt(request.get("rating").toString());
+            } catch (NumberFormatException e) {
+                // Keep default 5
+            }
+        }
+        review.setRating(rating);
         review.setCreatedAt(LocalDateTime.now());
         
         reviewRepository.save(review);
