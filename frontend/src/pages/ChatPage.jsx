@@ -320,17 +320,17 @@ const ChatPage = () => {
 
                                 {/* Active Product details banner */}
                                 {selectedConv.product && (
-                                    <div className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-1.5 max-w-[280px] hidden sm:flex items-center gap-2">
+                                    <div className="bg-brand-primary-50 border border-brand-primary-100 rounded-xl px-3 py-1.5 max-w-[280px] hidden sm:flex items-center gap-2">
                                         <div className="text-left min-w-0">
                                             <p className="text-[9px] text-neutral-400 font-medium uppercase tracking-tight">Sản phẩm đang hỏi</p>
                                             <Link 
                                                 to={`/product/${selectedConv.product.productId}`} 
-                                                className="text-[11px] font-bold text-amber-800 truncate block hover:underline hover:text-amber-900"
+                                                className="text-[11px] font-bold text-neutral-800 truncate block hover:underline hover:text-brand-accent"
                                             >
                                                 {selectedConv.product.title}
                                             </Link>
                                         </div>
-                                        <span className="text-[11px] font-bold text-red-600 shrink-0">
+                                        <span className="text-[11px] font-bold text-brand-price shrink-0">
                                             {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedConv.product.price)}
                                         </span>
                                     </div>
@@ -356,13 +356,13 @@ const ChatPage = () => {
                                                 key={idx}
                                                 className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed shadow-sm ${
                                                     isMe 
-                                                        ? 'bg-blue-600 text-white rounded-br-none self-end' 
+                                                        ? 'bg-brand-primary text-neutral-900 font-medium rounded-br-none self-end' 
                                                         : 'bg-white border border-neutral-100 text-gray-800 rounded-bl-none self-start'
                                                 }`}
                                             >
                                                 <p>{msg.content}</p>
                                                 <span className={`text-[9px] block text-right mt-1.5 ${
-                                                    isMe ? 'text-blue-200' : 'text-neutral-400'
+                                                    isMe ? 'text-neutral-500' : 'text-neutral-400'
                                                 }`}>
                                                     {new Date(msg.sentAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
@@ -381,11 +381,11 @@ const ChatPage = () => {
                                     onChange={(e) => setChatInput(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                                     placeholder="Nhập nội dung tin nhắn..." 
-                                    className="flex-1 bg-neutral-100 rounded-full px-5 py-2.5 text-[13px] outline-none border border-transparent focus:border-neutral-200 focus:bg-white transition-all placeholder:text-neutral-400" 
+                                    className="flex-1 bg-neutral-100 rounded-full px-5 py-2.5 text-[13px] outline-none border border-transparent focus:border-brand-primary-300 focus:bg-white transition-all placeholder:text-neutral-400" 
                                 />
                                 <button 
                                     onClick={handleSendMessage} 
-                                    className="bg-blue-600 hover:bg-blue-700 text-white p-2.5 rounded-full transition flex-shrink-0 active:scale-95 shadow-md shadow-blue-600/10"
+                                    className="bg-brand-primary hover:bg-brand-hover text-black p-2.5 rounded-full transition flex-shrink-0 active:scale-95 shadow-md shadow-brand-primary/10"
                                 >
                                     <Send size={18} />
                                 </button>
