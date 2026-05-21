@@ -186,6 +186,6 @@ public class AuthService {
 
         // 4. Create and return JWT
         String token = jwtService.generateToken(user.getEmail());
-        return new LoginResponse(token, user.getFullName(), user.getRole().name());
+        return new LoginResponse(token, user.getFullName(), user.getRole().name(), user.getUserId(), user.getEmail());
     }
 }

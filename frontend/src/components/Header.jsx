@@ -74,7 +74,11 @@ const Header = () => {
             <div className="hidden lg:flex items-center gap-1">
               <HeaderButton icon={<Heart size={18} />} />
               <HeaderButton icon={<Bell size={18} />} />
-              <HeaderButton icon={<MessageCircle size={18} />} label="Liên hệ" />
+              <HeaderButton 
+                icon={<MessageCircle size={18} />} 
+                label="Liên hệ" 
+                onClick={() => navigate('/chat')} 
+              />
             </div>
 
             {!isLogin && (
@@ -123,8 +127,11 @@ const Header = () => {
   );
 };
 
-const HeaderButton = ({ icon, label }) => (
-    <button className={`h-9 flex items-center justify-center gap-2 hover:bg-gray-100 rounded-full transition-colors group ${label ? 'px-4' : 'w-9'}`}>
+const HeaderButton = ({ icon, label, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`h-9 flex items-center justify-center gap-2 hover:bg-gray-100 rounded-full transition-colors group ${label ? 'px-4' : 'w-9'}`}
+    >
     <span className="text-gray-700 group-hover:text-black">
       {icon}
     </span>

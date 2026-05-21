@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Share2, MoreVertical, ChevronLeft, ChevronRight, Heart, MapPin, Clock, MessageCircle, Send, Check } from 'lucide-react';
 import SockJS from 'sockjs-client/dist/sockjs';
 import { Stomp } from '@stomp/stompjs';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const ProductDetailPage = () => {
     const { id } = useParams();
@@ -24,8 +25,8 @@ const ProductDetailPage = () => {
     const [chatMessages, setChatMessages] = useState([]);
     const [chatInput, setChatInput] = useState('');
     
-    // Auth - Mock user
-    const currentUser = { userId: 3, fullName: "Khách hàng" };
+    // Auth - Get current user from AuthContext
+    const { user: currentUser } = useAuth();
 
     useEffect(() => {
         let activeClient = null;
@@ -42,32 +43,38 @@ const ProductDetailPage = () => {
                 
                 setLoading(false);
                 
-                // Fetch chat history if product has seller
-                if (productRes.data.seller) {
+                // Fetch chat history if product has seller and user is logged in
+                if (productRes.data.seller && currentUser?.userId) {
                     try {
                         const chatRes = await axios.get(`http://localhost:8080/api/chat/messages/${currentUser.userId}/${productRes.data.seller.userId}`);
                         setChatMessages(Array.isArray(chatRes.data) ? chatRes.data : []);
                     } catch (err) {
                         console.error("Error fetching chat history", err);
                     }
+                } else {
+                    setChatMessages([]);
                 }
                 
-                // Setup WebSocket for chat
-                const socket = new SockJS('http://localhost:8080/ws');
-                const client = Stomp.over(socket);
-                activeClient = client;
-                client.connect({}, () => {
-                    client.subscribe(`/queue/messages/${currentUser.userId}`, (msg) => {
-                        const newMsg = JSON.parse(msg.body);
-                        // Chỉ thêm tin nhắn nếu nó không trùng lặp với tin nhắn cuối
-                        setChatMessages(prev => {
-                            const isDuplicate = prev.some(m => m.sentAt === newMsg.sentAt && m.content === newMsg.content);
-                            if (isDuplicate) return prev;
-                            return [...prev, newMsg];
+                // Setup WebSocket for chat if user is logged in
+                if (currentUser?.userId) {
+                    const socket = new SockJS('http://localhost:8080/ws');
+                    const client = Stomp.over(socket);
+                    activeClient = client;
+                    client.connect({}, () => {
+                        client.subscribe(`/queue/messages/${currentUser.userId}`, (msg) => {
+                            const newMsg = JSON.parse(msg.body);
+                            // Chỉ thêm tin nhắn nếu nó không trùng lặp với tin nhắn cuối
+                            setChatMessages(prev => {
+                                const isDuplicate = prev.some(m => m.sentAt === newMsg.sentAt && m.content === newMsg.content);
+                                if (isDuplicate) return prev;
+                                return [...prev, newMsg];
+                            });
                         });
                     });
-                });
-                setStompClient(client);
+                    setStompClient(client);
+                } else {
+                    setStompClient(null);
+                }
                 
             } catch (error) {
                 console.error("Error fetching data", error);
@@ -82,7 +89,7 @@ const ProductDetailPage = () => {
                 activeClient.disconnect();
             }
         };
-    }, [productId]);
+    }, [productId, currentUser?.userId]);
 
     const handleNextImage = () => {
         if (!product?.images?.length) return;
@@ -95,6 +102,10 @@ const ProductDetailPage = () => {
     };
 
     const toggleFavorite = async () => {
+        if (!currentUser?.userId) {
+            alert("Vui lòng đăng nhập để lưu tin đăng!");
+            return;
+        }
         try {
             const res = await axios.post(`http://localhost:8080/api/favorites`, {
                 userId: currentUser.userId,
@@ -107,6 +118,10 @@ const ProductDetailPage = () => {
     };
 
     const handleAddReview = async () => {
+        if (!currentUser?.userId) {
+            alert("Vui lòng đăng nhập để gửi bình luận!");
+            return;
+        }
         if (!reviewInput.trim()) return;
         try {
             await axios.post(`http://localhost:8080/api/reviews`, {
@@ -124,6 +139,10 @@ const ProductDetailPage = () => {
     };
 
     const handleSendMessage = () => {
+        if (!currentUser?.userId) {
+            alert("Vui lòng đăng nhập để gửi tin nhắn!");
+            return;
+        }
         if (!chatInput.trim() || !product?.seller) return;
         
         const msg = {
@@ -363,33 +382,51 @@ const ProductDetailPage = () => {
                             <div className="p-3 border-b font-bold text-[14px] text-gray-800 flex items-center gap-2">
                                 Khung Chat
                             </div>
-                            <div className="flex-1 p-3 overflow-y-auto bg-gray-50 flex flex-col gap-2">
-                                {chatMessages.length === 0 ? (
-                                    <div className="text-center text-[12px] text-gray-500 mt-10">
-                                        Hãy gửi tin nhắn để hỏi thêm về sản phẩm!
+                            {!currentUser?.userId ? (
+                                <div className="flex-1 flex flex-col items-center justify-center p-4 bg-gray-50 text-center">
+                                    <p className="text-[13px] text-gray-500 mb-3">Vui lòng đăng nhập để bắt đầu trò chuyện với người bán.</p>
+                                    <Link to="/login" className="px-4 py-1.5 bg-[#FFBA00] text-black font-bold text-xs rounded hover:bg-[#e6bf00] transition">
+                                        Đăng nhập ngay
+                                    </Link>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="flex-1 p-3 overflow-y-auto bg-gray-50 flex flex-col gap-2">
+                                        {chatMessages.length === 0 ? (
+                                            <div className="text-center text-[12px] text-gray-500 mt-10">
+                                                Hãy gửi tin nhắn để hỏi thêm về sản phẩm!
+                                            </div>
+                                        ) : (
+                                            chatMessages.map((msg, idx) => {
+                                                const isMe = Number(msg.senderId) === Number(currentUser?.userId) || 
+                                                             Number(msg.sender?.userId) === Number(currentUser?.userId);
+                                                return (
+                                                    <div 
+                                                        key={idx} 
+                                                        className={`max-w-[85%] rounded-lg px-3 py-1.5 text-[13px] ${isMe ? 'bg-blue-500 text-white self-end' : 'bg-white border text-gray-800 self-start'}`}
+                                                    >
+                                                        {msg.content}
+                                                    </div>
+                                                );
+                                            })
+                                        )}
                                     </div>
-                                ) : (
-                                    chatMessages.map((msg, idx) => (
-                                        <div key={idx} className={`max-w-[85%] rounded-lg px-3 py-1.5 text-[13px] ${msg.senderId === currentUser.userId || msg.sender?.userId === currentUser.userId ? 'bg-blue-500 text-white self-end' : 'bg-white border text-gray-800 self-start'}`}>
-                                            {msg.content}
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                            <div className="p-2 border-t flex gap-2">
-                                <input 
-                                    id="chat-input"
-                                    type="text" 
-                                    value={chatInput}
-                                    onChange={(e) => setChatInput(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                                    placeholder="Nhập tin nhắn..." 
-                                    className="flex-1 bg-gray-100 rounded-full px-3 py-1 text-[13px] outline-none" 
-                                />
-                                <button onClick={handleSendMessage} className="text-blue-500 p-1.5 hover:bg-blue-50 rounded-full transition flex-shrink-0">
-                                    <Send size={18} />
-                                </button>
-                            </div>
+                                    <div className="p-2 border-t flex gap-2">
+                                        <input 
+                                            id="chat-input"
+                                            type="text" 
+                                            value={chatInput}
+                                            onChange={(e) => setChatInput(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                                            placeholder="Nhập tin nhắn..." 
+                                            className="flex-1 bg-gray-100 rounded-full px-3 py-1 text-[13px] outline-none" 
+                                        />
+                                        <button onClick={handleSendMessage} className="text-blue-500 p-1.5 hover:bg-blue-50 rounded-full transition flex-shrink-0">
+                                            <Send size={18} />
+                                        </button>
+                                    </div>
+                                </>
+                            )}
                         </div>
 
                     </div>

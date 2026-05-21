@@ -22,9 +22,11 @@ const SocialLoginHandler = () => {
         const token = params.get('token');
         const fullName = params.get('fullName');
         const role = params.get('role');
+        const userId = params.get('userId');
+        const email = params.get('email');
 
         if (token && location.pathname !== '/reset-password') {
-            login(token, { fullName, role });
+            login(token, { fullName, role, userId: userId ? parseInt(userId) : null, email });
             navigate('/', { replace: true });
         }
     }, [location, login, navigate]);
@@ -33,6 +35,7 @@ const SocialLoginHandler = () => {
 };
 import CategoryGrid from "./components/CategoryGrid.jsx";
 import ProductDetailPage from "./pages/ProductDetailPage.jsx";
+import ChatPage from "./pages/ChatPage.jsx";
 
 function App() {
   return (
@@ -52,6 +55,7 @@ function App() {
             <Route path="/products" element={<ProductListPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/chat" element={<ChatPage />} />
             <Route path="/" element={<CategoryGrid />} />
             <Route path="/product/:id" element={<ProductDetailPage />} />
           </Route>

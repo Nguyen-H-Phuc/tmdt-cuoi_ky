@@ -10,7 +10,8 @@ import {
     Coins, 
     ShieldCheck, 
     LogOut, 
-    ChevronRight 
+    ChevronRight,
+    MessageCircle
 } from 'lucide-react';
 
 // Sử dụng Lucide icons thay thế cho SVG cũ
@@ -114,6 +115,7 @@ const PopupProfile = ({ isOpen, onClose }) => {
                 {/* Menu List (Scrollable) */}
                 <div className="flex-1 overflow-y-auto">
                     <SectionHeader title="Tiện ích" />
+                    <MenuItem label="Hộp thư nhắn tin" icon={<MessageCircle size={18} className="text-gray-400" />} onClick={() => { navigate('/chat'); onClose(); }} />
                     <MenuItem label="Tin đăng đã lưu" icon={ICONS.SAVED_POSTS} />
                     <MenuItem label="Tìm kiếm đã lưu" icon={ICONS.SAVED_SEARCH} />
                     <MenuItem label="Lịch sử xem tin" icon={ICONS.HISTORY} />

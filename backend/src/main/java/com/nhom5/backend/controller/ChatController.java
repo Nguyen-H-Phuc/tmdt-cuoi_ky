@@ -93,4 +93,46 @@ public class ChatController {
         });
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("/api/chat/conversations/{userId}")
+    public ResponseEntity<List<Map<String, Object>>> getConversations(@PathVariable Integer userId) {
+        List<com.nhom5.backend.entity.Conversation> conversations = conversationRepository.findConversationsByUserId(userId);
+        List<Map<String, Object>> result = new ArrayList<>();
+        
+        for (com.nhom5.backend.entity.Conversation conv : conversations) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("conversationId", conv.getConversationId());
+            map.put("lastMessageAt", conv.getLastMessageAt());
+            
+            // Determine other user
+            User otherUser = conv.getUserOne().getUserId().equals(userId) ? conv.getUserTwo() : conv.getUserOne();
+            
+            Map<String, Object> otherUserMap = new HashMap<>();
+            otherUserMap.put("userId", otherUser.getUserId());
+            otherUserMap.put("fullName", otherUser.getFullName());
+            otherUserMap.put("avatar", otherUser.getAvatar());
+            map.put("otherUser", otherUserMap);
+            
+            // Product info if exists
+            if (conv.getProduct() != null) {
+                Map<String, Object> productMap = new HashMap<>();
+                productMap.put("productId", conv.getProduct().getProductId());
+                productMap.put("title", conv.getProduct().getTitle());
+                productMap.put("price", conv.getProduct().getPrice());
+                map.put("product", productMap);
+            }
+            
+            // Last message snippet
+            List<Message> messages = messageRepository.findByConversationOrderBySentAtAsc(conv);
+            if (!messages.isEmpty()) {
+                Message lastMsg = messages.get(messages.size() - 1);
+                map.put("lastMessageSnippet", lastMsg.getMessageText());
+            } else {
+                map.put("lastMessageSnippet", "");
+            }
+            
+            result.add(map);
+        }
+        return ResponseEntity.ok(result);
+    }
 }
