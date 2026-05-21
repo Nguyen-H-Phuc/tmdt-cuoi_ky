@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FcGoogle } from "react-icons/fc";
 import { SiFacebook } from "react-icons/si";
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -8,6 +9,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 const LoginForm = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
     const { login } = useAuth();
 
@@ -29,10 +31,19 @@ const LoginForm = () => {
 
     return (
         <div className="w-[480px] bg-white rounded-2xl shadow-[0px_4px_16px_rgba(34,34,34,0.12)] p-10 flex flex-col items-center">
-            {/* Tiêu đề: Bold 20px */}
-            <h3 className="text-[20px] font-bold text-[#222222] mb-8 leading-7">
-                Đăng nhập/Đăng ký
-            </h3>
+            {/* Header Section */}
+            <div className="w-full flex items-center gap-4 mb-8">
+                <button 
+                    onClick={() => navigate('/')}
+                    className="text-gray-600 hover:bg-gray-100 p-1.5 rounded-lg transition-all"
+                    title="Về trang chủ"
+                >
+                    <ArrowLeft size={20} />
+                </button>
+                <h3 className="text-[20px] font-bold text-[#222222] leading-7">
+                    Đăng nhập/Đăng ký
+                </h3>
+            </div>
 
             {/* Social Buttons Section */}
             <div className="flex flex-col gap-3 w-full items-center mb-6">
@@ -73,6 +84,9 @@ const LoginForm = () => {
                 {/* Input Email: 400x48, text-center để placeholder ở giữa */}
                 <input
                     type="email"
+                    name="email"
+                    id="email"
+                    autoComplete="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -80,14 +94,26 @@ const LoginForm = () => {
                     className="w-[400px] h-[48px] border border-[#DADADA] rounded-xl outline-none pl-4 focus:border-brand-accent transition-all bg-white text-[14px] text-[#222222] placeholder:text-[#8C8C8C]"
                 />
 
-                <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Mật khẩu"
-                    className="w-[400px] h-[48px] border border-[#DADADA] rounded-xl outline-none pl-4 focus:border-brand-accent transition-all bg-white text-[14px] text-[#222222] placeholder:text-[#8C8C8C]"
-                />
+                <div className="relative w-[400px]">
+                    <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        id="password"
+                        autoComplete="current-password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Mật khẩu"
+                        className="w-full h-[48px] border border-[#DADADA] rounded-xl outline-none pl-4 pr-12 focus:border-brand-accent transition-all bg-white text-[14px] text-[#222222] placeholder:text-[#8C8C8C]"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
+                    >
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                </div>
 
                 <div className="w-[400px] text-right -mt-2">
                     <button 

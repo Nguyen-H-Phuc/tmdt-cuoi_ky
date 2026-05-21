@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { IoMdArrowBack } from "react-icons/io";
 import { AiFillCheckCircle, AiOutlineCheckCircle } from "react-icons/ai";
+import { Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import VerifyForm from './VerifyForm';
@@ -12,6 +13,7 @@ const RegisterForm = () => {
         email: '',
         password: '',
     });
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [agreed, setAgreed] = useState(true);
@@ -92,6 +94,8 @@ const RegisterForm = () => {
                 <input
                     type="text"
                     name="fullName"
+                    id="fullName"
+                    autoComplete="name"
                     required
                     value={formData.fullName}
                     onChange={handleInputChange}
@@ -103,6 +107,8 @@ const RegisterForm = () => {
                 <input
                     type="email"
                     name="email"
+                    id="email"
+                    autoComplete="email"
                     required
                     value={formData.email}
                     onChange={handleInputChange}
@@ -111,15 +117,26 @@ const RegisterForm = () => {
                 />
 
                 {/* Input Mật khẩu */}
-                <input
-                    type="password"
-                    name="password"
-                    required
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    placeholder="Mật khẩu *"
-                    className="w-[400px] h-[48px] border border-[#DADADA] rounded-xl px-4 outline-none focus:border-brand-accent transition-all placeholder:text-gray-400 text-[14px]"
-                />
+                <div className="relative w-[400px]">
+                    <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        id="password"
+                        autoComplete="new-password"
+                        required
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        placeholder="Mật khẩu *"
+                        className="w-full h-[48px] border border-[#DADADA] rounded-xl pl-4 pr-12 outline-none focus:border-brand-accent transition-all placeholder:text-gray-400 text-[14px]"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
+                    >
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                </div>
 
                 {/* Password Criteria */}
                 <div className="w-[400px] grid grid-cols-2 gap-y-2">
