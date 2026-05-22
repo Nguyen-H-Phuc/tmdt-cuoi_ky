@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import ProfileSidebar from '../components/ProfileSidebar';
 import ProfileSettingsCard from '../components/ProfileSettingsCard';
 import ProfileSecurityCard from '../components/ProfileSecurityCard';
+import OrderHistoryCard from '../components/OrderHistoryCard';
 
 const ProfilePage = () => {
     const [activeTab, setActiveTab] = useState('profile');
@@ -15,9 +16,10 @@ const ProfilePage = () => {
                 {/* Main Content - Right */}
                 {activeTab === 'profile' && <ProfileSettingsCard />}
                 {activeTab === 'security' && <ProfileSecurityCard />}
+                {activeTab === 'orders' && <OrderHistoryCard />}
                 
                 {/* Placeholder for other tabs */}
-                {activeTab !== 'profile' && activeTab !== 'security' && (
+                {activeTab !== 'profile' && activeTab !== 'security' && activeTab !== 'orders' && (
                     <div className="flex-1 bg-white rounded-xl shadow-[0px_4px_16px_rgba(34,34,34,0.12)] p-12 flex flex-col items-center justify-center text-center gap-4">
                         <div className="p-4 bg-gray-50 rounded-full text-gray-400">
                             <img src="https://api.dicebear.com/7.x/shapes/svg?seed=empty" alt="Empty" className="w-20 h-20" />
