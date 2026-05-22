@@ -11,15 +11,20 @@ import {
   MessageCircle,
   User,
   ChevronDown,
+  ShoppingCart,
 } from 'lucide-react';
 import '../index.css';
 
 import { useAuth } from "../context/AuthContext.jsx";
+import { useCart } from "../context/CartContext.jsx";
 import PopupProfile from "./PopupProfile.jsx";
+import MiniCart from "./MiniCart.jsx";
 
 const Header = () => {
   const { isLogin } = useAuth();
+  const { cart } = useCart();
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const navigate = useNavigate();
 
@@ -79,6 +84,20 @@ const Header = () => {
                 label="Liên hệ" 
                 onClick={() => navigate('/chat')} 
               />
+            </div>
+
+            {/* Shopping Cart */}
+            <div className="relative">
+              <HeaderButton 
+                icon={<ShoppingCart size={18} />} 
+                onClick={() => setIsMiniCartOpen(!isMiniCartOpen)} 
+              />
+              {cart.length > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-brand-price text-white text-[9px] font-bold w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white">
+                  {cart.reduce((sum, item) => sum + item.quantity, 0)}
+                </span>
+              )}
+              <MiniCart isOpen={isMiniCartOpen} onClose={() => setIsMiniCartOpen(false)} />
             </div>
 
             {!isLogin && (
