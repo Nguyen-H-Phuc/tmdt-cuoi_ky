@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Share2, MoreVertical, ChevronLeft, ChevronRight, Heart, MapPin, Clock, MessageCircle, Send, Check, Star } from 'lucide-react';
+import { Share2, MoreVertical, ChevronLeft, ChevronRight, Heart, MapPin, Clock, MessageCircle, Send, Check, Star, ShoppingBag } from 'lucide-react';
 import SockJS from 'sockjs-client/dist/sockjs';
 import { Stomp } from '@stomp/stompjs';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const ProductDetailPage = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const productId = id || 1; // Default to 1 if no ID in URL
     
     const [product, setProduct] = useState(null);
@@ -161,6 +162,15 @@ const ProductDetailPage = () => {
         // Optimistically add to UI
         setChatMessages(prev => [...prev, { ...msg, sender: currentUser }]);
         setChatInput('');
+    };
+
+    const handleBuyNow = () => {
+        if (!currentUser?.userId) {
+            alert("Vui lòng đăng nhập để tiến hành mua hàng!");
+            navigate('/login');
+            return;
+        }
+        navigate(`/checkout/${productId}`);
     };
 
     if (loading) {
@@ -490,15 +500,21 @@ const ProductDetailPage = () => {
                             {/* Action Buttons */}
                             <div className="flex flex-col gap-2">
                                 <button 
+                                    onClick={handleBuyNow} 
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-primary text-neutral-900 font-bold rounded-xl hover:bg-brand-hover transition shadow-sm uppercase text-sm"
+                                >
+                                    <ShoppingBag size={18} /> ĐẶT HÀNG (MUA NGAY)
+                                </button>
+                                <button 
                                     onClick={() => setShowPhone(!showPhone)} 
-                                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#589f39] text-white font-bold rounded hover:bg-[#4d8c32] transition"
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#589f39] text-white font-bold rounded-xl hover:bg-[#4d8c32] transition"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                                     {showPhone ? (product.seller?.phone || '0987654321') : 'BẤM ĐỂ HIỆN SỐ'}
                                 </button>
                                 <button 
                                     onClick={() => document.getElementById('chat-input').focus()} 
-                                    className="w-full flex items-center justify-center gap-2 py-2.5 border border-brand-accent text-brand-accent font-bold rounded hover:bg-brand-accent/5 transition"
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 border border-brand-accent text-brand-accent font-bold rounded-xl hover:bg-brand-accent/5 transition"
                                 >
                                     <MessageCircle size={18} /> CHAT VỚI NGƯỜI BÁN
                                 </button>
