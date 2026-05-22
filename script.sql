@@ -44,7 +44,8 @@ CREATE TABLE password_resets (
 
 CREATE TABLE categories (
     category_id INT PRIMARY KEY AUTO_INCREMENT,
-    category_name VARCHAR(100) NOT NULL
+    category_name VARCHAR(100) NOT NULL,
+    category_image VARCHAR(255) DEFAULT 'default.png'
 );
 
 CREATE TABLE products (
@@ -74,11 +75,19 @@ CREATE TABLE cart_items (
 
 CREATE TABLE orders (
     order_id INT PRIMARY KEY AUTO_INCREMENT,
+    order_code VARCHAR(50) UNIQUE NOT NULL,
     buyer_id INT NOT NULL,
-    seller_id INT NOT NULL, -- Giữ lại seller_id nếu quy định mỗi đơn chỉ mua từ 1 người bán
+    seller_id INT NOT NULL,
     total_price DECIMAL(10, 2) DEFAULT 0,
-    status ENUM('pending', 'confirmed', 'shipped', 'completed', 'cancelled') DEFAULT 'pending',
-    shipping_address TEXT, -- Lưu địa chỉ lúc đặt hàng (đề phòng user đổi địa chỉ sau này)
+    status VARCHAR(50) DEFAULT 'PENDING',
+    payment_method VARCHAR(50),
+    receiver_name VARCHAR(100),
+    receiver_phone VARCHAR(20),
+    delivery_method VARCHAR(50),
+    university VARCHAR(255),
+    dorm_info VARCHAR(255),
+    shipping_address VARCHAR(255),
+    notes TEXT,
     order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (buyer_id) REFERENCES users(user_id),
     FOREIGN KEY (seller_id) REFERENCES users(user_id)
@@ -120,6 +129,7 @@ CREATE TABLE conversations (
     user_one INT NOT NULL, -- Người bắt đầu nhắn tin
     user_two INT NOT NULL, -- Người nhận
     product_id INT NULL,   -- (Tùy chọn) Nhắn tin về món đồ cụ thể nào
+    last_message_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_one) REFERENCES users(user_id),
@@ -135,15 +145,11 @@ CREATE TABLE messages (
     is_read BOOLEAN DEFAULT FALSE, -- Để hiển thị thông báo "đã xem" hoặc số tin nhắn chưa đọc
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (conversation_id) REFERENCES conversations(conversation_id) ON DELETE CASCADE,
-    FOREIGN KEY (sender_id) REFERENCES users(user_id)
+    FOREIGN KEY (sender_id) REFERENCES users(user_id),
+    INDEX (sent_at)
 );
 
--- Thêm index cho bảng Messages để load nhanh hơn
-ALTER TABLE messages ADD INDEX (sent_at);
 
-ALTER TABLE conversations ADD COLUMN last_message_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-
-ALTER TABLE categories ADD COLUMN category_image VARCHAR(255) DEFAULT 'default.png';
 
 -- ==============================================
 -- THÊM DỮ LIỆU MẪU (DUMMY DATA)
