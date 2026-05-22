@@ -36,6 +36,7 @@ const SocialLoginHandler = () => {
 import CategoryGrid from "./components/CategoryGrid.jsx";
 import ProductDetailPage from "./pages/ProductDetailPage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
+import CheckoutPage from "./pages/CheckoutPage.jsx";
 
 function App() {
   return (
@@ -58,6 +59,7 @@ function App() {
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/" element={<CategoryGrid />} />
             <Route path="/product/:id" element={<ProductDetailPage />} />
+            <Route path="/checkout/:productId" element={<CheckoutPage />} />
           </Route>
 
           <Route path="/register" element={<RegisterPage />} />
