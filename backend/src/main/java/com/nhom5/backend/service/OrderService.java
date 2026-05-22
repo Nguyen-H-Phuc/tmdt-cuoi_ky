@@ -135,6 +135,42 @@ public class OrderService {
     }
 
     @Transactional
+    public List<OrderResponse> getOrdersByBuyer(Integer buyerId) {
+        List<Order> orders = orderRepository.findByBuyer_UserIdOrderByOrderDateDesc(buyerId);
+        List<OrderResponse> responses = new ArrayList<>();
+        for (Order order : orders) {
+            responses.add(convertToResponse(order));
+        }
+        return responses;
+    }
+
+    @Transactional
+    public OrderResponse cancelOrder(Long orderId, Integer userId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng."));
+
+        if (!order.getBuyer().getUserId().equals(userId)) {
+            throw new IllegalArgumentException("Bạn không có quyền hủy đơn hàng này.");
+        }
+
+        if (!"PENDING".equalsIgnoreCase(order.getStatus()) && !"PENDING_PAYMENT".equalsIgnoreCase(order.getStatus())) {
+            throw new IllegalArgumentException("Đơn hàng này không thể hủy vì đã ở trạng thái: " + order.getStatus());
+        }
+
+        order.setStatus("CANCELLED");
+        Order savedOrder = orderRepository.save(order);
+
+        List<OrderDetail> details = orderDetailRepository.findByOrder_OrderId(order.getOrderId());
+        if (details != null && !details.isEmpty()) {
+            Product product = details.get(0).getProduct();
+            product.setStatus("available");
+            productRepository.save(product);
+        }
+
+        return convertToResponse(savedOrder);
+    }
+
+    @Transactional
     public String processVNPayCallback(Map<String, String> params) {
         String vnp_SecureHash = params.get("vnp_SecureHash");
         String vnp_TxnRef = params.get("vnp_TxnRef"); // Order Code
