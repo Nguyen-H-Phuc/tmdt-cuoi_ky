@@ -14,7 +14,7 @@ import CheckoutShippingForm from '../components/CheckoutShippingForm.jsx';
 import CheckoutPaymentMethod from '../components/CheckoutPaymentMethod.jsx';
 import CheckoutOrderSummary from '../components/CheckoutOrderSummary.jsx';
 import CheckoutSuccessReceipt from '../components/CheckoutSuccessReceipt.jsx';
-import CheckoutVNPayModal from '../components/CheckoutVNPayModal.jsx';
+
 
 const CheckoutPage = () => {
   const { productId } = useParams();
@@ -48,19 +48,64 @@ const CheckoutPage = () => {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const res = await axios.get(`http://localhost:8080/api/products/${productId}`);
-        setProduct(res.data);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching product for checkout", err);
-        setLoading(false);
+    const query = new URLSearchParams(window.location.search);
+    const status = query.get('status');
+    const code = query.get('orderCode');
+
+    if (status && code) {
+      if (status === 'success') {
+        const fetchOrderDetails = async () => {
+          try {
+            setLoading(true);
+            const res = await axios.get(`http://localhost:8080/api/orders/code/${code}`);
+            const orderData = res.data;
+            setProduct(orderData.product);
+            setFullName(orderData.receiverName);
+            setPhone(orderData.receiverPhone);
+            setDeliveryMethod(orderData.deliveryMethod);
+            setUniversity(orderData.university || '');
+            setDormInfo(orderData.dormInfo || '');
+            setSpecificAddress(orderData.specificAddress || '');
+            setNotes(orderData.notes || '');
+            setPaymentMethod(orderData.paymentMethod);
+            setOrderId(code);
+            setStep(2);
+            setLoading(false);
+          } catch (err) {
+            console.error("Error fetching order details", err);
+            setLoading(false);
+          }
+        };
+        fetchOrderDetails();
+      } else {
+        alert("Thanh toán qua cổng VNPay thất bại hoặc đã bị hủy.");
+        // Fetch product information normally
+        const fetchProduct = async () => {
+          try {
+            const res = await axios.get(`http://localhost:8080/api/products/${productId}`);
+            setProduct(res.data);
+            setLoading(false);
+          } catch (err) {
+            console.error("Error fetching product for checkout", err);
+            setLoading(false);
+          }
+        };
+        fetchProduct();
       }
-    };
-    fetchProduct();
-    // Generate a random order ID
-    setOrderId(`DH${Math.floor(100000 + Math.random() * 900000)}`);
+    } else {
+      // Normal checkout page load
+      const fetchProduct = async () => {
+        try {
+          const res = await axios.get(`http://localhost:8080/api/products/${productId}`);
+          setProduct(res.data);
+          setLoading(false);
+        } catch (err) {
+          console.error("Error fetching product for checkout", err);
+          setLoading(false);
+        }
+      };
+      fetchProduct();
+    }
   }, [productId]);
 
   if (loading) {
@@ -69,6 +114,19 @@ const CheckoutPage = () => {
         <div className="flex flex-col items-center gap-3">
           <div className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
           <p className="text-gray-600 font-medium">Đang tải thông tin thanh toán...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (vnpayProcessing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F4F4F4]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-600 font-medium">
+            {paymentMethod === 'vnpay' ? 'Đang chuyển hướng đến cổng thanh toán VNPay...' : 'Đang xử lý đặt hàng...'}
+          </p>
         </div>
       </div>
     );
@@ -113,39 +171,48 @@ const CheckoutPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handlePlaceOrder = (e) => {
+  const handlePlaceOrder = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
-      // Scroll to error
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
-    if (paymentMethod === 'vnpay') {
-      setShowVNPayModal(true);
-    } else {
-      // COD Order Simulation
-      setVnpayProcessing(true);
-      setTimeout(() => {
-        setVnpayProcessing(false);
-        setPaymentResult('success');
-        setStep(2);
-      }, 1500);
-    }
-  };
-
-  const handleVNPayPayment = (status) => {
     setVnpayProcessing(true);
-    setTimeout(() => {
-      setVnpayProcessing(false);
-      setShowVNPayModal(false);
-      if (status === 'success') {
-        setPaymentResult('success');
-        setStep(2);
+    try {
+      const orderPayload = {
+        productId: parseInt(productId),
+        buyerId: currentUser?.userId,
+        fullName: fullName,
+        phone: phone,
+        deliveryMethod: deliveryMethod,
+        university: university,
+        dormInfo: dormInfo,
+        specificAddress: specificAddress,
+        notes: notes,
+        paymentMethod: paymentMethod
+      };
+
+      const res = await axios.post('http://localhost:8080/api/orders', orderPayload);
+      
+      if (paymentMethod === 'vnpay') {
+        if (res.data.paymentUrl) {
+          // Redirect to VNPay Gateway
+          window.location.href = res.data.paymentUrl;
+        } else {
+          throw new Error("Không nhận được URL thanh toán từ hệ thống.");
+        }
       } else {
-        alert("Thanh toán qua cổng VNPay thất bại hoặc đã bị hủy.");
+        // COD order
+        setOrderId(res.data.orderCode);
+        setStep(2);
+        setVnpayProcessing(false);
       }
-    }, 2000);
+    } catch (err) {
+      console.error("Lỗi đặt hàng:", err);
+      alert(err.response?.data?.message || err.message || "Đặt hàng thất bại. Vui lòng thử lại!");
+      setVnpayProcessing(false);
+    }
   };
 
   const images = product.images?.length > 0 ? product.images : ['/house_1.png'];
@@ -249,19 +316,6 @@ const CheckoutPage = () => {
 
       </div>
 
-      {/* VNPAY SANDBOX SIMULATION MODAL */}
-      <CheckoutVNPayModal
-        showVNPayModal={showVNPayModal}
-        vnpayTab={vnpayTab}
-        setVnpayTab={setVnpayTab}
-        selectedBank={selectedBank}
-        setSelectedBank={setSelectedBank}
-        vnpayProcessing={vnpayProcessing}
-        orderId={orderId}
-        productTitle={product.title}
-        totalAmount={totalAmount}
-        handleVNPayPayment={handleVNPayPayment}
-      />
 
     </div>
   );
