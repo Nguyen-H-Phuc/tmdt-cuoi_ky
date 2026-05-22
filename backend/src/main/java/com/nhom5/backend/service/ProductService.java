@@ -31,7 +31,7 @@ public class ProductService {
         return convertToDTO(product);
     }
 
-    private ProductDTO convertToDTO(Product product) {
+    public ProductDTO convertToDTO(Product product) {
         ProductDTO dto = new ProductDTO();
         dto.setProductId(product.getProductId());
         dto.setTitle(product.getTitle());
