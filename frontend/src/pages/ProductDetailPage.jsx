@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Share2, MoreVertical, ChevronLeft, ChevronRight, Heart, MapPin, Clock, MessageCircle, Send, Check, Star, ShoppingBag } from 'lucide-react';
+import { Share2, MoreVertical, ChevronLeft, ChevronRight, Heart, MapPin, Clock, MessageCircle, Send, Check, Star, ShoppingBag, ShoppingCart } from 'lucide-react';
 import SockJS from 'sockjs-client/dist/sockjs';
 import { Stomp } from '@stomp/stompjs';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useCart } from '../context/CartContext.jsx';
 
 const ProductDetailPage = () => {
     const { id } = useParams();
@@ -29,6 +30,7 @@ const ProductDetailPage = () => {
     
     // Auth - Get current user from AuthContext
     const { user: currentUser } = useAuth();
+    const { addToCart } = useCart();
 
     useEffect(() => {
         let activeClient = null;
@@ -171,6 +173,18 @@ const ProductDetailPage = () => {
             return;
         }
         navigate(`/checkout/${productId}`);
+    };
+
+    const handleAddToCart = async () => {
+        if (!product) return;
+        try {
+            await addToCart(product, 1);
+            alert("Đã thêm sản phẩm vào giỏ hàng thành công!");
+        } catch (error) {
+            console.error("Lỗi khi thêm vào giỏ hàng:", error);
+            const errMsg = error.response?.data?.message || error.response?.data || error.message;
+            alert(`Không thể thêm vào giỏ hàng: ${errMsg}`);
+        }
     };
 
     if (loading) {
@@ -501,9 +515,15 @@ const ProductDetailPage = () => {
                             <div className="flex flex-col gap-2">
                                 <button 
                                     onClick={handleBuyNow} 
-                                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-primary text-neutral-900 font-bold rounded-xl hover:bg-brand-hover transition shadow-sm uppercase text-sm"
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-primary text-neutral-900 font-bold rounded-xl hover:bg-brand-hover transition shadow-sm uppercase text-sm cursor-pointer"
                                 >
                                     <ShoppingBag size={18} /> ĐẶT HÀNG (MUA NGAY)
+                                </button>
+                                <button 
+                                    onClick={handleAddToCart} 
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 border border-brand-primary hover:bg-brand-primary/10 text-gray-900 font-bold rounded-xl transition shadow-sm uppercase text-sm cursor-pointer"
+                                >
+                                    <ShoppingCart size={18} /> Thêm vào giỏ hàng
                                 </button>
                                 <button 
                                     onClick={() => setShowPhone(!showPhone)} 
