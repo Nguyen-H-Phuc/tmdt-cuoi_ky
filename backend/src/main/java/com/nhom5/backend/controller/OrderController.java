@@ -47,4 +47,25 @@ public class OrderController {
         String redirectUrl = orderService.processVNPayCallback(params);
         response.sendRedirect(redirectUrl);
     }
+
+    @GetMapping("/buyer")
+    public ResponseEntity<?> getOrdersByBuyer(@RequestParam Integer buyerId) {
+        try {
+            return ResponseEntity.ok(orderService.getOrdersByBuyer(buyerId));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{orderId}/cancel")
+    public ResponseEntity<?> cancelOrder(@PathVariable Long orderId, @RequestParam Integer userId) {
+        try {
+            OrderResponse response = orderService.cancelOrder(orderId, userId);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
+        }
+    }
 }

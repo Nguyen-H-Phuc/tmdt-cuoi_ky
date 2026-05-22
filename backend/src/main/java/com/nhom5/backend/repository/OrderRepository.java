@@ -13,6 +13,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Optional<Order> findByOrderCode(String orderCode);
 
+    List<Order> findByBuyer_UserIdOrderByOrderDateDesc(Integer buyerId);
+
+    List<Order> findBySeller_UserIdOrderByOrderDateDesc(Integer sellerId);
+
     @Query(value = "SELECT DATE(order_date) as date, SUM(total_price) as revenue " +
             "FROM orders " +
             "WHERE seller_id = :sellerId AND status = 'COMPLETED' " +
