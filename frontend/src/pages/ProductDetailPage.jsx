@@ -175,10 +175,16 @@ const ProductDetailPage = () => {
         navigate(`/checkout/${productId}`);
     };
 
-    const handleAddToCart = () => {
+    const handleAddToCart = async () => {
         if (!product) return;
-        addToCart(product, 1);
-        alert("Đã thêm sản phẩm vào giỏ hàng thành công!");
+        try {
+            await addToCart(product, 1);
+            alert("Đã thêm sản phẩm vào giỏ hàng thành công!");
+        } catch (error) {
+            console.error("Lỗi khi thêm vào giỏ hàng:", error);
+            const errMsg = error.response?.data?.message || error.response?.data || error.message;
+            alert(`Không thể thêm vào giỏ hàng: ${errMsg}`);
+        }
     };
 
     if (loading) {
