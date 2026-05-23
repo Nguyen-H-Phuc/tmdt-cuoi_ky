@@ -286,15 +286,25 @@ const OrderHistoryCard = () => {
                   )}
 
                   {/* Write Review */}
-                  {order.status?.toUpperCase() === 'COMPLETED' && order.product && (
-                    <button
-                      onClick={() => setReviewingProduct(order.product)}
-                      className="px-3 py-1.5 text-[11px] font-bold text-white bg-brand-accent hover:bg-brand-accent/90 rounded-lg shadow-sm transition-all flex items-center gap-1"
-                    >
-                      <Star size={13} />
-                      Đánh giá
-                    </button>
-                  )}
+                  {order.status?.toUpperCase() === 'COMPLETED' && order.product && (() => {
+                    const baseDateStr = order.statusDate || order.orderDate;
+                    const baseDate = baseDateStr ? new Date(baseDateStr) : null;
+                    const isWithin7Days = baseDate && (new Date().getTime() - baseDate.getTime()) <= 7 * 24 * 60 * 60 * 1000;
+                    
+                    return isWithin7Days ? (
+                      <button
+                        onClick={() => setReviewingProduct(order.product)}
+                        className="px-3 py-1.5 text-[11px] font-bold text-white bg-brand-accent hover:bg-brand-accent/90 rounded-lg shadow-sm transition-all flex items-center gap-1"
+                      >
+                        <Star size={13} />
+                        Đánh giá
+                      </button>
+                    ) : (
+                      <span className="px-3 py-1.5 text-[11px] font-semibold text-gray-400 bg-gray-50 border border-gray-100 rounded-lg select-none cursor-default flex items-center gap-1">
+                        Hết hạn đánh giá
+                      </span>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
