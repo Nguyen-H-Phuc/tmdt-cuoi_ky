@@ -2,13 +2,16 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     User, 
-    Settings, 
-    Bell, 
+    // Settings, 
+    // Bell, 
     ShieldCheck, 
-    Heart, 
+    // Heart, 
     ShoppingBag, 
     LogOut,
-    CreditCard
+    // CreditCard,
+    Package,
+    Star,
+    BarChart3
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -19,11 +22,14 @@ const ProfileSidebar = ({ activeTab, setActiveTab }) => {
     const menuItems = [
         { id: 'profile', icon: <User size={18} />, label: 'Thông tin cá nhân' },
         { id: 'orders', icon: <ShoppingBag size={18} />, label: 'Quản lý đơn hàng' },
-        { id: 'favorites', icon: <Heart size={18} />, label: 'Sản phẩm yêu thích' },
-        { id: 'notifications', icon: <Bell size={18} />, label: 'Thông báo' },
-        { id: 'payments', icon: <CreditCard size={18} />, label: 'Ví & Thanh toán' },
+        { id: 'my-products', icon: <Package size={18} />, label: 'Quản lý bài đăng' },
+        { id: 'my-reviews', icon: <Star size={18} />, label: 'Quản lý đánh giá' },
+        { id: 'analytics', icon: <BarChart3 size={18} />, label: 'Thống kê doanh thu' },
+        // { id: 'favorites', icon: <Heart size={18} />, label: 'Sản phẩm yêu thích' },
+        // { id: 'notifications', icon: <Bell size={18} />, label: 'Thông báo' },
+        // { id: 'payments', icon: <CreditCard size={18} />, label: 'Ví & Thanh toán' },
         { id: 'security', icon: <ShieldCheck size={18} />, label: 'Bảo mật tài khoản' },
-        { id: 'settings', icon: <Settings size={18} />, label: 'Cài đặt' },
+        // { id: 'settings', icon: <Settings size={18} />, label: 'Cài đặt' },
     ];
 
     const handleLogout = async () => {
