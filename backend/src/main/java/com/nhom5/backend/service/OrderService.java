@@ -158,6 +158,7 @@ public class OrderService {
         }
 
         order.setStatus("CANCELLED");
+        order.setStatusDate(LocalDateTime.now());
         Order savedOrder = orderRepository.save(order);
 
         List<OrderDetail> details = orderDetailRepository.findByOrder_OrderId(order.getOrderId());
@@ -192,6 +193,7 @@ public class OrderService {
         if (isSignatureValid && "00".equals(vnp_ResponseCode)) {
             // Payment success
             order.setStatus("COMPLETED");
+            order.setStatusDate(LocalDateTime.now());
             orderRepository.save(order);
 
             // Mark product as sold
@@ -203,6 +205,7 @@ public class OrderService {
         } else {
             // Payment failed or cancelled
             order.setStatus("CANCELLED");
+            order.setStatusDate(LocalDateTime.now());
             orderRepository.save(order);
 
             return "http://localhost:5173/checkout/" + productId + "?status=fail&orderCode=" + vnp_TxnRef;
@@ -313,6 +316,7 @@ public class OrderService {
         response.setSpecificAddress(order.getSpecificAddress());
         response.setNotes(order.getNotes());
         response.setOrderDate(order.getOrderDate());
+        response.setStatusDate(order.getStatusDate());
 
         if (order.getBuyer() != null) {
             response.setBuyer(convertToUserDTO(order.getBuyer()));

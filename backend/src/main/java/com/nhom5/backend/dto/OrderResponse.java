@@ -21,5 +21,6 @@ public class OrderResponse {
     private String specificAddress;
     private String notes;
     private LocalDateTime orderDate;
+    private LocalDateTime statusDate;
     private String paymentUrl; // VNPAY payment gateway URL
 }

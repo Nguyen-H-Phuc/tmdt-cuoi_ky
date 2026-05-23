@@ -94,15 +94,37 @@ const OrderDetailModal = ({ isOpen, onClose, order, onCancelOrder, onPayNow }) =
         {/* Content Body (Scrollable) */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           
-          {/* Status Message */}
-          <div className={`p-4 rounded-xl border ${statusInfo.color} flex flex-col gap-1`}>
-            <div className="flex items-center gap-2">
-              <Clock size={16} />
-              <span className="text-xs font-bold">{statusInfo.label}</span>
+          {/* Status Message & Timeline */}
+          <div className={`p-4 rounded-xl border ${statusInfo.color} flex flex-col gap-3`}>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <Clock size={16} />
+                <span className="text-xs font-bold">{statusInfo.label}</span>
+              </div>
+              {statusInfo.desc && (
+                <p className="text-[11px] leading-relaxed opacity-90">{statusInfo.desc}</p>
+              )}
             </div>
-            {statusInfo.desc && (
-              <p className="text-[11px] leading-relaxed opacity-90">{statusInfo.desc}</p>
-            )}
+            
+            {/* Timeline */}
+            <div className="border-t border-black/10 pt-2.5 space-y-1.5 text-[10px] opacity-80">
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0"></span>
+                <span>Thời gian tạo đơn: {formatDate(order.orderDate)}</span>
+              </div>
+              {order.statusDate && (
+                <div className="flex items-center gap-2 font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0 animate-ping"></span>
+                  <span>
+                    {order.status?.toUpperCase() === 'COMPLETED' && 'Thời gian hoàn thành: '}
+                    {order.status?.toUpperCase() === 'CANCELLED' && 'Thời gian hủy đơn: '}
+                    {order.status?.toUpperCase() === 'PENDING_PAYMENT' && 'Cập nhật thanh toán: '}
+                    {order.status?.toUpperCase() === 'PENDING' && 'Cập nhật trạng thái: '}
+                    {formatDate(order.statusDate)}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Grid sections */}

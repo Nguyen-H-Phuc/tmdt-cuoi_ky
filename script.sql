@@ -89,6 +89,7 @@ CREATE TABLE orders (
     shipping_address VARCHAR(255),
     notes TEXT,
     order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status_date TIMESTAMP NULL,
     FOREIGN KEY (buyer_id) REFERENCES users(user_id),
     FOREIGN KEY (seller_id) REFERENCES users(user_id)
 );
@@ -109,6 +110,7 @@ CREATE TABLE reviews (
     reviewer_id INT NOT NULL,
     rating INT CHECK (rating BETWEEN 1 AND 5),
     comment TEXT,
+    edit_count INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (product_id) REFERENCES products(product_id),
     FOREIGN KEY (reviewer_id) REFERENCES users(user_id)
