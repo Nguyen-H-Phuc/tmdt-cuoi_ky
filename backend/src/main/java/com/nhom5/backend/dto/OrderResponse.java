@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 
 @Data
 public class OrderResponse {
-    private Long orderId;
+    private Integer orderId;
     private String orderCode;
     private UserDTO buyer;
     private UserDTO seller;
