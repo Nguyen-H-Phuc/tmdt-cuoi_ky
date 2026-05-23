@@ -28,13 +28,27 @@ const ProfileSettingsCard = () => {
             try {
                 const response = await axios.get(`http://localhost:8080/api/users/profile/${currentUser.userId}`);
                 const data = response.data;
+                const fetchedAvatar = (!data.avatar || data.avatar === 'null' || data.avatar === 'undefined')
+                    ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.fullName || 'Default'}`
+                    : data.avatar;
                 setProfile({
                     fullName: data.fullName || '',
                     phone: data.phone || '',
                     email: data.email || '',
                     address: data.address || '',
                     bio: data.bio || '',
-                    avatar: data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.fullName || 'Default'}`
+                    avatar: fetchedAvatar
+                });
+                
+                // Sync fetched data to AuthContext so other components like Sidebar receive the updated avatar/name
+                updateUser({
+                    ...currentUser,
+                    fullName: data.fullName,
+                    email: data.email,
+                    phone: data.phone,
+                    avatar: data.avatar,
+                    address: data.address,
+                    bio: data.bio
                 });
             } catch (error) {
                 console.error("Lỗi fetch thông tin người dùng:", error);
@@ -45,7 +59,7 @@ const ProfileSettingsCard = () => {
         };
 
         fetchUserProfile();
-    }, [currentUser?.userId]);
+    }, [currentUser?.userId, updateUser]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -80,7 +94,26 @@ const ProfileSettingsCard = () => {
                     'Content-Type': 'multipart/form-data'
                 }
             });
-            setProfile(prev => ({ ...prev, avatar: response.data.avatarUrl }));
+            const newAvatarUrl = response.data.avatarUrl;
+
+            // Lưu trực tiếp vào database ngay khi upload thành công
+            await axios.put(`http://localhost:8080/api/users/profile/${currentUser.userId}`, {
+                fullName: profile.fullName || currentUser.fullName,
+                phone: profile.phone || currentUser.phone,
+                email: profile.email || currentUser.email,
+                address: profile.address || currentUser.address,
+                bio: profile.bio || currentUser.bio,
+                avatar: newAvatarUrl
+            });
+
+            setProfile(prev => ({ ...prev, avatar: newAvatarUrl }));
+
+            // Cập nhật AuthContext lập tức để thay đổi avatar bên sidebar & header dropdown
+            updateUser({
+                ...currentUser,
+                avatar: newAvatarUrl
+            });
+
             setMessage({ type: 'success', text: 'Tải ảnh đại diện lên thành công!' });
         } catch (error) {
             console.error("Lỗi upload avatar:", error);

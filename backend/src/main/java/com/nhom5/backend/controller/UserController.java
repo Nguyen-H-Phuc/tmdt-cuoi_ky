@@ -1,9 +1,11 @@
 package com.nhom5.backend.controller;
 
+import com.nhom5.backend.dto.PasswordUpdateRequest;
 import com.nhom5.backend.dto.ProfileUpdateRequest;
 import com.nhom5.backend.dto.UserDTO;
 import com.nhom5.backend.entity.User;
 import com.nhom5.backend.repository.UserRepository;
+import com.nhom5.backend.service.AuthService;
 import com.nhom5.backend.service.CloudinaryService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,9 @@ public class UserController {
 
     @Autowired
     private CloudinaryService cloudinaryService;
+
+    @Autowired
+    private AuthService authService;
 
     private UserDTO convertToUserDTO(User user) {
         if (user == null) return null;
@@ -103,6 +108,18 @@ public class UserController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(500).body(Map.of("message", "Lỗi trong quá trình upload lên Cloudinary: " + e.getMessage()));
+        }
+    }
+
+    @PutMapping("/profile/{userId}/change-password")
+    public ResponseEntity<?> changePassword(
+            @PathVariable Integer userId,
+            @Valid @RequestBody PasswordUpdateRequest request) {
+        try {
+            authService.changePassword(userId, request);
+            return ResponseEntity.ok(Map.of("message", "Cập nhật mật khẩu thành công!"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
 }

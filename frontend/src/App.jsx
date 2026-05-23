@@ -30,9 +30,10 @@ const SocialLoginHandler = () => {
         const role = params.get('role');
         const userId = params.get('userId');
         const email = params.get('email');
+        const avatar = params.get('avatar');
 
         if (token && location.pathname !== '/reset-password') {
-            login(token, { fullName, role, userId: userId ? parseInt(userId) : null, email });
+            login(token, { fullName, role, userId: userId ? parseInt(userId) : null, email, avatar });
             navigate('/', { replace: true });
         }
     }, [location, login, navigate]);
