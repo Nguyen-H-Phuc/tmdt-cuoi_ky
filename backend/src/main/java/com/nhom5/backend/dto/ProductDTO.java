@@ -11,7 +11,12 @@ public class ProductDTO {
     private Double price;
     private String description;
     private String category;
+    private Integer categoryId;
     private String status;
+    private String approvalStatus;
+    private Integer quantity;
+    private Boolean isDeleted;
+    private Boolean isHidden;
     private Integer viewCount;
     private String province;
     private String district;
