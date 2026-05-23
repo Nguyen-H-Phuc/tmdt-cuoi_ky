@@ -59,9 +59,21 @@ CREATE TABLE products (
     image_url VARCHAR(255),
     view_count INT DEFAULT 0, -- Phục vụ chức năng "Xem nhiều nhất"
     status ENUM('available', 'sold') DEFAULT 'available',
+    approval_status VARCHAR(20) DEFAULT 'pending',
+    quantity INT DEFAULT 1,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    is_hidden BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (category_id) REFERENCES categories(category_id)
+);
+
+CREATE TABLE product_images (
+    image_id INT PRIMARY KEY AUTO_INCREMENT,
+    product_id INT NOT NULL,
+    image_url VARCHAR(255) NOT NULL,
+    is_main BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
 );
 
 CREATE TABLE cart_items (
