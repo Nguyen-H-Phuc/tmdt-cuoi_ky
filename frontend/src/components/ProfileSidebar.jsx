@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
     User, 
     Settings, 
@@ -9,8 +10,12 @@ import {
     LogOut,
     CreditCard
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const ProfileSidebar = ({ activeTab, setActiveTab }) => {
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
+
     const menuItems = [
         { id: 'profile', icon: <User size={18} />, label: 'Thông tin cá nhân' },
         { id: 'orders', icon: <ShoppingBag size={18} />, label: 'Quản lý đơn hàng' },
@@ -21,18 +26,27 @@ const ProfileSidebar = ({ activeTab, setActiveTab }) => {
         { id: 'settings', icon: <Settings size={18} />, label: 'Cài đặt' },
     ];
 
+    const handleLogout = async () => {
+        await logout();
+        navigate('/login');
+    };
+
     return (
         <div className="w-full md:w-64 bg-white rounded-xl shadow-[0px_4px_16px_rgba(34,34,34,0.12)] overflow-hidden h-fit">
             {/* User Profile Summary */}
             <div className="p-4 bg-brand-accent flex flex-col items-center gap-2">
                 <img 
-                    src="https://api.dicebear.com/7.x/avataaars/svg?seed=Phuc" 
+                    src={(!user?.avatar || user.avatar === 'null' || user.avatar === 'undefined') 
+                        ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.fullName || 'Default'}` 
+                        : user.avatar} 
                     alt="Avatar" 
-                    className="w-16 h-16 rounded-full border-2 border-white shadow-sm"
+                    className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm"
                 />
                 <div className="text-center">
-                    <h3 className="text-sm font-bold text-[#222222]">Nguyễn Hữu Phúc</h3>
-                    <p className="text-[10px] font-medium text-black/60">Thành viên từ 2024</p>
+                    <h3 className="text-sm font-bold text-[#222222]">{user?.fullName || 'Khách'}</h3>
+                    <p className="text-[10px] font-medium text-black/60">
+                        Thành viên từ {user?.createdAt ? new Date(user.createdAt).getFullYear() : '2026'}
+                    </p>
                 </div>
             </div>
 
@@ -43,7 +57,7 @@ const ProfileSidebar = ({ activeTab, setActiveTab }) => {
                         <li key={item.id}>
                             <button
                                 onClick={() => setActiveTab(item.id)}
-                                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all ${
+                                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all cursor-pointer ${
                                     activeTab === item.id 
                                         ? 'bg-brand-accent/10 text-[#222222] font-bold' 
                                         : 'text-gray-600 hover:bg-gray-50 font-medium'
@@ -57,7 +71,10 @@ const ProfileSidebar = ({ activeTab, setActiveTab }) => {
                         </li>
                     ))}
                     <li className="mt-2 pt-2 border-t border-gray-100">
-                        <button className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-red-500 hover:bg-red-50 font-bold transition-all text-xs">
+                        <button 
+                            onClick={handleLogout}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-red-500 hover:bg-red-50 font-bold transition-all text-xs cursor-pointer"
+                        >
                             <LogOut size={18} />
                             Đăng xuất
                         </button>

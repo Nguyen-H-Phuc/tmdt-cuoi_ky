@@ -60,7 +60,9 @@ const PopupProfile = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
 
     const fullName = user?.fullName || "Khách";
-    const avatarUrl = user?.avatar || "https://placehold.co/80x80";
+    const avatarUrl = (!user?.avatar || user.avatar === 'null' || user.avatar === 'undefined')
+        ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${fullName || 'Default'}`
+        : user.avatar;
 
     const handleLogout = (e) => {
         e.stopPropagation();
