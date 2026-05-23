@@ -2,17 +2,22 @@ package com.nhom5.backend.controller;
 
 import com.nhom5.backend.dto.ReviewDTO;
 import com.nhom5.backend.dto.UserDTO;
+import com.nhom5.backend.dto.ReviewReportDTO;
 import com.nhom5.backend.entity.Product;
 import com.nhom5.backend.entity.Review;
 import com.nhom5.backend.entity.User;
 import com.nhom5.backend.entity.Order;
+import com.nhom5.backend.entity.ReviewReport;
 import com.nhom5.backend.repository.ProductRepository;
 import com.nhom5.backend.repository.ReviewRepository;
 import com.nhom5.backend.repository.UserRepository;
 import com.nhom5.backend.repository.OrderRepository;
+import com.nhom5.backend.repository.ReviewReportRepository;
+import com.nhom5.backend.service.CloudinaryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,6 +42,12 @@ public class ReviewController {
     @Autowired
     private OrderRepository orderRepository;
 
+    @Autowired
+    private ReviewReportRepository reviewReportRepository;
+
+    @Autowired
+    private CloudinaryService cloudinaryService;
+
     private ReviewDTO convertToReviewDTO(Review review) {
         if (review == null) return null;
         ReviewDTO dto = new ReviewDTO();
@@ -53,6 +64,20 @@ public class ReviewController {
             userDTO.setAvatar(user.getAvatar());
             dto.setUser(userDTO);
         }
+        
+        Product product = review.getProduct();
+        if (product != null) {
+            dto.setProductId(product.getProductId());
+            dto.setProductTitle(product.getTitle());
+        }
+        
+        if (review.getReviewReport() != null) {
+            dto.setReportStatus(review.getReviewReport().getStatus());
+            dto.setReportReason(review.getReviewReport().getReason());
+            dto.setProofImage(review.getReviewReport().getProofImage());
+            dto.setProofVideo(review.getReviewReport().getProofVideo());
+        }
+        
         return dto;
     }
 
@@ -195,5 +220,138 @@ public class ReviewController {
         reviewRepository.save(review);
         
         return ResponseEntity.ok(Map.of("message", "Đã lưu đánh giá thành công."));
+    }
+
+    @GetMapping("/seller/{sellerId}")
+    public ResponseEntity<List<ReviewDTO>> getSellerReviews(@PathVariable Integer sellerId) {
+        List<Review> reviews = reviewRepository.findByProduct_Seller_UserIdOrderByCreatedAtDesc(sellerId);
+        List<ReviewDTO> dtos = reviews.stream()
+                .map(this::convertToReviewDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
+    @PostMapping("/upload-proof")
+    public ResponseEntity<?> uploadProof(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "File không được trống"));
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Định dạng file không hợp lệ."));
+        }
+
+        boolean isImage = contentType.startsWith("image/");
+        boolean isVideo = contentType.startsWith("video/");
+        if (!isImage && !isVideo) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Chỉ chấp nhận file hình ảnh hoặc video làm bằng chứng."));
+        }
+
+        try {
+            Map<?, ?> uploadResult = cloudinaryService.uploadProof(file);
+            String fileUrl = (String) uploadResult.get("secure_url");
+            return ResponseEntity.ok(Map.of(
+                "fileUrl", fileUrl,
+                "fileType", isImage ? "image" : "video"
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Map.of("message", "Lỗi upload lên Cloudinary: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{reviewId}/report")
+    public ResponseEntity<?> reportReview(@PathVariable Integer reviewId, @RequestBody Map<String, Object> request) {
+        String reason = (String) request.get("reason");
+        Integer reporterId = (Integer) request.get("reporterId");
+        String proofImage = (String) request.get("proofImage");
+        String proofVideo = (String) request.get("proofVideo");
+
+        if (reason == null || reason.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Lý do báo cáo không được để trống."));
+        }
+        if (reporterId == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "reporterId là bắt buộc."));
+        }
+
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đánh giá."));
+
+        Product product = review.getProduct();
+        if (product == null || product.getSeller() == null || !product.getSeller().getUserId().equals(reporterId)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Chỉ người bán của sản phẩm mới có quyền báo cáo đánh giá này."));
+        }
+
+        Optional<ReviewReport> existingReport = reviewReportRepository.findByReview_ReviewId(reviewId);
+        ReviewReport report;
+        if (existingReport.isPresent()) {
+            report = existingReport.get();
+            report.setReason(reason);
+            report.setProofImage(proofImage);
+            report.setProofVideo(proofVideo);
+            report.setStatus("PENDING");
+            report.setCreatedAt(LocalDateTime.now());
+        } else {
+            report = new ReviewReport();
+            report.setReview(review);
+            report.setReporter(product.getSeller());
+            report.setReason(reason);
+            report.setProofImage(proofImage);
+            report.setProofVideo(proofVideo);
+            report.setStatus("PENDING");
+            report.setCreatedAt(LocalDateTime.now());
+        }
+
+        reviewReportRepository.save(report);
+        return ResponseEntity.ok(Map.of("message", "Đã gửi báo cáo đánh giá thành công. Đang chờ quản trị viên xử lý."));
+    }
+
+    @GetMapping("/reports")
+    public ResponseEntity<List<ReviewReportDTO>> getAllReports() {
+        List<ReviewReport> reports = reviewReportRepository.findAll();
+        List<ReviewReportDTO> dtos = reports.stream().map(report -> {
+            ReviewReportDTO dto = new ReviewReportDTO();
+            dto.setReportId(report.getReportId());
+            dto.setReviewId(report.getReview().getReviewId());
+            dto.setReviewComment(report.getReview().getComment());
+            dto.setReviewRating(report.getReview().getRating());
+            dto.setReviewerName(report.getReview().getReviewer().getFullName());
+            dto.setReporterName(report.getReporter().getFullName());
+            dto.setReason(report.getReason());
+            dto.setStatus(report.getStatus());
+            dto.setCreatedAt(report.getCreatedAt());
+            dto.setProofImage(report.getProofImage());
+            dto.setProofVideo(report.getProofVideo());
+            if (report.getReview().getProduct() != null) {
+                dto.setProductId(report.getReview().getProduct().getProductId());
+                dto.setProductTitle(report.getReview().getProduct().getTitle());
+            }
+            return dto;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
+    }
+
+    @PostMapping("/reports/{reportId}/approve")
+    public ResponseEntity<?> approveReport(@PathVariable Integer reportId) {
+        ReviewReport report = reviewReportRepository.findById(reportId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy báo cáo."));
+
+        Review review = report.getReview();
+        reviewRepository.delete(review);
+
+        return ResponseEntity.ok(Map.of("message", "Đã phê duyệt báo cáo và xóa đánh giá vi phạm thành công."));
+    }
+
+    @PostMapping("/reports/{reportId}/reject")
+    public ResponseEntity<?> rejectReport(@PathVariable Integer reportId) {
+        ReviewReport report = reviewReportRepository.findById(reportId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy báo cáo."));
+
+        report.setStatus("REJECTED");
+        reviewReportRepository.save(report);
+
+        return ResponseEntity.ok(Map.of("message", "Đã từ chối báo cáo và giữ lại đánh giá."));
     }
 }

@@ -19,4 +19,9 @@ public class CloudinaryService {
         return cloudinary.uploader().upload(multipartFile.getBytes(), 
             ObjectUtils.asMap("folder", "avatars"));
     }
+
+    public Map uploadProof(MultipartFile multipartFile) throws IOException {
+        return cloudinary.uploader().upload(multipartFile.getBytes(), 
+            ObjectUtils.asMap("folder", "proofs", "resource_type", "auto"));
+    }
 }
