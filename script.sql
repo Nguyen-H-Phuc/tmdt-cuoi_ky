@@ -129,6 +129,19 @@ CREATE TABLE reviews (
     FOREIGN KEY (reviewer_id) REFERENCES users(user_id)
 );
 
+CREATE TABLE review_reports (
+    report_id INT PRIMARY KEY AUTO_INCREMENT,
+    review_id INT NOT NULL,
+    reporter_id INT NOT NULL,
+    reason TEXT NOT NULL,
+    proof_image VARCHAR(255) NULL,
+    proof_video VARCHAR(255) NULL,
+    status VARCHAR(50) DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (review_id) REFERENCES reviews(review_id) ON DELETE CASCADE,
+    FOREIGN KEY (reporter_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
 CREATE TABLE traffic_logs (
     log_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NULL, -- Nếu họ đã đăng nhập thì lưu ID, khách vãng lai để NULL
