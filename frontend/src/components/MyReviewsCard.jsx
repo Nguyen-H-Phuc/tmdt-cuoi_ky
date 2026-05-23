@@ -22,6 +22,9 @@ const MyReviewsCard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
+  // State Toast thông báo
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
   // State cho Modal báo cáo
   const [selectedReview, setSelectedReview] = useState(null);
   const [reportReasonType, setReportReasonType] = useState('Đánh giá không đúng sự thật');
@@ -41,6 +44,13 @@ const MyReviewsCard = () => {
       fetchReviews();
     }
   }, [user]);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: 'success' });
+    }, 3000);
+  };
 
   const fetchReviews = async () => {
     try {
@@ -74,7 +84,6 @@ const MyReviewsCard = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate size (ví dụ: video tối đa 20MB, ảnh tối đa 5MB)
     const maxSize = type === 'video' ? 20 * 1024 * 1024 : 5 * 1024 * 1024;
     if (file.size > maxSize) {
       setUploadError(`File quá lớn. Tối đa cho phép là ${type === 'video' ? '20MB' : '5MB'}.`);
@@ -129,7 +138,7 @@ const MyReviewsCard = () => {
     if (reportReasonType === 'Khác' && customReason.trim() !== '') {
       finalReason = customReason.trim();
     } else if (reportReasonType === 'Khác') {
-      alert('Vui lòng nhập lý do cụ thể.');
+      showToast('Vui lòng nhập lý do cụ thể.', 'error');
       return;
     }
 
@@ -151,7 +160,7 @@ const MyReviewsCard = () => {
 
     } catch (err) {
       console.error('Error reporting review:', err);
-      alert(err.response?.data?.message || 'Có lỗi xảy ra khi gửi báo cáo.');
+      showToast(err.response?.data?.message || 'Có lỗi xảy ra khi gửi báo cáo.', 'error');
     } finally {
       setSubmittingReport(false);
     }
@@ -185,7 +194,7 @@ const MyReviewsCard = () => {
   }
 
   return (
-    <div className="flex-1 bg-white rounded-xl shadow-[0px_4px_16px_rgba(34,34,34,0.12)] p-5 md:p-6 space-y-6">
+    <div className="flex-1 bg-white rounded-xl shadow-[0px_4px_16px_rgba(34,34,34,0.12)] p-5 md:p-6 space-y-6 relative">
       {/* Header */}
       <div className="border-b border-gray-100 pb-4 flex justify-between items-center">
         <div>
@@ -290,7 +299,7 @@ const MyReviewsCard = () => {
                         />
                       ))}
                     </div>
-                    <p className="text-xs text-gray-750 leading-relaxed italic">
+                    <p className="text-xs text-gray-700 leading-relaxed italic">
                       "{review.content}"
                     </p>
                   </div>
@@ -554,6 +563,30 @@ const MyReviewsCard = () => {
               )}
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Custom Toast Notification */}
+      {toast.show && (
+        <div className={`fixed bottom-5 right-5 z-[9999] bg-white rounded-xl shadow-[0px_4px_24px_rgba(0,0,0,0.12)] border p-4 flex items-center gap-3 animate-slide-in-right min-w-[300px] max-w-sm ${
+          toast.type === 'success' ? 'border-emerald-100' : 
+          toast.type === 'error' ? 'border-red-100' : 'border-blue-100'
+        }`}>
+          <div className={`p-1.5 rounded-full shrink-0 ${
+            toast.type === 'success' ? 'bg-emerald-50 text-emerald-500' :
+            toast.type === 'error' ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'
+          }`}>
+            {toast.type === 'success' ? <ShieldCheck size={16} /> :
+             toast.type === 'error' ? <AlertTriangle size={16} /> : <Info size={16} />}
+          </div>
+          <p className="text-xs font-bold text-gray-700 flex-1 leading-normal">{toast.message}</p>
+          <button 
+            type="button"
+            onClick={() => setToast({ ...toast, show: false })}
+            className="text-gray-400 hover:text-gray-650 p-0.5 rounded-full hover:bg-gray-50 transition-colors shrink-0 cursor-pointer"
+          >
+            <X size={14} />
+          </button>
         </div>
       )}
     </div>

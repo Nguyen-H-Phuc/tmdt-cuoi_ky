@@ -68,4 +68,37 @@ public class OrderController {
             return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
         }
     }
+
+    @GetMapping("/seller")
+    public ResponseEntity<?> getOrdersBySeller(@RequestParam Integer sellerId) {
+        try {
+            return ResponseEntity.ok(orderService.getOrdersBySeller(sellerId));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{orderId}/accept")
+    public ResponseEntity<?> acceptOrder(@PathVariable Integer orderId, @RequestParam Integer sellerId) {
+        try {
+            OrderResponse response = orderService.acceptOrder(orderId, sellerId);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{orderId}/reject")
+    public ResponseEntity<?> rejectOrder(@PathVariable Integer orderId, @RequestParam Integer sellerId) {
+        try {
+            OrderResponse response = orderService.rejectOrder(orderId, sellerId);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
+        }
+    }
 }

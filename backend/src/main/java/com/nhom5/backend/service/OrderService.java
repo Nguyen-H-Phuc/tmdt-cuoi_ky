@@ -343,4 +343,61 @@ public class OrderService {
         dto.setCreatedAt(user.getCreatedAt());
         return dto;
     }
+
+    @Transactional
+    public List<OrderResponse> getOrdersBySeller(Integer sellerId) {
+        List<Order> orders = orderRepository.findBySeller_UserIdOrderByOrderDateDesc(sellerId);
+        List<OrderResponse> responses = new ArrayList<>();
+        for (Order order : orders) {
+            responses.add(convertToResponse(order));
+        }
+        return responses;
+    }
+
+    @Transactional
+    public OrderResponse acceptOrder(Integer orderId, Integer sellerId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng."));
+
+        if (!order.getSeller().getUserId().equals(sellerId)) {
+            throw new IllegalArgumentException("Bạn không có quyền xác nhận đơn hàng này.");
+        }
+
+        if (!"PENDING".equalsIgnoreCase(order.getStatus())) {
+            throw new IllegalArgumentException("Chỉ đơn hàng ở trạng thái Chờ xác nhận mới có thể duyệt.");
+        }
+
+        order.setStatus("COMPLETED");
+        order.setStatusDate(LocalDateTime.now());
+        Order savedOrder = orderRepository.save(order);
+
+        return convertToResponse(savedOrder);
+    }
+
+    @Transactional
+    public OrderResponse rejectOrder(Integer orderId, Integer sellerId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng."));
+
+        if (!order.getSeller().getUserId().equals(sellerId)) {
+            throw new IllegalArgumentException("Bạn không có quyền từ chối đơn hàng này.");
+        }
+
+        if (!"PENDING".equalsIgnoreCase(order.getStatus()) && !"PENDING_PAYMENT".equalsIgnoreCase(order.getStatus())) {
+            throw new IllegalArgumentException("Chỉ đơn hàng ở trạng thái Chờ xác nhận hoặc Chờ thanh toán mới có thể từ chối.");
+        }
+
+        order.setStatus("CANCELLED");
+        order.setStatusDate(LocalDateTime.now());
+        Order savedOrder = orderRepository.save(order);
+
+        List<OrderDetail> details = orderDetailRepository.findByOrder_OrderId(order.getOrderId());
+        if (details != null && !details.isEmpty()) {
+            Product product = details.get(0).getProduct();
+            product.setStatus("available");
+            productRepository.save(product);
+        }
+
+        return convertToResponse(savedOrder);
+    }
 }
