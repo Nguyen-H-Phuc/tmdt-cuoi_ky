@@ -8,6 +8,7 @@ CREATE TABLE users (
    phone VARCHAR(15) NULL,
    address TEXT NULL,
    avatar VARCHAR(255) NULL,
+   bio TEXT NULL,
    role ENUM('admin', 'member') DEFAULT 'member',
    is_active BOOLEAN DEFAULT FALSE, -- Mặc định false cho đến khi verify email
    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
