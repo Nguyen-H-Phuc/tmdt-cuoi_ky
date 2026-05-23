@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Share2, MoreVertical, ChevronLeft, ChevronRight, Heart, MapPin, Clock, MessageCircle, Send, Check, Star, ShoppingBag, ShoppingCart } from 'lucide-react';
+import { Share2, MoreVertical, ChevronLeft, ChevronRight, Heart, MapPin, Clock, MessageCircle, Send, Check, Star, ShoppingBag, ShoppingCart, AlertCircle, Info, Lock } from 'lucide-react';
 import SockJS from 'sockjs-client/dist/sockjs';
 import { Stomp } from '@stomp/stompjs';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -22,6 +22,13 @@ const ProductDetailPage = () => {
     const [reviews, setReviews] = useState([]);
     const [reviewInput, setReviewInput] = useState('');
     const [ratingInput, setRatingInput] = useState(5);
+    const [eligibility, setEligibility] = useState({
+        eligible: false,
+        message: 'Vui lòng đăng nhập để gửi đánh giá.',
+        remainingEdits: 0,
+        deadline: null,
+        isEdit: false
+    });
     
     // Chat
     const [stompClient, setStompClient] = useState(null);
@@ -44,6 +51,45 @@ const ProductDetailPage = () => {
                 // Fetch reviews
                 const reviewRes = await axios.get(`http://localhost:8080/api/reviews/product/${productId}`);
                 setReviews(reviewRes.data);
+                
+                // Fetch review eligibility
+                if (currentUser?.userId) {
+                    try {
+                        const eligibilityRes = await axios.get(`http://localhost:8080/api/reviews/eligibility?productId=${productId}&userId=${currentUser.userId}`);
+                        const eligibilityData = eligibilityRes.data;
+                        if (eligibilityData.review) {
+                            setEligibility({
+                                eligible: false,
+                                message: 'Bạn đã đánh giá sản phẩm này rồi. Để chỉnh sửa đánh giá, vui lòng truy cập Lịch sử mua hàng.',
+                                remainingEdits: 0,
+                                deadline: null,
+                                isEdit: true
+                            });
+                            setReviewInput('');
+                            setRatingInput(5);
+                        } else {
+                            setEligibility({
+                                eligible: eligibilityData.eligible,
+                                message: eligibilityData.message || '',
+                                remainingEdits: eligibilityData.remainingEdits !== undefined ? eligibilityData.remainingEdits : 2,
+                                deadline: eligibilityData.deadline,
+                                isEdit: false
+                            });
+                            setReviewInput('');
+                            setRatingInput(5);
+                        }
+                    } catch (err) {
+                        console.error("Error fetching review eligibility", err);
+                    }
+                } else {
+                    setEligibility({
+                        eligible: false,
+                        message: 'Vui lòng đăng nhập để gửi đánh giá.',
+                        remainingEdits: 0,
+                        deadline: null,
+                        isEdit: false
+                    });
+                }
                 
                 setLoading(false);
                 
@@ -121,9 +167,25 @@ const ProductDetailPage = () => {
         }
     };
 
+    const formatDeadline = (dateStr) => {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        return date.toLocaleString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
     const handleAddReview = async () => {
         if (!currentUser?.userId) {
             alert("Vui lòng đăng nhập để gửi bình luận!");
+            return;
+        }
+        if (!eligibility.eligible) {
+            alert(eligibility.message || "Bạn không đủ điều kiện để đánh giá sản phẩm này.");
             return;
         }
         if (!reviewInput.trim()) return;
@@ -131,16 +193,43 @@ const ProductDetailPage = () => {
             await axios.post(`http://localhost:8080/api/reviews`, {
                 userId: currentUser.userId,
                 productId: productId,
-                content: reviewInput,
+                content: reviewInput.trim(),
                 rating: ratingInput
             });
-            setReviewInput('');
-            setRatingInput(5); // Reset to 5 stars
+            alert("Đã lưu đánh giá thành công!");
+            
             // Reload reviews
             const reviewRes = await axios.get(`http://localhost:8080/api/reviews/product/${productId}`);
             setReviews(reviewRes.data);
+            
+            // Reload eligibility
+            const eligibilityRes = await axios.get(`http://localhost:8080/api/reviews/eligibility?productId=${productId}&userId=${currentUser.userId}`);
+            const eligibilityData = eligibilityRes.data;
+            if (eligibilityData.review) {
+                setEligibility({
+                    eligible: false,
+                    message: 'Bạn đã đánh giá sản phẩm này rồi. Để chỉnh sửa đánh giá, vui lòng truy cập Lịch sử mua hàng.',
+                    remainingEdits: 0,
+                    deadline: null,
+                    isEdit: true
+                });
+                setReviewInput('');
+                setRatingInput(5);
+            } else {
+                setEligibility({
+                    eligible: eligibilityData.eligible,
+                    message: eligibilityData.message || '',
+                    remainingEdits: eligibilityData.remainingEdits !== undefined ? eligibilityData.remainingEdits : 2,
+                    deadline: eligibilityData.deadline,
+                    isEdit: false
+                });
+                setReviewInput('');
+                setRatingInput(5);
+            }
         } catch (error) {
-            console.error("Error adding review", error);
+            console.error("Error adding/updating review", error);
+            const errMsg = error.response?.data?.message || error.message || "Đã xảy ra lỗi khi lưu đánh giá.";
+            alert(`Lỗi: ${errMsg}`);
         }
     };
 
@@ -328,7 +417,7 @@ const ProductDetailPage = () => {
                                 });
 
                                 return (
-                                    <div className="bg-neutral-50/75 rounded-2xl p-5 flex flex-col md:flex-row items-center gap-6 md:gap-10 border border-neutral-100">
+                                    <div className="bg-neutral-50/50 rounded-2xl p-5 flex flex-col md:flex-row items-center gap-6 md:gap-10 border border-neutral-100">
                                         {/* Left: Big score */}
                                         <div className="text-center md:border-r border-neutral-200 md:pr-10 shrink-0">
                                             <div className="text-5xl font-black text-gray-800 tracking-tight">{avgRating}</div>
@@ -381,9 +470,9 @@ const ProductDetailPage = () => {
                                     </div>
                                 ) : (
                                     reviews.map((rev, index) => (
-                                        <div key={index} className="flex gap-4 p-4 rounded-xl hover:bg-neutral-50/50 transition border border-transparent hover:border-neutral-100">
+                                        <div key={index} className="flex gap-4 p-4 rounded-xl bg-neutral-50/30 hover:bg-neutral-50/60 transition border border-neutral-100/50">
                                             <img 
-                                                src={rev.user?.avatar || "/user_avatar.png"} 
+                                                src={rev.user?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${rev.user?.fullName || 'U'}`} 
                                                 alt="avatar" 
                                                 className="w-10 h-10 rounded-full object-cover border border-neutral-200 shrink-0" 
                                             />
@@ -412,7 +501,7 @@ const ProductDetailPage = () => {
                                                 </div>
 
                                                 {/* Comment text */}
-                                                <p className="text-[13px] text-gray-600 leading-relaxed bg-neutral-50 px-3.5 py-2.5 rounded-2xl rounded-tl-none inline-block max-w-full break-words">
+                                                <p className="text-[13px] text-gray-750 leading-relaxed bg-white border border-gray-100/80 px-3.5 py-2.5 rounded-2xl rounded-tl-none inline-block max-w-full break-words shadow-sm">
                                                     {rev.content}
                                                 </p>
                                             </div>
@@ -422,68 +511,107 @@ const ProductDetailPage = () => {
                             </div>
 
                             {/* Write Review box */}
-                            <div className="border-t border-neutral-100 pt-6">
-                                <p className="font-bold text-[14px] text-gray-800 mb-3">Gửi đánh giá của bạn</p>
-                                
-                                {/* Star Rating Input selector */}
-                                <div className="flex items-center gap-3 mb-4">
-                                    <span className="text-xs text-gray-500 font-medium">Chọn số sao:</span>
-                                    <div className="flex gap-1.5">
-                                        {[1, 2, 3, 4, 5].map((s) => (
-                                            <button 
-                                                key={s} 
-                                                type="button" 
-                                                onClick={() => setRatingInput(s)}
-                                                className="transition transform active:scale-90 hover:scale-110"
+                            {(!currentUser?.userId || !eligibility.isEdit) && (
+                                <div className="border-t border-neutral-100 pt-6">
+                                    {!currentUser?.userId ? (
+                                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 text-center space-y-3">
+                                            <Lock className="mx-auto text-slate-400 stroke-1" size={32} />
+                                            <h4 className="text-sm font-bold text-slate-700">Đăng nhập để đánh giá</h4>
+                                            <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+                                                Chỉ những khách hàng đã mua sản phẩm này thành công mới có thể đánh giá và nhận xét.
+                                            </p>
+                                            <button
+                                                onClick={() => navigate('/login')}
+                                                className="px-5 py-2 text-xs font-bold text-white bg-brand-accent hover:bg-brand-accent/90 rounded-xl transition cursor-pointer"
                                             >
-                                                <Star 
-                                                    size={22} 
-                                                    className={s <= ratingInput ? "text-amber-400 fill-amber-400" : "text-gray-300"} 
-                                                />
+                                                Đăng nhập ngay
                                             </button>
-                                        ))}
-                                    </div>
-                                    <span className="text-xs font-bold text-amber-600 uppercase tracking-wider ml-1">
-                                        {ratingInput === 5 && 'Rất tốt'}
-                                        {ratingInput === 4 && 'Tốt'}
-                                        {ratingInput === 3 && 'Bình thường'}
-                                        {ratingInput === 2 && 'Tệ'}
-                                        {ratingInput === 1 && 'Rất tệ'}
-                                    </span>
-                                </div>
+                                        </div>
+                                    ) : !eligibility.eligible ? (
+                                        <div className="bg-gray-55/70 border border-gray-200 rounded-2xl p-5 flex gap-3 text-xs text-gray-600 leading-relaxed">
+                                            <AlertCircle size={18} className="text-gray-400 shrink-0 mt-0.5" />
+                                            <div>
+                                                <p className="font-bold text-gray-800">Không thể viết đánh giá</p>
+                                                <p className="text-gray-500 mt-1">{eligibility.message}</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <p className="font-bold text-[14px] text-gray-800 mb-3">
+                                                Gửi đánh giá của bạn
+                                            </p>
+                                            
+                                            {/* Warning box */}
+                                            <div className="bg-amber-50/60 border border-amber-100 rounded-2xl p-4 flex gap-3 text-xs text-amber-800 mb-4 leading-relaxed">
+                                                <Info size={18} className="text-amber-500 shrink-0 mt-0.5" />
+                                                <div className="flex-1">
+                                                    <p className="font-bold">
+                                                        Đánh giá của bạn có thể chỉnh sửa tối đa 2 lần.
+                                                    </p>
+                                                    <p className="text-amber-700/80 mt-0.5">
+                                                        Lưu ý: Sau khi gửi, bạn chỉ có thể chỉnh sửa đánh giá này từ Lịch sử mua hàng trong vòng 7 ngày.
+                                                    </p>
+                                                </div>
+                                            </div>
 
-                                <div className="flex gap-3 items-start">
-                                    <img 
-                                        src={currentUser?.avatar || "/user_avatar.png"} 
-                                        alt="You" 
-                                        className="w-10 h-10 rounded-full object-cover border border-neutral-200 shrink-0" 
-                                    />
-                                    <div className="flex-1 relative">
-                                        <textarea 
-                                            rows={2}
-                                            value={reviewInput}
-                                            onChange={(e) => setReviewInput(e.target.value)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter' && !e.shiftKey) {
-                                                    e.preventDefault();
-                                                    handleAddReview();
-                                                }
-                                            }}
-                                            placeholder={currentUser?.userId ? "Chia sẻ cảm nghĩ của bạn về sản phẩm này..." : "Vui lòng đăng nhập để gửi bình luận..."} 
-                                            disabled={!currentUser?.userId}
-                                            className="w-full bg-neutral-50/75 border border-neutral-200 focus:border-brand-accent focus:bg-white transition rounded-2xl px-4 py-3 text-sm outline-none resize-none placeholder:text-gray-400 text-gray-800 pr-12" 
-                                        />
-                                        <button 
-                                            onClick={handleAddReview} 
-                                            disabled={!currentUser?.userId || !reviewInput.trim()}
-                                            className="absolute right-3.5 bottom-3.5 text-brand-accent hover:text-brand-hover disabled:text-gray-300 transition-colors p-1"
-                                            title="Gửi đánh giá"
-                                        >
-                                            <Send size={18} />
-                                        </button>
-                                    </div>
+                                            {/* Star Rating Input selector */}
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <span className="text-xs text-gray-500 font-medium">Chọn số sao:</span>
+                                                <div className="flex gap-1.5">
+                                                    {[1, 2, 3, 4, 5].map((s) => (
+                                                        <button 
+                                                            key={s} 
+                                                            type="button" 
+                                                            onClick={() => setRatingInput(s)}
+                                                            className="transition transform active:scale-90 hover:scale-110 cursor-pointer"
+                                                        >
+                                                            <Star 
+                                                                size={22} 
+                                                                className={s <= ratingInput ? "text-amber-400 fill-amber-400" : "text-gray-300"} 
+                                                            />
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <span className="text-xs font-bold text-amber-600 uppercase tracking-wider ml-1">
+                                                    {ratingInput === 5 && 'Rất tốt'}
+                                                    {ratingInput === 4 && 'Tốt'}
+                                                    {ratingInput === 3 && 'Bình thường'}
+                                                    {ratingInput === 2 && 'Tệ'}
+                                                    {ratingInput === 1 && 'Rất tệ'}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex gap-3 items-start">
+                                                <img 
+                                                    src={currentUser?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${currentUser?.fullName || 'U'}`} 
+                                                    alt="You" 
+                                                    className="w-10 h-10 rounded-full object-cover border border-neutral-200 shrink-0" 
+                                                />
+                                                <div className="flex-1">
+                                                    <textarea 
+                                                        rows={3}
+                                                        value={reviewInput}
+                                                        onChange={(e) => setReviewInput(e.target.value)}
+                                                        placeholder="Chia sẻ trải nghiệm thực tế của bạn về chất lượng và độ bền của món đồ nhé..." 
+                                                        className="w-full bg-neutral-50/50 border border-neutral-200 focus:border-brand-accent focus:bg-white transition rounded-2xl px-4 py-3.5 text-xs outline-none resize-none placeholder:text-gray-400 text-gray-800" 
+                                                    />
+                                                    <div className="flex justify-end mt-3">
+                                                        <button
+                                                            onClick={handleAddReview}
+                                                            disabled={!reviewInput.trim()}
+                                                            className="px-6 py-2.5 bg-brand-accent hover:bg-brand-accent/90 disabled:bg-gray-250 text-white font-bold rounded-xl text-xs transition shadow-sm hover:shadow flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                                                            title="Gửi đánh giá"
+                                                        >
+                                                            <Send size={14} />
+                                                            Gửi đánh giá
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </div>
                     
