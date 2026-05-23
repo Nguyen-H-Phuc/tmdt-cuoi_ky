@@ -50,3 +50,35 @@ export const checkReviewEligibility = async (productId, userId) => {
   return response.data;
 };
 
+/**
+ * Lấy danh sách đơn hàng được đặt của một người bán
+ * @param {number} sellerId - ID người bán
+ * @returns {Promise}
+ */
+export const getSellerOrders = async (sellerId) => {
+  const response = await apiClient.get(`/api/orders/seller?sellerId=${sellerId}`);
+  return response.data;
+};
+
+/**
+ * Phê duyệt đơn hàng (người bán đồng ý bán)
+ * @param {number|string} orderId - ID đơn hàng
+ * @param {number} sellerId - ID người bán
+ * @returns {Promise}
+ */
+export const acceptOrder = async (orderId, sellerId) => {
+  const response = await apiClient.put(`/api/orders/${orderId}/accept?sellerId=${sellerId}`);
+  return response.data;
+};
+
+/**
+ * Từ chối đơn hàng (người bán từ chối bán)
+ * @param {number|string} orderId - ID đơn hàng
+ * @param {number} sellerId - ID người bán
+ * @returns {Promise}
+ */
+export const rejectOrder = async (orderId, sellerId) => {
+  const response = await apiClient.put(`/api/orders/${orderId}/reject?sellerId=${sellerId}`);
+  return response.data;
+};
+
