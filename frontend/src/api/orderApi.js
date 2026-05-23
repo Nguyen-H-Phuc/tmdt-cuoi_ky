@@ -22,19 +22,31 @@ export const cancelOrder = async (orderId, userId) => {
 };
 
 /**
- * Gửi đánh giá cho sản phẩm
+ * Gửi hoặc cập nhật đánh giá cho sản phẩm
  * @param {number} productId - ID sản phẩm được đánh giá
- * @param {number} reviewerId - ID người đánh giá
+ * @param {number} userId - ID người đánh giá
  * @param {number} rating - Số sao đánh giá (1-5)
- * @param {string} comment - Nhận xét đánh giá
+ * @param {string} content - Nhận xét đánh giá
  * @returns {Promise}
  */
-export const submitReview = async (productId, reviewerId, rating, comment) => {
+export const submitReview = async (productId, userId, rating, content) => {
   const response = await apiClient.post('/api/reviews', {
     productId,
-    reviewerId,
+    userId,
     rating,
-    comment
+    content
   });
   return response.data;
 };
+
+/**
+ * Kiểm tra điều kiện đánh giá sản phẩm của người dùng
+ * @param {number} productId - ID sản phẩm
+ * @param {number} userId - ID người dùng
+ * @returns {Promise}
+ */
+export const checkReviewEligibility = async (productId, userId) => {
+  const response = await apiClient.get(`/api/reviews/eligibility?productId=${productId}&userId=${userId}`);
+  return response.data;
+};
+
