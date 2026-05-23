@@ -8,29 +8,6 @@ import { Calendar, DollarSign, Tag, TrendingUp, AlertCircle, RefreshCw } from 'l
 
 const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#6B7280'];
 
-// Dữ liệu mô phỏng trong trường hợp database trống (Giúp demo đồ án đẹp mắt ngay lập tức)
-const MOCK_REVENUE_DATA = [
-  { date: '15/04', 'Doanh thu': 250000 },
-  { date: '18/04', 'Doanh thu': 450000 },
-  { date: '22/04', 'Doanh thu': 120000 },
-  { date: '26/04', 'Doanh thu': 680000 },
-  { date: '30/04', 'Doanh thu': 300000 },
-  { date: '04/05', 'Doanh thu': 850000 },
-  { date: '08/05', 'Doanh thu': 420000 },
-  { date: '12/05', 'Doanh thu': 950000 },
-  { date: '16/05', 'Doanh thu': 310000 },
-  { date: '20/05', 'Doanh thu': 1250000 },
-  { date: '23/05', 'Doanh thu': 620000 }
-];
-
-const MOCK_CATEGORY_DATA = [
-  { name: 'Đồ điện tử', value: 1850000 },
-  { name: 'Giáo trình & Sách', value: 450000 },
-  { name: 'Đồ gia dụng & Nội thất', value: 920000 },
-  { name: 'Thời trang & Phụ kiện', value: 580000 },
-  { name: 'Giải trí & Thể thao', value: 300000 }
-];
-
 const StoreDashboard = ({ sellerId = 1 }) => {
   // Bộ lọc khoảng thời gian (AreaChart)
   const [startDate, setStartDate] = useState(() => {
@@ -47,7 +24,6 @@ const StoreDashboard = ({ sellerId = 1 }) => {
   const [categoryData, setCategoryData] = useState([]);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [isDemoMode, setIsDemoMode] = useState(false);
 
   // Fetch dữ liệu doanh thu theo ngày
   const fetchRevenue = async () => {
@@ -62,16 +38,12 @@ const StoreDashboard = ({ sellerId = 1 }) => {
           'Doanh thu': item.revenue
         }));
         setRevenueData(formatted);
-        setIsDemoMode(false);
       } else {
-        // Nếu không có dữ liệu thật, dùng dữ liệu mô phỏng để demo
-        setRevenueData(MOCK_REVENUE_DATA);
-        setIsDemoMode(true);
+        setRevenueData([]);
       }
     } catch (error) {
-      console.warn("Lỗi fetch doanh thu thật (Sử dụng dữ liệu demo):", error);
-      setRevenueData(MOCK_REVENUE_DATA);
-      setIsDemoMode(true);
+      console.error("Lỗi fetch doanh thu thật:", error);
+      setRevenueData([]);
     } finally {
       setIsLoading(false);
     }
@@ -90,11 +62,11 @@ const StoreDashboard = ({ sellerId = 1 }) => {
         }));
         setCategoryData(formatted);
       } else {
-        setCategoryData(MOCK_CATEGORY_DATA);
+        setCategoryData([]);
       }
     } catch (error) {
-      console.warn("Lỗi fetch danh mục thật (Sử dụng dữ liệu demo):", error);
-      setCategoryData(MOCK_CATEGORY_DATA);
+      console.error("Lỗi fetch danh mục thật:", error);
+      setCategoryData([]);
     }
   };
 
@@ -126,13 +98,6 @@ const StoreDashboard = ({ sellerId = 1 }) => {
             Xem báo cáo doanh số bán đồ cũ và cơ cấu danh mục hàng hóa
           </p>
         </div>
-        
-        {isDemoMode && (
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-100 text-amber-700 rounded-full text-[10px] font-bold animate-pulse">
-            <AlertCircle size={12} />
-            Chế độ Demo (Chưa có đơn hàng COMPLETED)
-          </div>
-        )}
       </div>
 
       {/* KPI Cards */}
@@ -233,6 +198,7 @@ const StoreDashboard = ({ sellerId = 1 }) => {
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
               className="border border-gray-200 rounded-lg px-2 py-1 text-gray-700 font-medium focus:outline-none focus:border-emerald-500 transition-colors"
             >
+              <option value="0">Toàn thời gian (Tháng)</option>
               {months.map(m => (
                 <option key={m} value={m}>Tháng {m}</option>
               ))}
@@ -242,6 +208,7 @@ const StoreDashboard = ({ sellerId = 1 }) => {
               onChange={(e) => setSelectedYear(Number(e.target.value))}
               className="border border-gray-200 rounded-lg px-2 py-1 text-gray-700 font-medium focus:outline-none focus:border-emerald-500 transition-colors"
             >
+              <option value="0">Toàn thời gian (Năm)</option>
               {years.map(y => (
                 <option key={y} value={y}>Năm {y}</option>
               ))}
@@ -272,7 +239,7 @@ const StoreDashboard = ({ sellerId = 1 }) => {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-xs text-gray-400 font-medium">Không có dữ liệu trong tháng này</p>
+              <p className="text-xs text-gray-400 font-medium">Không có dữ liệu trong khoảng thời gian này</p>
             )}
           </div>
 
