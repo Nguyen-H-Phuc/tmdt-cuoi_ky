@@ -51,8 +51,8 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
             "JOIN categories c ON p.category_id = c.category_id " +
             "WHERE o.seller_id = :sellerId " +
             "  AND o.status = 'COMPLETED' " +
-            "  AND YEAR(o.status_date) = :year " +
-            "  AND MONTH(o.status_date) = :month " +
+            "  AND (:year = 0 OR YEAR(o.status_date) = :year) " +
+            "  AND (:month = 0 OR MONTH(o.status_date) = :month) " +
             "GROUP BY c.category_id, c.category_name " +
             "ORDER BY revenue DESC", nativeQuery = true)
     List<RevenueByCategory> getRevenueByCategoryInMonth(
