@@ -23,4 +23,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "GROUP BY DATE(order_date) " +
             "ORDER BY date ASC", nativeQuery = true)
     List<DailyRevenue> getDailyRevenueBySeller(@Param("sellerId") Long sellerId);
+
+    @Query("SELECT o FROM Order o JOIN OrderDetail od ON o.orderId = od.order.orderId " +
+           "WHERE o.buyer.userId = :userId AND od.product.productId = :productId AND o.status = 'COMPLETED'")
+    List<Order> findCompletedOrdersByBuyerAndProduct(@Param("userId") Integer userId, @Param("productId") Integer productId);
 }

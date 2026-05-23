@@ -63,4 +63,7 @@ public class Order {
 
     @Column(name = "order_date")
     private LocalDateTime orderDate;
+
+    @Column(name = "status_date")
+    private LocalDateTime statusDate;
 }

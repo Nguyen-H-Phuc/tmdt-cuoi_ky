@@ -29,4 +29,7 @@ public class Review {
     private Integer rating = 5;
 
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "edit_count")
+    private Integer editCount = 0;
 }
