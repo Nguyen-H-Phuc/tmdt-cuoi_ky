@@ -21,6 +21,7 @@ const ChatPage = () => {
     const [loadingMessages, setLoadingMessages] = useState(false);
     
     const messagesEndRef = useRef(null);
+    const chatContainerRef = useRef(null);
     
     // Redirect if not logged in
     useEffect(() => {
@@ -72,15 +73,15 @@ const ChatPage = () => {
         client.debug = () => {};
         
         client.connect({}, () => {
-            client.subscribe(`/queue/messages/${currentUser.userId}`, (msg) => {
+            client.subscribe(`/user/${currentUser.userId}/queue/messages`, (msg) => {
                 const newMsg = JSON.parse(msg.body);
                 
                 // If it is from the currently active conversation participant, add to messages list
                 setSelectedConv(currentSelected => {
-                    if (currentSelected && Number(newMsg.senderId) === Number(currentSelected.otherUser?.userId)) {
+                    if (currentSelected && Number(newMsg.senderId || newMsg.sender?.userId) === Number(currentSelected.otherUser?.userId)) {
                         setMessages(prev => {
                             // Check for duplicates
-                            if (prev.some(m => m.sentAt === newMsg.sentAt && m.content === newMsg.content)) return prev;
+                            if (prev.some(m => m.sentAt === newMsg.sentAt && (m.content === newMsg.content || m.messageText === newMsg.content))) return prev;
                             return [...prev, newMsg];
                         });
                     }
@@ -108,7 +109,7 @@ const ChatPage = () => {
         const fetchMessages = async () => {
             try {
                 setLoadingMessages(true);
-                const res = await axios.get(`http://localhost:8080/api/chat/messages/${currentUser.userId}/${selectedConv.otherUser?.userId}`);
+                const res = await axios.get(`http://localhost:8080/api/chat/messages/${selectedConv.conversationId}`);
                 setMessages(Array.isArray(res.data) ? res.data : []);
                 setLoadingMessages(false);
             } catch (error) {
@@ -122,7 +123,9 @@ const ChatPage = () => {
 
     // Auto-scroll to bottom of chat when new message arrives or selected conversation changes
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
     }, [messages, selectedConv]);
 
     const handleSendMessage = () => {
@@ -132,6 +135,7 @@ const ChatPage = () => {
             senderId: currentUser.userId,
             receiverId: selectedConv.otherUser?.userId,
             content: chatInput,
+            productId: selectedConv.product?.productId ? parseInt(selectedConv.product.productId) : null
         };
 
         if (stompClient && stompClient.connected) {
@@ -338,7 +342,7 @@ const ChatPage = () => {
                             </div>
 
                             {/* Messages Body */}
-                            <div className="flex-1 p-5 overflow-y-auto flex flex-col gap-3">
+                            <div ref={chatContainerRef} className="flex-1 p-5 overflow-y-auto flex flex-col gap-3">
                                 {loadingMessages ? (
                                     <div className="flex-1 flex items-center justify-center text-xs text-gray-400">
                                         Đang tải lịch sử hội thoại...
@@ -350,7 +354,7 @@ const ChatPage = () => {
                                     </div>
                                 ) : (
                                     messages.map((msg, idx) => {
-                                        const isMe = Number(msg.senderId) === Number(currentUser?.userId);
+                                        const isMe = Number(msg.senderId || msg.sender?.userId) === Number(currentUser?.userId);
                                         return (
                                             <div 
                                                 key={idx}
@@ -360,7 +364,7 @@ const ChatPage = () => {
                                                         : 'bg-white border border-neutral-100 text-gray-800 rounded-bl-none self-start'
                                                 }`}
                                             >
-                                                <p>{msg.content}</p>
+                                                <p>{msg.content || msg.messageText}</p>
                                                 <span className={`text-[9px] block text-right mt-1.5 ${
                                                     isMe ? 'text-neutral-500' : 'text-neutral-400'
                                                 }`}>
