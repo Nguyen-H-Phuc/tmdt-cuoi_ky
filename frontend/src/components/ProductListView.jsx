@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ProductListItem from './ProductListItem';
-import { ChevronDown, Grid } from 'lucide-react';
+import ProductCard from './ProductCard';
+import { ChevronDown, Grid, List } from 'lucide-react';
 import axios from 'axios';
 
 const ProductListView = () => {
@@ -8,9 +9,10 @@ const ProductListView = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     
-    // States for sorting
+    // States for sorting & layout
     const [sortBy, setSortBy] = useState('relevance');
     const [showSortDropdown, setShowSortDropdown] = useState(false);
+    const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
     
     const dropdownRef = useRef(null);
     
@@ -30,6 +32,7 @@ const ProductListView = () => {
                 // Map the backend data to match the frontend expectations
                 const mappedProducts = response.data.map(p => ({
                     id: p.productId,
+                    productId: p.productId,
                     title: p.title,
                     specs: `${p.category ? p.category.categoryName : 'Khác'} • ${p.status === 'available' ? 'Có sẵn' : 'Đã bán'}`,
                     price: `${p.price?.toLocaleString('vi-VN')} đ`,
@@ -43,7 +46,9 @@ const ProductListView = () => {
                     imageUrl: p.imageUrl || "https://placehold.co/400x400/eeeeee/333333?text=No+Image",
                     sellerName: p.user?.fullName || "Người bán ẩn danh",
                     sellerAvatar: p.user?.avatar || "https://placehold.co/100x100/333333/FFFFFF?text=U",
-                    isProSeller: p.user?.role === 'admin'
+                    isProSeller: p.user?.role === 'admin',
+                    category: p.category,
+                    user: p.user
                 }));
                 setProducts(mappedProducts);
                 setLoading(false);
@@ -94,7 +99,7 @@ const ProductListView = () => {
             {/* Header Controls */}
             <div className="flex items-center justify-between border-b border-gray-200 px-4 md:px-6">
                 <h2 className="py-3 md:py-4 text-sm md:text-base font-semibold text-gray-800">
-                    Tin đăng mới nhất
+                    Tất cả
                 </h2>
                 
                 {/* Right Filters */}
@@ -132,29 +137,48 @@ const ProductListView = () => {
                     )}
 
                     <div className="hidden md:block w-px h-4 bg-gray-300"></div>
-                    <button className="hidden md:flex items-center gap-1.5 text-gray-700 hover:text-black font-medium">
-                        Dạng lưới <Grid size={16} className="mt-0.5" />
+                    <button 
+                        onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
+                        className="hidden md:flex items-center gap-1.5 text-gray-700 hover:text-black font-semibold transition-colors focus:outline-none"
+                    >
+                        {viewMode === 'list' ? (
+                            <>
+                                Dạng lưới <Grid size={16} className="mt-0.5" />
+                            </>
+                        ) : (
+                            <>
+                                Dạng danh sách <List size={16} className="mt-0.5" />
+                            </>
+                        )}
                     </button>
                 </div>
             </div>
 
             {/* Product List */}
-            <div className="flex flex-col px-4 md:px-6 pb-2 min-h-[200px]">
+            <div className={`px-4 md:px-6 pb-4 min-h-[200px] ${
+                viewMode === 'grid' 
+                ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 pt-4 justify-items-center' 
+                : 'flex flex-col'
+            }`}>
                 {loading ? (
-                    <div className="flex justify-center items-center py-10">
+                    <div className="flex justify-center items-center py-10 col-span-full w-full">
                         <span className="text-gray-500">Đang tải dữ liệu...</span>
                     </div>
                 ) : error ? (
-                    <div className="flex justify-center items-center py-10">
+                    <div className="flex justify-center items-center py-10 col-span-full w-full">
                         <span className="text-red-500">{error}</span>
                     </div>
                 ) : sortedProducts.length === 0 ? (
-                    <div className="flex justify-center items-center py-10">
+                    <div className="flex justify-center items-center py-10 col-span-full w-full">
                         <span className="text-gray-500">Không có sản phẩm nào</span>
                     </div>
                 ) : (
                     sortedProducts.map(product => (
-                        <ProductListItem key={product.id} product={product} />
+                        viewMode === 'grid' ? (
+                            <ProductCard key={product.id} product={product} />
+                        ) : (
+                            <ProductListItem key={product.id} product={product} />
+                        )
                     ))
                 )}
             </div>
