@@ -4,7 +4,6 @@ import { ChevronDown, Grid } from 'lucide-react';
 import axios from 'axios';
 
 const ProductListView = () => {
-    const [activeTab, setActiveTab] = useState('Tất cả');
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -14,7 +13,6 @@ const ProductListView = () => {
     const [showSortDropdown, setShowSortDropdown] = useState(false);
     
     const dropdownRef = useRef(null);
-    const tabs = ['Tất cả', 'Cá nhân', 'Bán chuyên'];
     
     const sortOptions = [
         { value: 'relevance', label: 'Liên quan nhất' },
@@ -72,19 +70,8 @@ const ProductListView = () => {
         };
     }, []);
 
-    // Filter products based on active tab
-    const filteredProducts = products.filter(product => {
-        if (activeTab === 'Cá nhân') {
-            return !product.isProSeller;
-        }
-        if (activeTab === 'Bán chuyên') {
-            return product.isProSeller;
-        }
-        return true; // 'Tất cả'
-    });
-
     // Sort products based on selected option
-    const sortedProducts = [...filteredProducts].sort((a, b) => {
+    const sortedProducts = [...products].sort((a, b) => {
         switch (sortBy) {
             case 'newest':
                 const timeA = a.rawCreatedAt ? new Date(a.rawCreatedAt).getTime() : 0;
@@ -106,22 +93,9 @@ const ProductListView = () => {
         <div className="w-full max-w-4xl mx-auto bg-white rounded-md shadow-sm border border-gray-100 mt-6">
             {/* Header Controls */}
             <div className="flex items-center justify-between border-b border-gray-200 px-4 md:px-6">
-                {/* Tabs */}
-                <div className="flex gap-4 md:gap-8">
-                    {tabs.map(tab => (
-                        <button 
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={`py-3 md:py-4 text-sm md:text-base font-medium border-b-2 transition-colors focus:outline-none ${
-                                activeTab === tab 
-                                ? 'border-black text-black' 
-                                : 'border-transparent text-gray-500 hover:text-black'
-                            }`}
-                        >
-                            {tab}
-                        </button>
-                    ))}
-                </div>
+                <h2 className="py-3 md:py-4 text-sm md:text-base font-semibold text-gray-800">
+                    Tin đăng mới nhất
+                </h2>
                 
                 {/* Right Filters */}
                 <div className="flex items-center gap-3 md:gap-5 text-sm relative" ref={dropdownRef}>
