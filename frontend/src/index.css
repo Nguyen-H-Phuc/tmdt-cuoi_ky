@@ -128,3 +128,12 @@ button:focus-visible {
   background-color: var(--color-brand-primary-100);
   color: #1f2937;
 }
+
+/* Utilities */
+@utility no-scrollbar {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

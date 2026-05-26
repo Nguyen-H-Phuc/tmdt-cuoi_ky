@@ -96,10 +96,19 @@ const ProductDetailPage = () => {
                 // Fetch chat history if product has seller and user is logged in
                 if (productRes.data.seller && currentUser?.userId) {
                     try {
-                        const chatRes = await axios.get(`http://localhost:8080/api/chat/messages/${currentUser.userId}/${productRes.data.seller.userId}`);
-                        setChatMessages(Array.isArray(chatRes.data) ? chatRes.data : []);
-                    } catch (err) {
-                        console.error("Error fetching chat history", err);
+                        const convRes = await axios.get(`http://localhost:8080/api/chat/conversations/${currentUser.userId}`);
+                        const convs = convRes.data;
+                        // Find conversation for this product and seller
+                        const targetConv = convs.find(c => c.otherUser?.userId === productRes.data.seller.userId && c.product?.productId === parseInt(productId));
+                        if (targetConv) {
+                            const msgRes = await axios.get(`http://localhost:8080/api/chat/messages/${targetConv.conversationId}`);
+                            setChatMessages(Array.isArray(msgRes.data) ? msgRes.data : []);
+                        } else {
+                            setChatMessages([]);
+                        }
+                    } catch(err) {
+                        console.error("Error loading chat history", err);
+                        setChatMessages([]);
                     }
                 } else {
                     setChatMessages([]);
@@ -111,11 +120,11 @@ const ProductDetailPage = () => {
                     const client = Stomp.over(socket);
                     activeClient = client;
                     client.connect({}, () => {
-                        client.subscribe(`/queue/messages/${currentUser.userId}`, (msg) => {
+                        client.subscribe(`/user/${currentUser.userId}/queue/messages`, (msg) => {
                             const newMsg = JSON.parse(msg.body);
                             // Chỉ thêm tin nhắn nếu nó không trùng lặp với tin nhắn cuối
                             setChatMessages(prev => {
-                                const isDuplicate = prev.some(m => m.sentAt === newMsg.sentAt && m.content === newMsg.content);
+                                const isDuplicate = prev.some(m => (m.sentAt === newMsg.sentAt && (m.content === newMsg.content || m.messageText === newMsg.content)));
                                 if (isDuplicate) return prev;
                                 return [...prev, newMsg];
                             });
@@ -244,6 +253,7 @@ const ProductDetailPage = () => {
             senderId: currentUser.userId,
             receiverId: product.seller.userId,
             content: chatInput,
+            productId: parseInt(productId)
         };
         
         if (stompClient && stompClient.connected) {
@@ -700,6 +710,15 @@ const ProductDetailPage = () => {
                             ) : (
                                 <>
                                     <div className="flex-1 p-4 overflow-y-auto bg-neutral-50/40 flex flex-col gap-3">
+                                        {/* Product Context Card inside chat */}
+                                        <div className="bg-white p-2.5 rounded-xl border border-neutral-100/80 mb-2 flex gap-2.5 items-center shadow-sm shrink-0">
+                                            <img src={currentImageUrl} alt="Product" className="w-10 h-10 object-cover rounded-lg border border-neutral-100" />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-[12px] font-bold text-gray-800 truncate">{product.title}</p>
+                                                <p className="text-[11px] text-brand-price font-bold">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}</p>
+                                            </div>
+                                        </div>
+
                                         {chatMessages.length === 0 ? (
                                             <div className="text-center text-[12px] text-gray-400 mt-10">
                                                 Hãy gửi tin nhắn để hỏi thêm về sản phẩm!
@@ -717,7 +736,7 @@ const ProductDetailPage = () => {
                                                                 : 'bg-white border border-neutral-100 text-gray-800 rounded-bl-none self-start'
                                                         }`}
                                                     >
-                                                        {msg.content}
+                                                        {msg.content || msg.messageText}
                                                     </div>
                                                 );
                                             })

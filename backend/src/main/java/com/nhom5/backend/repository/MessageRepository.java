@@ -2,10 +2,12 @@ package com.nhom5.backend.repository;
 
 import com.nhom5.backend.entity.Message;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-import com.nhom5.backend.entity.Conversation;
 import java.util.List;
 
 public interface MessageRepository extends JpaRepository<Message, Integer> {
-    List<Message> findByConversationOrderBySentAtAsc(Conversation conversation);
+    @Query("SELECT m FROM Message m LEFT JOIN FETCH m.sender LEFT JOIN FETCH m.conversation c LEFT JOIN FETCH c.userOne LEFT JOIN FETCH c.userTwo WHERE m.conversation.conversationId = :conversationId ORDER BY m.sentAt ASC")
+    List<Message> findByConversation_ConversationIdOrderBySentAtAsc(@Param("conversationId") Integer conversationId);
 }

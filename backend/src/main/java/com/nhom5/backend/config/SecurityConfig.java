@@ -47,9 +47,7 @@ public class SecurityConfig {
                                 "/api/cart/**", "/api/users/**", "/uploads/**")
                         .permitAll()
                         .anyRequest().authenticated())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)) // Không
-                                                                                                                // dùng
-                                                                                                                // Session
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)) // Không dùng Session
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class) // Chèn máy soát vé vào đây
                 .oauth2Login(oauth -> oauth
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))

@@ -5,13 +5,12 @@ import {
     // Settings, 
     // Bell, 
     ShieldCheck, 
-    // Heart, 
     ShoppingBag, 
     LogOut,
-    // CreditCard,
     Package,
     Star,
-    BarChart3
+    BarChart3,
+    MessageCircle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -21,6 +20,7 @@ const ProfileSidebar = ({ activeTab, setActiveTab }) => {
 
     const menuItems = [
         { id: 'profile', icon: <User size={18} />, label: 'Thông tin cá nhân' },
+        { id: 'chat', icon: <MessageCircle size={18} />, label: 'Tin nhắn' },
         { id: 'orders', icon: <ShoppingBag size={18} />, label: 'Quản lý đơn hàng' },
         { id: 'my-products', icon: <Package size={18} />, label: 'Quản lý bài đăng' },
         { id: 'my-reviews', icon: <Star size={18} />, label: 'Quản lý đánh giá' },
