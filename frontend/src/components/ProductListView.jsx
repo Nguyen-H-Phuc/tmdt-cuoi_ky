@@ -34,21 +34,21 @@ const ProductListView = () => {
                     id: p.productId,
                     productId: p.productId,
                     title: p.title,
-                    specs: `${p.category ? p.category.categoryName : 'Khác'} • ${p.status === 'available' ? 'Có sẵn' : 'Đã bán'}`,
+                    specs: `${p.category ? (typeof p.category === 'object' ? p.category.categoryName : p.category) : 'Khác'} • ${p.status === 'available' ? 'Có sẵn' : 'Đã bán'}`,
                     price: `${p.price?.toLocaleString('vi-VN')} đ`,
                     rawPrice: p.price || 0,
-                    location: p.user?.address || 'Toàn quốc',
+                    location: p.seller?.address || 'Toàn quốc',
                     time: p.createdAt ? new Date(p.createdAt).toLocaleDateString('vi-VN') : 'Mới đây',
                     rawCreatedAt: p.createdAt,
                     viewCount: p.viewCount || 0,
                     isPriority: false,
                     imageCount: p.imageUrl ? 1 : 0,
                     imageUrl: p.imageUrl || "https://placehold.co/400x400/eeeeee/333333?text=No+Image",
-                    sellerName: p.user?.fullName || "Người bán ẩn danh",
-                    sellerAvatar: p.user?.avatar || "https://placehold.co/100x100/333333/FFFFFF?text=U",
-                    isProSeller: p.user?.role === 'admin',
-                    category: p.category,
-                    user: p.user
+                    sellerName: p.seller?.fullName || "Người bán ẩn danh",
+                    sellerAvatar: p.seller?.avatar || "https://placehold.co/100x100/333333/FFFFFF?text=U",
+                    isProSeller: p.seller?.role === 'admin',
+                    category: typeof p.category === 'object' ? p.category : { categoryName: p.category },
+                    user: p.seller
                 }));
                 setProducts(mappedProducts);
                 setLoading(false);
