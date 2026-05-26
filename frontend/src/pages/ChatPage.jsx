@@ -21,6 +21,7 @@ const ChatPage = () => {
     const [loadingMessages, setLoadingMessages] = useState(false);
     
     const messagesEndRef = useRef(null);
+    const chatContainerRef = useRef(null);
     
     // Redirect if not logged in
     useEffect(() => {
@@ -122,7 +123,9 @@ const ChatPage = () => {
 
     // Auto-scroll to bottom of chat when new message arrives or selected conversation changes
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
     }, [messages, selectedConv]);
 
     const handleSendMessage = () => {
@@ -339,7 +342,7 @@ const ChatPage = () => {
                             </div>
 
                             {/* Messages Body */}
-                            <div className="flex-1 p-5 overflow-y-auto flex flex-col gap-3">
+                            <div ref={chatContainerRef} className="flex-1 p-5 overflow-y-auto flex flex-col gap-3">
                                 {loadingMessages ? (
                                     <div className="flex-1 flex items-center justify-center text-xs text-gray-400">
                                         Đang tải lịch sử hội thoại...
