@@ -9,7 +9,10 @@ public class UserDTO {
     private String fullName;
     private String email;
     private String phone;
+    private String address;
     private String avatar;
+    private String bio;
+    private String role;
     private Boolean isActive;
     private LocalDateTime createdAt;
     // can add more fields like active status, years joined, post count later if needed

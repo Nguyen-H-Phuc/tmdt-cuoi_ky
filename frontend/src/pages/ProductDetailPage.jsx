@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Share2, MoreVertical, ChevronLeft, ChevronRight, Heart, MapPin, Clock, MessageCircle, Send, Check } from 'lucide-react';
+import { Share2, MoreVertical, ChevronLeft, ChevronRight, Heart, MapPin, Clock, MessageCircle, Send, Check, Star, ShoppingBag, ShoppingCart, AlertCircle, Info, Lock } from 'lucide-react';
 import SockJS from 'sockjs-client/dist/sockjs';
 import { Stomp } from '@stomp/stompjs';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext.jsx';
+import { useCart } from '../context/CartContext.jsx';
 
 const ProductDetailPage = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const productId = id || 1; // Default to 1 if no ID in URL
     
     const [product, setProduct] = useState(null);
@@ -19,17 +21,27 @@ const ProductDetailPage = () => {
     // Reviews
     const [reviews, setReviews] = useState([]);
     const [reviewInput, setReviewInput] = useState('');
+    const [ratingInput, setRatingInput] = useState(5);
+    const [eligibility, setEligibility] = useState({
+        eligible: false,
+        message: 'Vui lòng đăng nhập để gửi đánh giá.',
+        remainingEdits: 0,
+        deadline: null,
+        isEdit: false
+    });
     
     // Chat
     const [stompClient, setStompClient] = useState(null);
     const [chatMessages, setChatMessages] = useState([]);
     const [chatInput, setChatInput] = useState('');
     
-    // Auth - Real user from context
-    const { user: authUser } = useAuth();
-    const currentUser = authUser || { userId: 3, fullName: "Khách hàng" };
+    // Auth - Get current user from AuthContext
+    const { user: currentUser } = useAuth();
+    const { addToCart } = useCart();
 
     useEffect(() => {
+        let activeClient = null;
+
         const fetchProductData = async () => {
             try {
                 // Fetch product details
@@ -40,10 +52,49 @@ const ProductDetailPage = () => {
                 const reviewRes = await axios.get(`http://localhost:8080/api/reviews/product/${productId}`);
                 setReviews(reviewRes.data);
                 
+                // Fetch review eligibility
+                if (currentUser?.userId) {
+                    try {
+                        const eligibilityRes = await axios.get(`http://localhost:8080/api/reviews/eligibility?productId=${productId}&userId=${currentUser.userId}`);
+                        const eligibilityData = eligibilityRes.data;
+                        if (eligibilityData.review) {
+                            setEligibility({
+                                eligible: false,
+                                message: 'Bạn đã đánh giá sản phẩm này rồi. Để chỉnh sửa đánh giá, vui lòng truy cập Lịch sử mua hàng.',
+                                remainingEdits: 0,
+                                deadline: null,
+                                isEdit: true
+                            });
+                            setReviewInput('');
+                            setRatingInput(5);
+                        } else {
+                            setEligibility({
+                                eligible: eligibilityData.eligible,
+                                message: eligibilityData.message || '',
+                                remainingEdits: eligibilityData.remainingEdits !== undefined ? eligibilityData.remainingEdits : 2,
+                                deadline: eligibilityData.deadline,
+                                isEdit: false
+                            });
+                            setReviewInput('');
+                            setRatingInput(5);
+                        }
+                    } catch (err) {
+                        console.error("Error fetching review eligibility", err);
+                    }
+                } else {
+                    setEligibility({
+                        eligible: false,
+                        message: 'Vui lòng đăng nhập để gửi đánh giá.',
+                        remainingEdits: 0,
+                        deadline: null,
+                        isEdit: false
+                    });
+                }
+                
                 setLoading(false);
                 
-                // Fetch chat history if any
-                if (currentUser && currentUser.userId && productRes.data.seller) {
+                // Fetch chat history if product has seller and user is logged in
+                if (productRes.data.seller && currentUser?.userId) {
                     try {
                         const convRes = await axios.get(`http://localhost:8080/api/chat/conversations/${currentUser.userId}`);
                         const convs = convRes.data;
@@ -51,23 +102,38 @@ const ProductDetailPage = () => {
                         const targetConv = convs.find(c => c.otherUser?.userId === productRes.data.seller.userId && c.product?.productId === parseInt(productId));
                         if (targetConv) {
                             const msgRes = await axios.get(`http://localhost:8080/api/chat/messages/${targetConv.conversationId}`);
-                            setChatMessages(msgRes.data);
+                            setChatMessages(Array.isArray(msgRes.data) ? msgRes.data : []);
+                        } else {
+                            setChatMessages([]);
                         }
                     } catch(err) {
                         console.error("Error loading chat history", err);
+                        setChatMessages([]);
                     }
+                } else {
+                    setChatMessages([]);
                 }
                 
-                // Setup WebSocket for chat
-                const socket = new SockJS('http://localhost:8080/ws');
-                const client = Stomp.over(socket);
-                client.connect({}, () => {
-                    client.subscribe(`/user/${currentUser.userId}/queue/messages`, (msg) => {
-                        const newMsg = JSON.parse(msg.body);
-                        setChatMessages(prev => [...prev, newMsg]);
+                // Setup WebSocket for chat if user is logged in
+                if (currentUser?.userId) {
+                    const socket = new SockJS('http://localhost:8080/ws');
+                    const client = Stomp.over(socket);
+                    activeClient = client;
+                    client.connect({}, () => {
+                        client.subscribe(`/user/${currentUser.userId}/queue/messages`, (msg) => {
+                            const newMsg = JSON.parse(msg.body);
+                            // Chỉ thêm tin nhắn nếu nó không trùng lặp với tin nhắn cuối
+                            setChatMessages(prev => {
+                                const isDuplicate = prev.some(m => (m.sentAt === newMsg.sentAt && (m.content === newMsg.content || m.messageText === newMsg.content)));
+                                if (isDuplicate) return prev;
+                                return [...prev, newMsg];
+                            });
+                        });
                     });
-                });
-                setStompClient(client);
+                    setStompClient(client);
+                } else {
+                    setStompClient(null);
+                }
                 
             } catch (error) {
                 console.error("Error fetching data", error);
@@ -76,7 +142,13 @@ const ProductDetailPage = () => {
         };
 
         fetchProductData();
-    }, [productId]);
+
+        return () => {
+            if (activeClient && activeClient.connected) {
+                activeClient.disconnect();
+            }
+        };
+    }, [productId, currentUser?.userId]);
 
     const handleNextImage = () => {
         if (!product?.images?.length) return;
@@ -89,6 +161,10 @@ const ProductDetailPage = () => {
     };
 
     const toggleFavorite = async () => {
+        if (!currentUser?.userId) {
+            alert("Vui lòng đăng nhập để lưu tin đăng!");
+            return;
+        }
         try {
             const res = await axios.post(`http://localhost:8080/api/favorites`, {
                 userId: currentUser.userId,
@@ -100,24 +176,77 @@ const ProductDetailPage = () => {
         }
     };
 
+    const formatDeadline = (dateStr) => {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        return date.toLocaleString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
     const handleAddReview = async () => {
+        if (!currentUser?.userId) {
+            alert("Vui lòng đăng nhập để gửi bình luận!");
+            return;
+        }
+        if (!eligibility.eligible) {
+            alert(eligibility.message || "Bạn không đủ điều kiện để đánh giá sản phẩm này.");
+            return;
+        }
         if (!reviewInput.trim()) return;
         try {
             await axios.post(`http://localhost:8080/api/reviews`, {
                 userId: currentUser.userId,
                 productId: productId,
-                content: reviewInput
+                content: reviewInput.trim(),
+                rating: ratingInput
             });
-            setReviewInput('');
+            alert("Đã lưu đánh giá thành công!");
+            
             // Reload reviews
             const reviewRes = await axios.get(`http://localhost:8080/api/reviews/product/${productId}`);
             setReviews(reviewRes.data);
+            
+            // Reload eligibility
+            const eligibilityRes = await axios.get(`http://localhost:8080/api/reviews/eligibility?productId=${productId}&userId=${currentUser.userId}`);
+            const eligibilityData = eligibilityRes.data;
+            if (eligibilityData.review) {
+                setEligibility({
+                    eligible: false,
+                    message: 'Bạn đã đánh giá sản phẩm này rồi. Để chỉnh sửa đánh giá, vui lòng truy cập Lịch sử mua hàng.',
+                    remainingEdits: 0,
+                    deadline: null,
+                    isEdit: true
+                });
+                setReviewInput('');
+                setRatingInput(5);
+            } else {
+                setEligibility({
+                    eligible: eligibilityData.eligible,
+                    message: eligibilityData.message || '',
+                    remainingEdits: eligibilityData.remainingEdits !== undefined ? eligibilityData.remainingEdits : 2,
+                    deadline: eligibilityData.deadline,
+                    isEdit: false
+                });
+                setReviewInput('');
+                setRatingInput(5);
+            }
         } catch (error) {
-            console.error("Error adding review", error);
+            console.error("Error adding/updating review", error);
+            const errMsg = error.response?.data?.message || error.message || "Đã xảy ra lỗi khi lưu đánh giá.";
+            alert(`Lỗi: ${errMsg}`);
         }
     };
 
     const handleSendMessage = () => {
+        if (!currentUser?.userId) {
+            alert("Vui lòng đăng nhập để gửi tin nhắn!");
+            return;
+        }
         if (!chatInput.trim() || !product?.seller) return;
         
         const msg = {
@@ -134,6 +263,27 @@ const ProductDetailPage = () => {
         // Optimistically add to UI
         setChatMessages(prev => [...prev, { ...msg, sender: currentUser }]);
         setChatInput('');
+    };
+
+    const handleBuyNow = () => {
+        if (!currentUser?.userId) {
+            alert("Vui lòng đăng nhập để tiến hành mua hàng!");
+            navigate('/login');
+            return;
+        }
+        navigate(`/checkout/${productId}`);
+    };
+
+    const handleAddToCart = async () => {
+        if (!product) return;
+        try {
+            await addToCart(product, 1);
+            alert("Đã thêm sản phẩm vào giỏ hàng thành công!");
+        } catch (error) {
+            console.error("Lỗi khi thêm vào giỏ hàng:", error);
+            const errMsg = error.response?.data?.message || error.response?.data || error.message;
+            alert(`Không thể thêm vào giỏ hàng: ${errMsg}`);
+        }
     };
 
     if (loading) {
@@ -193,7 +343,7 @@ const ProductDetailPage = () => {
                                         <div 
                                             key={i} 
                                             onClick={() => setCurrentImageIndex(i)}
-                                            className={`flex-shrink-0 w-16 h-16 rounded overflow-hidden cursor-pointer border-2 ${i === currentImageIndex ? 'border-orange-500' : 'border-transparent'}`}
+                                            className={`flex-shrink-0 w-16 h-16 rounded overflow-hidden cursor-pointer border-2 ${i === currentImageIndex ? 'border-brand-accent' : 'border-transparent'}`}
                                         >
                                             <img src={img} alt="Thumbnail" className="w-full h-full object-cover" />
                                         </div>
@@ -209,7 +359,7 @@ const ProductDetailPage = () => {
                             </h1>
                             
                             <div className="flex justify-between items-center mt-3">
-                                <span className="text-2xl font-bold text-[#d0021b]">
+                                <span className="text-2xl font-bold text-brand-price">
                                     {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
                                 </span>
                                 <div className="flex gap-3">
@@ -254,46 +404,224 @@ const ProductDetailPage = () => {
                             </div>
                         </div>
 
-                        {/* Comment section */}
-                        <div className="bg-white border rounded-md shadow-sm overflow-hidden flex flex-col min-h-[300px]">
-                            <div className="p-4 border-b font-bold text-[15px] text-gray-800">
-                                Đánh giá & Bình luận
+                        {/* Comment & Rating section */}
+                        <div className="bg-white rounded-2xl shadow-sm border border-neutral-100 overflow-hidden flex flex-col p-6 space-y-6">
+                            {/* Header */}
+                            <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
+                                <div className="flex items-center gap-2">
+                                    <MessageCircle className="text-brand-accent animate-pulse" size={22} />
+                                    <h2 className="font-bold text-[17px] text-gray-800">
+                                        Đánh giá & Bình luận ({reviews.length})
+                                    </h2>
+                                </div>
                             </div>
-                            <div className="flex-1 p-4 overflow-y-auto space-y-4">
+
+                            {/* Summary Dashboard */}
+                            {reviews.length > 0 && (() => {
+                                const totalReviews = reviews.length;
+                                const avgRating = (reviews.reduce((acc, r) => acc + (r.rating || 5), 0) / totalReviews).toFixed(1);
+                                const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+                                reviews.forEach(r => {
+                                    const rVal = r.rating || 5;
+                                    distribution[rVal] = (distribution[rVal] || 0) + 1;
+                                });
+
+                                return (
+                                    <div className="bg-neutral-50/50 rounded-2xl p-5 flex flex-col md:flex-row items-center gap-6 md:gap-10 border border-neutral-100">
+                                        {/* Left: Big score */}
+                                        <div className="text-center md:border-r border-neutral-200 md:pr-10 shrink-0">
+                                            <div className="text-5xl font-black text-gray-800 tracking-tight">{avgRating}</div>
+                                            {/* Stars */}
+                                            <div className="flex gap-1 justify-center my-2">
+                                                {[1, 2, 3, 4, 5].map((s) => (
+                                                    <Star 
+                                                        key={s} 
+                                                        size={16} 
+                                                        className={s <= Math.round(avgRating) ? "text-amber-400 fill-amber-400" : "text-gray-300"} 
+                                                    />
+                                                ))}
+                                            </div>
+                                            <p className="text-[12px] text-gray-500 font-medium">({totalReviews} đánh giá)</p>
+                                        </div>
+
+                                        {/* Right: Progress bars */}
+                                        <div className="flex-1 w-full space-y-2 max-w-sm">
+                                            {[5, 4, 3, 2, 1].map((stars) => {
+                                                const count = distribution[stars] || 0;
+                                                const percentage = ((count / totalReviews) * 100).toFixed(0);
+                                                return (
+                                                    <div key={stars} className="flex items-center gap-3 text-xs text-gray-600">
+                                                        <span className="w-3 text-right font-medium">{stars}</span>
+                                                        <Star size={12} className="text-amber-400 fill-amber-400 shrink-0" />
+                                                        <div className="flex-1 h-2 bg-neutral-200 rounded-full overflow-hidden">
+                                                            <div 
+                                                                className="h-full bg-amber-400 rounded-full transition-all duration-500" 
+                                                                style={{ width: `${percentage}%` }}
+                                                            ></div>
+                                                        </div>
+                                                        <span className="w-8 text-right text-gray-400 font-medium">{percentage}%</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
+                            {/* Reviews list */}
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
                                 {reviews.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center text-center text-gray-500 mt-4">
-                                        <MessageCircle size={40} className="text-gray-300 mb-2" />
-                                        <p className="text-sm">Chưa có bình luận nào.</p>
+                                    <div className="flex flex-col items-center justify-center text-center text-gray-500 py-10">
+                                        <div className="w-16 h-16 bg-neutral-50 rounded-full flex items-center justify-center border border-neutral-100 text-neutral-300 mb-3">
+                                            <MessageCircle size={28} />
+                                        </div>
+                                        <p className="text-[13px] font-medium text-gray-400">Chưa có bình luận hay đánh giá nào.</p>
+                                        <p className="text-[11px] text-gray-400">Hãy là người đầu tiên để lại đánh giá cho sản phẩm này!</p>
                                     </div>
                                 ) : (
                                     reviews.map((rev, index) => (
-                                        <div key={index} className="flex gap-3">
-                                            <img src={rev.user?.avatar || "/user_avatar.png"} alt="avatar" className="w-8 h-8 rounded-full" />
-                                            <div>
-                                                <div className="font-medium text-[13px] text-gray-800">{rev.user?.fullName}</div>
-                                                <div className="text-[11px] text-gray-400 mb-1">{new Date(rev.createdAt).toLocaleString('vi-VN')}</div>
-                                                <div className="text-sm text-gray-700 bg-gray-100 p-2 rounded-lg inline-block">{rev.content}</div>
+                                        <div key={index} className="flex gap-4 p-4 rounded-xl bg-neutral-50/30 hover:bg-neutral-50/60 transition border border-neutral-100/50">
+                                            <img 
+                                                src={rev.user?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${rev.user?.fullName || 'U'}`} 
+                                                alt="avatar" 
+                                                className="w-10 h-10 rounded-full object-cover border border-neutral-200 shrink-0" 
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex justify-between items-baseline mb-1">
+                                                    <div className="font-bold text-[13px] text-gray-800 truncate">
+                                                        {rev.user?.fullName}
+                                                    </div>
+                                                    <div className="text-[10px] text-gray-400 font-medium">
+                                                        {new Date(rev.createdAt).toLocaleString('vi-VN', { 
+                                                            year: 'numeric', month: '2-digit', day: '2-digit', 
+                                                            hour: '2-digit', minute: '2-digit' 
+                                                        })}
+                                                    </div>
+                                                </div>
+
+                                                {/* Rating stars of reviewer */}
+                                                <div className="flex gap-0.5 mb-2">
+                                                    {[1, 2, 3, 4, 5].map((s) => (
+                                                        <Star 
+                                                            key={s} 
+                                                            size={12} 
+                                                            className={s <= (rev.rating || 5) ? "text-amber-400 fill-amber-400" : "text-gray-200"} 
+                                                        />
+                                                    ))}
+                                                </div>
+
+                                                {/* Comment text */}
+                                                <p className="text-[13px] text-gray-750 leading-relaxed bg-white border border-gray-100/80 px-3.5 py-2.5 rounded-2xl rounded-tl-none inline-block max-w-full break-words shadow-sm">
+                                                    {rev.content}
+                                                </p>
                                             </div>
                                         </div>
                                     ))
                                 )}
                             </div>
-                            <div className="p-3 border-t bg-white flex gap-2 items-center">
-                                <img src="/user_avatar.png" alt="You" className="w-8 h-8 rounded-full" />
-                                <div className="flex-1 bg-gray-100 rounded-full px-4 py-1.5 flex items-center">
-                                    <input 
-                                        type="text" 
-                                        value={reviewInput}
-                                        onChange={(e) => setReviewInput(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleAddReview()}
-                                        placeholder="Viết bình luận..." 
-                                        className="w-full bg-transparent outline-none text-sm" 
-                                    />
+
+                            {/* Write Review box */}
+                            {(!currentUser?.userId || !eligibility.isEdit) && (
+                                <div className="border-t border-neutral-100 pt-6">
+                                    {!currentUser?.userId ? (
+                                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 text-center space-y-3">
+                                            <Lock className="mx-auto text-slate-400 stroke-1" size={32} />
+                                            <h4 className="text-sm font-bold text-slate-700">Đăng nhập để đánh giá</h4>
+                                            <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+                                                Chỉ những khách hàng đã mua sản phẩm này thành công mới có thể đánh giá và nhận xét.
+                                            </p>
+                                            <button
+                                                onClick={() => navigate('/login')}
+                                                className="px-5 py-2 text-xs font-bold text-white bg-brand-accent hover:bg-brand-accent/90 rounded-xl transition cursor-pointer"
+                                            >
+                                                Đăng nhập ngay
+                                            </button>
+                                        </div>
+                                    ) : !eligibility.eligible ? (
+                                        <div className="bg-gray-55/70 border border-gray-200 rounded-2xl p-5 flex gap-3 text-xs text-gray-600 leading-relaxed">
+                                            <AlertCircle size={18} className="text-gray-400 shrink-0 mt-0.5" />
+                                            <div>
+                                                <p className="font-bold text-gray-800">Không thể viết đánh giá</p>
+                                                <p className="text-gray-500 mt-1">{eligibility.message}</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <p className="font-bold text-[14px] text-gray-800 mb-3">
+                                                Gửi đánh giá của bạn
+                                            </p>
+                                            
+                                            {/* Warning box */}
+                                            <div className="bg-amber-50/60 border border-amber-100 rounded-2xl p-4 flex gap-3 text-xs text-amber-800 mb-4 leading-relaxed">
+                                                <Info size={18} className="text-amber-500 shrink-0 mt-0.5" />
+                                                <div className="flex-1">
+                                                    <p className="font-bold">
+                                                        Đánh giá của bạn có thể chỉnh sửa tối đa 2 lần.
+                                                    </p>
+                                                    <p className="text-amber-700/80 mt-0.5">
+                                                        Lưu ý: Sau khi gửi, bạn chỉ có thể chỉnh sửa đánh giá này từ Lịch sử mua hàng trong vòng 7 ngày.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Star Rating Input selector */}
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <span className="text-xs text-gray-500 font-medium">Chọn số sao:</span>
+                                                <div className="flex gap-1.5">
+                                                    {[1, 2, 3, 4, 5].map((s) => (
+                                                        <button 
+                                                            key={s} 
+                                                            type="button" 
+                                                            onClick={() => setRatingInput(s)}
+                                                            className="transition transform active:scale-90 hover:scale-110 cursor-pointer"
+                                                        >
+                                                            <Star 
+                                                                size={22} 
+                                                                className={s <= ratingInput ? "text-amber-400 fill-amber-400" : "text-gray-300"} 
+                                                            />
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <span className="text-xs font-bold text-amber-600 uppercase tracking-wider ml-1">
+                                                    {ratingInput === 5 && 'Rất tốt'}
+                                                    {ratingInput === 4 && 'Tốt'}
+                                                    {ratingInput === 3 && 'Bình thường'}
+                                                    {ratingInput === 2 && 'Tệ'}
+                                                    {ratingInput === 1 && 'Rất tệ'}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex gap-3 items-start">
+                                                <img 
+                                                    src={currentUser?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${currentUser?.fullName || 'U'}`} 
+                                                    alt="You" 
+                                                    className="w-10 h-10 rounded-full object-cover border border-neutral-200 shrink-0" 
+                                                />
+                                                <div className="flex-1">
+                                                    <textarea 
+                                                        rows={3}
+                                                        value={reviewInput}
+                                                        onChange={(e) => setReviewInput(e.target.value)}
+                                                        placeholder="Chia sẻ trải nghiệm thực tế của bạn về chất lượng và độ bền của món đồ nhé..." 
+                                                        className="w-full bg-neutral-50/50 border border-neutral-200 focus:border-brand-accent focus:bg-white transition rounded-2xl px-4 py-3.5 text-xs outline-none resize-none placeholder:text-gray-400 text-gray-800" 
+                                                    />
+                                                    <div className="flex justify-end mt-3">
+                                                        <button
+                                                            onClick={handleAddReview}
+                                                            disabled={!reviewInput.trim()}
+                                                            className="px-6 py-2.5 bg-brand-accent hover:bg-brand-accent/90 disabled:bg-gray-250 text-white font-bold rounded-xl text-xs transition shadow-sm hover:shadow flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                                                            title="Gửi đánh giá"
+                                                        >
+                                                            <Send size={14} />
+                                                            Gửi đánh giá
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                                <button onClick={handleAddReview} className="text-blue-500 p-2 hover:bg-blue-50 rounded-full transition">
-                                    <Send size={20} />
-                                </button>
-                            </div>
+                            )}
                         </div>
                     </div>
                     
@@ -324,15 +652,27 @@ const ProductDetailPage = () => {
                             {/* Action Buttons */}
                             <div className="flex flex-col gap-2">
                                 <button 
+                                    onClick={handleBuyNow} 
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-primary text-neutral-900 font-bold rounded-xl hover:bg-brand-hover transition shadow-sm uppercase text-sm cursor-pointer"
+                                >
+                                    <ShoppingBag size={18} /> ĐẶT HÀNG (MUA NGAY)
+                                </button>
+                                <button 
+                                    onClick={handleAddToCart} 
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 border border-brand-primary hover:bg-brand-primary/10 text-gray-900 font-bold rounded-xl transition shadow-sm uppercase text-sm cursor-pointer"
+                                >
+                                    <ShoppingCart size={18} /> Thêm vào giỏ hàng
+                                </button>
+                                <button 
                                     onClick={() => setShowPhone(!showPhone)} 
-                                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#589f39] text-white font-bold rounded hover:bg-[#4d8c32] transition"
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#589f39] text-white font-bold rounded-xl hover:bg-[#4d8c32] transition"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                                     {showPhone ? (product.seller?.phone || '0987654321') : 'BẤM ĐỂ HIỆN SỐ'}
                                 </button>
                                 <button 
                                     onClick={() => document.getElementById('chat-input').focus()} 
-                                    className="w-full flex items-center justify-center gap-2 py-2.5 border border-[#ff8c00] text-[#ff8c00] font-bold rounded hover:bg-orange-50 transition"
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 border border-brand-accent text-brand-accent font-bold rounded-xl hover:bg-brand-accent/5 transition"
                                 >
                                     <MessageCircle size={18} /> CHAT VỚI NGƯỜI BÁN
                                 </button>
@@ -354,46 +694,73 @@ const ProductDetailPage = () => {
                         </div>
 
                         {/* Chat Mini Section (Right column) */}
-                        <div className="bg-white border rounded-md shadow-sm flex flex-col h-[350px]">
-                            <div className="p-3 border-b font-bold text-[14px] text-gray-800 flex items-center gap-2">
-                                Khung Chat
+                        <div className="bg-white border border-neutral-100 rounded-2xl shadow-sm overflow-hidden flex flex-col h-[350px]">
+                            <div className="p-4 border-b border-neutral-50 font-bold text-[14px] text-gray-800 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                                Khung Chat Trực Tuyến
                             </div>
-                            <div className="flex-1 p-3 overflow-y-auto bg-gray-50 flex flex-col gap-2">
-                                {/* Product Context Card inside chat */}
-                                <div className="bg-white p-2 rounded border mb-2 flex gap-2 items-center shadow-sm">
-                                    <img src={currentImageUrl} alt="Product" className="w-10 h-10 object-cover rounded" />
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-[12px] font-medium text-gray-800 truncate">{product.title}</p>
-                                        <p className="text-[12px] text-red-500 font-bold">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}</p>
-                                    </div>
+                            {!currentUser?.userId ? (
+                                <div className="flex-1 flex flex-col items-center justify-center p-6 bg-neutral-50/50 text-center gap-3">
+                                    <MessageCircle size={32} className="text-gray-300" />
+                                    <p className="text-[12px] text-gray-500 leading-relaxed max-w-[200px]">Vui lòng đăng nhập để bắt đầu trò chuyện với người bán.</p>
+                                    <Link to="/login" className="px-5 py-2 bg-brand-primary text-black font-bold text-xs rounded-xl hover:bg-brand-hover transition shadow-sm">
+                                        Đăng nhập ngay
+                                    </Link>
                                 </div>
-                                
-                                {chatMessages.length === 0 ? (
-                                    <div className="text-center text-[12px] text-gray-500 mt-6">
-                                        Hãy gửi tin nhắn để hỏi thêm về sản phẩm!
-                                    </div>
-                                ) : (
-                                    chatMessages.map((msg, idx) => (
-                                        <div key={idx} className={`max-w-[85%] rounded-lg px-3 py-1.5 text-[13px] ${msg.senderId === currentUser.userId || msg.sender?.userId === currentUser.userId ? 'bg-blue-500 text-white self-end' : 'bg-white border text-gray-800 self-start'}`}>
-                                            {msg.content}
+                            ) : (
+                                <>
+                                    <div className="flex-1 p-4 overflow-y-auto bg-neutral-50/40 flex flex-col gap-3">
+                                        {/* Product Context Card inside chat */}
+                                        <div className="bg-white p-2.5 rounded-xl border border-neutral-100/80 mb-2 flex gap-2.5 items-center shadow-sm shrink-0">
+                                            <img src={currentImageUrl} alt="Product" className="w-10 h-10 object-cover rounded-lg border border-neutral-100" />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-[12px] font-bold text-gray-800 truncate">{product.title}</p>
+                                                <p className="text-[11px] text-brand-price font-bold">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}</p>
+                                            </div>
                                         </div>
-                                    ))
-                                )}
-                            </div>
-                            <div className="p-2 border-t flex gap-2">
-                                <input 
-                                    id="chat-input"
-                                    type="text" 
-                                    value={chatInput}
-                                    onChange={(e) => setChatInput(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                                    placeholder="Nhập tin nhắn..." 
-                                    className="flex-1 bg-gray-100 rounded-full px-3 py-1 text-[13px] outline-none" 
-                                />
-                                <button onClick={handleSendMessage} className="text-blue-500 p-1.5 hover:bg-blue-50 rounded-full transition flex-shrink-0">
-                                    <Send size={18} />
-                                </button>
-                            </div>
+
+                                        {chatMessages.length === 0 ? (
+                                            <div className="text-center text-[12px] text-gray-400 mt-10">
+                                                Hãy gửi tin nhắn để hỏi thêm về sản phẩm!
+                                            </div>
+                                        ) : (
+                                            chatMessages.map((msg, idx) => {
+                                                const isMe = Number(msg.senderId) === Number(currentUser?.userId) || 
+                                                             Number(msg.sender?.userId) === Number(currentUser?.userId);
+                                                return (
+                                                    <div 
+                                                        key={idx} 
+                                                        className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-[13px] leading-relaxed shadow-sm ${
+                                                            isMe 
+                                                                ? 'bg-brand-primary text-neutral-900 rounded-br-none self-end border border-brand-hover/10' 
+                                                                : 'bg-white border border-neutral-100 text-gray-800 rounded-bl-none self-start'
+                                                        }`}
+                                                    >
+                                                        {msg.content || msg.messageText}
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                    <div className="p-3 border-t border-neutral-50 bg-white flex gap-2 items-center">
+                                        <input 
+                                            id="chat-input"
+                                            type="text" 
+                                            value={chatInput}
+                                            onChange={(e) => setChatInput(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                                            placeholder="Nhập tin nhắn..." 
+                                            className="flex-1 bg-neutral-50 border border-transparent focus:border-brand-primary-300 focus:bg-white transition rounded-full px-4 py-2 text-[13px] outline-none" 
+                                        />
+                                        <button 
+                                            onClick={handleSendMessage} 
+                                            className="bg-brand-primary hover:bg-brand-hover text-black p-2 rounded-full transition shrink-0 shadow-sm"
+                                        >
+                                            <Send size={16} />
+                                        </button>
+                                    </div>
+                                </>
+                            )}
                         </div>
 
                     </div>

@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Lock, Smartphone, Key, Eye, EyeOff, ShieldAlert } from 'lucide-react';
+import { Lock, Eye, EyeOff, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import axios from 'axios';
+import { useAuth } from '../context/AuthContext.jsx';
 
 const ProfileSecurityCard = () => {
+    const { user: currentUser } = useAuth();
     const [passwords, setPasswords] = useState({
         current: '',
         new: '',
@@ -12,6 +15,8 @@ const ProfileSecurityCard = () => {
         new: false,
         confirm: false
     });
+    const [isSaving, setIsSaving] = useState(false);
+    const [message, setMessage] = useState({ type: '', text: '' });
 
     const handlePasswordChange = (e) => {
         const { name, value } = e.target;
@@ -22,14 +27,69 @@ const ProfileSecurityCard = () => {
         setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }));
     };
 
-    const handleSubmit = (e) => {
+    const validatePassword = (password) => {
+        if (password.length < 8 || password.length > 32) {
+            return 'Mật khẩu mới phải từ 8 đến 32 ký tự.';
+        }
+        if (!/[A-Z]/.test(password)) {
+            return 'Mật khẩu mới phải chứa ít nhất 1 chữ in hoa.';
+        }
+        if (!/[a-z]/.test(password)) {
+            return 'Mật khẩu mới phải chứa ít nhất 1 chữ thường.';
+        }
+        if (!/[0-9]/.test(password)) {
+            return 'Mật khẩu mới phải chứa ít nhất 1 chữ số.';
+        }
+        return null;
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (passwords.new !== passwords.confirm) {
-            alert('Mật khẩu mới không khớp!');
+        setMessage({ type: '', text: '' });
+
+        if (!passwords.current || !passwords.new || !passwords.confirm) {
+            setMessage({ type: 'error', text: 'Vui lòng điền đầy đủ các trường.' });
             return;
         }
-        console.log('Changing password...');
-        alert('Đã cập nhật mật khẩu mới!');
+
+        // Validate password criteria
+        const passwordError = validatePassword(passwords.new);
+        if (passwordError) {
+            setMessage({ type: 'error', text: passwordError });
+            return;
+        }
+
+        if (passwords.new !== passwords.confirm) {
+            setMessage({ type: 'error', text: 'Xác nhận mật khẩu mới không khớp!' });
+            return;
+        }
+
+        if (!currentUser?.userId) {
+            setMessage({ type: 'error', text: 'Không tìm thấy thông tin người dùng đăng nhập.' });
+            return;
+        }
+
+        setIsSaving(true);
+
+        try {
+            const response = await axios.put(`http://localhost:8080/api/users/profile/${currentUser.userId}/change-password`, {
+                currentPassword: passwords.current,
+                newPassword: passwords.new
+            });
+
+            setMessage({ type: 'success', text: response.data.message || 'Cập nhật mật khẩu thành công!' });
+            setPasswords({
+                current: '',
+                new: '',
+                confirm: ''
+            });
+        } catch (error) {
+            console.error("Lỗi cập nhật mật khẩu:", error);
+            const errMsg = error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật mật khẩu.';
+            setMessage({ type: 'error', text: errMsg });
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -41,10 +101,26 @@ const ProfileSecurityCard = () => {
                     <p className="text-xs text-gray-500 mt-1">Quản lý mật khẩu và các thiết lập bảo mật khác</p>
                 </div>
 
+                {/* Notifications Alert */}
+                {message.text && (
+                    <div className={`p-4 rounded-xl border flex items-start gap-2.5 text-xs ${
+                        message.type === 'success' 
+                            ? 'bg-emerald-50 border-emerald-100 text-emerald-800' 
+                            : 'bg-red-50 border-red-100 text-red-800'
+                    }`}>
+                        {message.type === 'success' ? (
+                            <CheckCircle2 size={16} className="text-emerald-600 flex-shrink-0 mt-0.5" />
+                        ) : (
+                            <AlertCircle size={16} className="text-red-600 flex-shrink-0 mt-0.5" />
+                        )}
+                        <span className="font-semibold">{message.text}</span>
+                    </div>
+                )}
+
                 {/* Password Section */}
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-[#FFBA00]/10 rounded text-[#FFBA00]">
+                        <div className="p-1.5 bg-brand-accent/10 rounded text-brand-accent">
                             <Lock size={16} />
                         </div>
                         <h3 className="font-bold text-sm text-[#222222]">Thay đổi mật khẩu</h3>
@@ -60,8 +136,10 @@ const ProfileSecurityCard = () => {
                                     name="current"
                                     value={passwords.current}
                                     onChange={handlePasswordChange}
-                                    className="w-full h-12 pl-4 pr-12 border border-[#DADADA] rounded-xl outline-none focus:border-[#FFBA00] transition-all bg-white text-sm"
+                                    disabled={isSaving}
+                                    className="w-full h-12 pl-4 pr-12 border border-[#DADADA] rounded-xl outline-none focus:border-brand-accent transition-all bg-white text-sm"
                                     placeholder="••••••••"
+                                    required
                                 />
                                 <button 
                                     type="button"
@@ -82,8 +160,10 @@ const ProfileSecurityCard = () => {
                                     name="new"
                                     value={passwords.new}
                                     onChange={handlePasswordChange}
-                                    className="w-full h-12 pl-4 pr-12 border border-[#DADADA] rounded-xl outline-none focus:border-[#FFBA00] transition-all bg-white text-sm"
+                                    disabled={isSaving}
+                                    className="w-full h-12 pl-4 pr-12 border border-[#DADADA] rounded-xl outline-none focus:border-brand-accent transition-all bg-white text-sm"
                                     placeholder="••••••••"
+                                    required
                                 />
                                 <button 
                                     type="button"
@@ -97,15 +177,17 @@ const ProfileSecurityCard = () => {
 
                         {/* Confirm Password */}
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-semibold text-[#222222]">Xác nhận mật khẩu mới</label>
+                            <label className="text-sm font-semibold text-[#222222]">Xác nhận mật khẩu mới</label>
                             <div className="relative">
                                 <input
                                     type={showPasswords.confirm ? 'text' : 'password'}
                                     name="confirm"
                                     value={passwords.confirm}
                                     onChange={handlePasswordChange}
-                                    className="w-full h-10 pl-3 pr-10 border border-[#DADADA] rounded-lg outline-none focus:border-[#FFBA00] transition-all bg-white text-xs"
+                                    disabled={isSaving}
+                                    className="w-full h-12 pl-3 pr-10 border border-[#DADADA] rounded-lg outline-none focus:border-brand-accent transition-all bg-white text-sm"
                                     placeholder="••••••••"
+                                    required
                                 />
                                 <button 
                                     type="button"
@@ -119,63 +201,19 @@ const ProfileSecurityCard = () => {
 
                         <button
                             type="submit"
-                            className="mt-1 w-fit px-6 h-10 bg-[#FFBA00] text-black text-xs font-bold rounded-lg hover:brightness-105 shadow-sm transition-all"
+                            disabled={isSaving}
+                            className="mt-1 w-fit px-6 h-10 bg-brand-primary hover:bg-brand-hover text-black disabled:bg-gray-200 disabled:text-gray-400 text-xs font-bold rounded-lg hover:brightness-105 shadow-sm transition-all flex items-center gap-2 cursor-pointer"
                         >
-                            Cập nhật mật khẩu
+                            {isSaving ? (
+                                <>
+                                    <Loader2 className="animate-spin" size={14} />
+                                    Đang cập nhật...
+                                </>
+                            ) : (
+                                'Cập nhật mật khẩu'
+                            )}
                         </button>
                     </form>
-                </div>
-
-                {/* 2FA Section */}
-                <div className="pt-6 border-t border-gray-100 flex flex-col gap-4">
-                    <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-[#FFBA00]/10 rounded text-[#FFBA00]">
-                            <Smartphone size={16} />
-                        </div>
-                        <h3 className="font-bold text-sm text-[#222222]">Xác thực 2 lớp (2FA)</h3>
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                        <div className="flex gap-3">
-                            <div className="p-1.5 bg-white rounded shadow-sm h-fit">
-                                <ShieldCheck size={20} className="text-green-500" />
-                            </div>
-                            <div>
-                                <p className="font-semibold text-xs text-[#222222]">Tình trạng: Chưa kích hoạt</p>
-                                <p className="text-[10px] text-gray-500 mt-0.5 max-w-md">
-                                    Tăng cường bảo mật cho tài khoản của bạn bằng cách yêu cầu mã xác minh mỗi khi đăng nhập.
-                                </p>
-                            </div>
-                        </div>
-                        <button className="px-4 py-1.5 border-2 border-[#FFBA00] text-[#222222] text-xs font-bold rounded-lg hover:bg-[#FFBA00] transition-all">
-                            Kích hoạt
-                        </button>
-                    </div>
-                </div>
-
-                {/* Devices Section */}
-                <div className="pt-8 border-t border-gray-100 flex flex-col gap-6">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-[#FFBA00]/10 rounded-lg text-[#FFBA00]">
-                            <Key size={20} />
-                        </div>
-                        <h3 className="font-bold text-[#222222]">Các thiết bị đang đăng nhập</h3>
-                    </div>
-
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl">
-                            <div className="flex items-center gap-4">
-                                <div className="p-2 bg-gray-50 rounded-lg">
-                                    <Smartphone size={24} className="text-gray-400" />
-                                </div>
-                                <div>
-                                    <p className="font-semibold text-[#222222]">Windows PC - Chrome</p>
-                                    <p className="text-xs text-gray-500">Đang hoạt động • Hà Nội, Việt Nam</p>
-                                </div>
-                            </div>
-                            <span className="text-xs font-bold text-green-500 bg-green-50 px-2 py-1 rounded">Hiện tại</span>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

@@ -10,4 +10,11 @@ public class ReviewDTO {
     private Integer rating;
     private LocalDateTime createdAt;
     private UserDTO user;
+    private Integer productId;
+    private String productTitle;
+    private String reportStatus;
+    private String reportReason;
+    private String proofImage;
+    private String proofVideo;
 }
+

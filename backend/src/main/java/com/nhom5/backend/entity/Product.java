@@ -39,6 +39,14 @@ public class Product {
 
     private String status = "available";
 
+    private String approvalStatus = "pending";
+
+    private Integer quantity = 1;
+
+    private Boolean isDeleted = false;
+
+    private Boolean isHidden = false;
+
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public enum Status {

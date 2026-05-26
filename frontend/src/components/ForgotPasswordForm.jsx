@@ -39,7 +39,7 @@ const ForgotPasswordForm = () => {
                 </p>
                 <button
                     onClick={() => navigate('/login')}
-                    className="w-full h-10 bg-[#FFBA00] text-black text-sm font-bold rounded-lg hover:brightness-105 transition-all"
+                    className="w-full h-10 bg-brand-accent text-black text-sm font-bold rounded-lg hover:brightness-105 transition-all"
                 >
                     Quay lại Đăng nhập
                 </button>
@@ -80,7 +80,7 @@ const ForgotPasswordForm = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="example@gmail.com"
-                        className="w-full h-10 px-4 border border-[#DADADA] rounded-lg outline-none focus:border-[#FFBA00] transition-all bg-white text-xs"
+                        className="w-full h-10 px-4 border border-[#DADADA] rounded-lg outline-none focus:border-brand-accent transition-all bg-white text-xs"
                     />
                 </div>
 
@@ -89,7 +89,7 @@ const ForgotPasswordForm = () => {
                     disabled={!email || isLoading}
                     className={`w-full h-10 text-xs font-bold rounded-lg transition-all mt-2 flex items-center justify-center gap-2 ${
                         email && !isLoading
-                            ? "bg-[#FFBA00] text-black hover:brightness-105 shadow-sm"
+                            ? "bg-brand-accent text-black hover:brightness-105 shadow-sm"
                             : "bg-[#F4F4F4] text-[#8C8C8C] cursor-not-allowed"
                     }`}
                 >

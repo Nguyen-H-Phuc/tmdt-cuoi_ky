@@ -29,4 +29,11 @@ public class Review {
     private Integer rating = 5;
 
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "edit_count")
+    private Integer editCount = 0;
+
+    @OneToOne(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private ReviewReport reviewReport;
 }
+

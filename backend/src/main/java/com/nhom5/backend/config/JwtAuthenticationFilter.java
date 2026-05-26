@@ -37,21 +37,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        jwt = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(jwt); // Bạn cần viết thêm hàm này trong JwtService
+        try {
+            jwt = authHeader.substring(7);
+            userEmail = jwtService.extractUsername(jwt); // Bạn cần viết thêm hàm này trong JwtService
 
-        // 2. Nếu có email và chưa được xác thực trong SecurityContext
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+            // 2. Nếu có email và chưa được xác thực trong SecurityContext
+            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
-            // 3. Kiểm tra token còn hạn không
-            if (jwtService.isTokenValid(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities()
-                );
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                // 3. Kiểm tra token còn hạn không
+                if (jwtService.isTokenValid(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities()
+                    );
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
+        } catch (Exception e) {
+            // Log warning on invalid/expired token but continue filter chain
+            // This allows anonymous requests to reach permitAll endpoints even if they send a stale/invalid token.
+            logger.warn("Invalid or expired JWT token received: " + e.getMessage());
         }
         filterChain.doFilter(request, response);
     }

@@ -8,6 +8,7 @@ CREATE TABLE users (
    phone VARCHAR(15) NULL,
    address TEXT NULL,
    avatar VARCHAR(255) NULL,
+   bio TEXT NULL,
    role ENUM('admin', 'member') DEFAULT 'member',
    is_active BOOLEAN DEFAULT FALSE, -- Mặc định false cho đến khi verify email
    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -44,7 +45,8 @@ CREATE TABLE password_resets (
 
 CREATE TABLE categories (
     category_id INT PRIMARY KEY AUTO_INCREMENT,
-    category_name VARCHAR(100) NOT NULL
+    category_name VARCHAR(100) NOT NULL,
+    category_image VARCHAR(255) DEFAULT 'default.png'
 );
 
 CREATE TABLE products (
@@ -57,9 +59,21 @@ CREATE TABLE products (
     image_url VARCHAR(255),
     view_count INT DEFAULT 0, -- Phục vụ chức năng "Xem nhiều nhất"
     status ENUM('available', 'sold') DEFAULT 'available',
+    approval_status VARCHAR(20) DEFAULT 'pending',
+    quantity INT DEFAULT 1,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    is_hidden BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (category_id) REFERENCES categories(category_id)
+);
+
+CREATE TABLE product_images (
+    image_id INT PRIMARY KEY AUTO_INCREMENT,
+    product_id INT NOT NULL,
+    image_url VARCHAR(255) NOT NULL,
+    is_main BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
 );
 
 CREATE TABLE cart_items (
@@ -74,12 +88,21 @@ CREATE TABLE cart_items (
 
 CREATE TABLE orders (
     order_id INT PRIMARY KEY AUTO_INCREMENT,
+    order_code VARCHAR(50) UNIQUE NOT NULL,
     buyer_id INT NOT NULL,
-    seller_id INT NOT NULL, -- Giữ lại seller_id nếu quy định mỗi đơn chỉ mua từ 1 người bán
+    seller_id INT NOT NULL,
     total_price DECIMAL(10, 2) DEFAULT 0,
-    status ENUM('pending', 'confirmed', 'shipped', 'completed', 'cancelled') DEFAULT 'pending',
-    shipping_address TEXT, -- Lưu địa chỉ lúc đặt hàng (đề phòng user đổi địa chỉ sau này)
+    status VARCHAR(50) DEFAULT 'PENDING',
+    payment_method VARCHAR(50),
+    receiver_name VARCHAR(100),
+    receiver_phone VARCHAR(20),
+    delivery_method VARCHAR(50),
+    university VARCHAR(255),
+    dorm_info VARCHAR(255),
+    shipping_address VARCHAR(255),
+    notes TEXT,
     order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status_date TIMESTAMP NULL,
     FOREIGN KEY (buyer_id) REFERENCES users(user_id),
     FOREIGN KEY (seller_id) REFERENCES users(user_id)
 );
@@ -100,9 +123,23 @@ CREATE TABLE reviews (
     reviewer_id INT NOT NULL,
     rating INT CHECK (rating BETWEEN 1 AND 5),
     comment TEXT,
+    edit_count INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (product_id) REFERENCES products(product_id),
     FOREIGN KEY (reviewer_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE review_reports (
+    report_id INT PRIMARY KEY AUTO_INCREMENT,
+    review_id INT NOT NULL,
+    reporter_id INT NOT NULL,
+    reason TEXT NOT NULL,
+    proof_image VARCHAR(255) NULL,
+    proof_video VARCHAR(255) NULL,
+    status VARCHAR(50) DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (review_id) REFERENCES reviews(review_id) ON DELETE CASCADE,
+    FOREIGN KEY (reporter_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE traffic_logs (
@@ -120,6 +157,7 @@ CREATE TABLE conversations (
     user_one INT NOT NULL, -- Người bắt đầu nhắn tin
     user_two INT NOT NULL, -- Người nhận
     product_id INT NULL,   -- (Tùy chọn) Nhắn tin về món đồ cụ thể nào
+    last_message_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_one) REFERENCES users(user_id),
@@ -135,23 +173,12 @@ CREATE TABLE messages (
     is_read BOOLEAN DEFAULT FALSE, -- Để hiển thị thông báo "đã xem" hoặc số tin nhắn chưa đọc
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (conversation_id) REFERENCES conversations(conversation_id) ON DELETE CASCADE,
-    FOREIGN KEY (sender_id) REFERENCES users(user_id)
+    FOREIGN KEY (sender_id) REFERENCES users(user_id),
+    INDEX (sent_at)
 );
 
--- Thêm index cho bảng Messages để load nhanh hơn
-ALTER TABLE messages ADD INDEX (sent_at);
 
-ALTER TABLE conversations ADD COLUMN last_message_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
-ALTER TABLE categories ADD COLUMN category_image VARCHAR(255) DEFAULT 'default.png';
-
-CREATE TABLE product_images (
-    image_id INT PRIMARY KEY AUTO_INCREMENT,
-    product_id INT NOT NULL,
-    image_url VARCHAR(255) NOT NULL,
-    is_main BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (product_id) REFERENCES products(product_id)
-);
 
 CREATE TABLE favorites (
     favorite_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -205,4 +232,9 @@ VALUES(5, 'Nguyen Van Admin', 'a@gmail.com', '0900000000', NULL, NULL, 'member',
 
 INSERT INTO tmdt_db.local_accounts
 (user_id, password_hash, is_email_verified, verification_code, code_expired_at)
-VALUES(5, '$2a$10$0q.QX/A/VV8j6CMYTJuftuOl4EJAHJOjqmtcHRrkkt0KU.U6wYTu.', 1, NULL, NULL);
+VALUES
+(1, '$2a$10$mRn.QAQT/vL5urT9sSbhCupPVDWDRk2QcLH18AJGnHyzNMmCUzlQ.', 1, NULL, NULL),
+(2, '$2a$10$mRn.QAQT/vL5urT9sSbhCupPVDWDRk2QcLH18AJGnHyzNMmCUzlQ.', 1, NULL, NULL),
+(3, '$2a$10$mRn.QAQT/vL5urT9sSbhCupPVDWDRk2QcLH18AJGnHyzNMmCUzlQ.', 1, NULL, NULL),
+(4, '$2a$10$mRn.QAQT/vL5urT9sSbhCupPVDWDRk2QcLH18AJGnHyzNMmCUzlQ.', 1, NULL, NULL),
+(5, '$2a$10$mRn.QAQT/vL5urT9sSbhCupPVDWDRk2QcLH18AJGnHyzNMmCUzlQ.', 1, NULL, NULL);

@@ -11,15 +11,20 @@ import {
   MessageCircle,
   User,
   ChevronDown,
+  ShoppingCart,
 } from 'lucide-react';
 import '../index.css';
 
 import { useAuth } from "../context/AuthContext.jsx";
+import { useCart } from "../context/CartContext.jsx";
 import PopupProfile from "./PopupProfile.jsx";
+import MiniCart from "./MiniCart.jsx";
 
 const Header = () => {
   const { isLogin } = useAuth();
+  const { cart } = useCart();
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const navigate = useNavigate();
 
@@ -44,12 +49,12 @@ const Header = () => {
           {/* MIDDLE: Search Bar */}
           <div className="flex-1 max-w-2xl hidden sm:flex items-center gap-0">
             <div className="h-9 flex items-center gap-1 bg-[#F4F4F4] rounded-l-full px-4 border-r border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors shrink-0">
-              <MapPin size={16} className="text-[#FFBA00]" fill="currentColor" fillOpacity={0.2} />
+              <MapPin size={16} className="text-brand-accent" fill="currentColor" fillOpacity={0.2} />
               <span className="text-xs font-semibold whitespace-nowrap hidden lg:inline">Toàn quốc</span>
               <ChevronDown size={12} />
             </div>
 
-            <div className="flex-1 h-9 flex items-center bg-[#F4F4F4] rounded-r-full px-3 relative group border border-transparent focus-within:border-[#FFBA00] transition-all">
+            <div className="flex-1 h-9 flex items-center bg-[#F4F4F4] rounded-r-full px-3 relative group border border-transparent focus-within:border-brand-accent transition-all">
               <Search size={16} className="text-gray-500 shrink-0" />
               <input
                   type="text"
@@ -74,7 +79,25 @@ const Header = () => {
             <div className="hidden lg:flex items-center gap-1">
               <HeaderButton icon={<Heart size={18} />} />
               <HeaderButton icon={<Bell size={18} />} />
-              <HeaderButton icon={<MessageCircle size={18} />} label="Liên hệ" />
+              <HeaderButton 
+                icon={<MessageCircle size={18} />} 
+                label="Liên hệ" 
+                onClick={() => navigate('/chat')} 
+              />
+            </div>
+
+            {/* Shopping Cart */}
+            <div className="relative">
+              <HeaderButton 
+                icon={<ShoppingCart size={18} />} 
+                onClick={() => setIsMiniCartOpen(!isMiniCartOpen)} 
+              />
+              {cart.length > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-brand-price text-white text-[9px] font-bold w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white">
+                  {cart.reduce((sum, item) => sum + item.quantity, 0)}
+                </span>
+              )}
+              <MiniCart isOpen={isMiniCartOpen} onClose={() => setIsMiniCartOpen(false)} />
             </div>
 
             {!isLogin && (
@@ -85,7 +108,7 @@ const Header = () => {
                 </button>
             )}
 
-            <button className="h-9 px-4 sm:flex items-center justify-center gap-1 bg-[#FFD400] hover:bg-[#e6bf00] rounded-full transition-all shadow-sm">
+            <button className="h-9 px-4 sm:flex items-center justify-center gap-1 bg-brand-primary hover:bg-brand-hover rounded-full transition-all shadow-sm">
               <span className="text-xs font-bold text-gray-900">Đăng tin</span>
             </button>
 
@@ -123,8 +146,11 @@ const Header = () => {
   );
 };
 
-const HeaderButton = ({ icon, label }) => (
-    <button className={`h-9 flex items-center justify-center gap-2 hover:bg-gray-100 rounded-full transition-colors group ${label ? 'px-4' : 'w-9'}`}>
+const HeaderButton = ({ icon, label, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`h-9 flex items-center justify-center gap-2 hover:bg-gray-100 rounded-full transition-colors group ${label ? 'px-4' : 'w-9'}`}
+    >
     <span className="text-gray-700 group-hover:text-black">
       {icon}
     </span>

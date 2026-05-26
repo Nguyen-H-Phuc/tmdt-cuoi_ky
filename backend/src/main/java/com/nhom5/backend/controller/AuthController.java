@@ -89,10 +89,13 @@ public class AuthController {
         String token = jwtService.generateToken(user.getEmail());
 
         // Chuyển hướng người dùng quay lại React kèm Token trên URL
-        String redirectUrl = String.format("http://localhost:5173/?token=%s&fullName=%s&role=%s",
+        String redirectUrl = String.format("http://localhost:5173/?token=%s&fullName=%s&role=%s&userId=%d&email=%s&avatar=%s",
                 token,
                 URLEncoder.encode(user.getFullName(), StandardCharsets.UTF_8),
-                user.getRole().name());
+                user.getRole().name(),
+                user.getUserId(),
+                URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8),
+                URLEncoder.encode(user.getAvatar() != null ? user.getAvatar() : "", StandardCharsets.UTF_8));
 
         response.sendRedirect(redirectUrl);
     }

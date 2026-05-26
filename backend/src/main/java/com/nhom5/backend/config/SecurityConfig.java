@@ -39,17 +39,19 @@ public class SecurityConfig {
                     corsConfiguration.setAllowCredentials(true);
                     return corsConfiguration;
                 }))
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/api/auth/**", "/login/**", "/oauth2/**", "/api/products/**", "/api/reviews/**", "/api/favorites/**", "/ws/**", "/api/statistics/**", "/api/categories/**", "/api/chat/**").permitAll()
-                    .anyRequest().authenticated()
-            )
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)) // Không dùng Session
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class) // Chèn máy soát vé vào đây
-            .oauth2Login(oauth -> oauth
-                    .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                    .defaultSuccessUrl("/api/auth/oauth2-success", true)
-            );
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**", "/login/**", "/oauth2/**",
+                                "/api/products/**", "/api/reviews/**", "/api/favorites/**", "/ws/**",
+                                "/api/statistics/**", "/api/categories/**", "/api/chat/**", "/api/orders/**",
+                                "/api/cart/**", "/api/users/**", "/uploads/**")
+                        .permitAll()
+                        .anyRequest().authenticated())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)) // Không dùng Session
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class) // Chèn máy soát vé vào đây
+                .oauth2Login(oauth -> oauth
+                        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                        .defaultSuccessUrl("/api/auth/oauth2-success", true));
         return http.build();
     }
 }

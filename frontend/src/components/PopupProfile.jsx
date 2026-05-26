@@ -10,7 +10,8 @@ import {
     Coins, 
     ShieldCheck, 
     LogOut, 
-    ChevronRight 
+    ChevronRight,
+    MessageCircle
 } from 'lucide-react';
 
 // Sử dụng Lucide icons thay thế cho SVG cũ
@@ -59,7 +60,9 @@ const PopupProfile = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
 
     const fullName = user?.fullName || "Khách";
-    const avatarUrl = user?.avatar || "https://placehold.co/80x80";
+    const avatarUrl = (!user?.avatar || user.avatar === 'null' || user.avatar === 'undefined')
+        ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${fullName || 'Default'}`
+        : user.avatar;
 
     const handleLogout = (e) => {
         e.stopPropagation();
@@ -83,7 +86,7 @@ const PopupProfile = ({ isOpen, onClose }) => {
                 <div className="shrink-0 p-4 flex flex-col items-center gap-3">
                     <div className="relative">
                         <img className="w-14 h-14 rounded-full border border-neutral-200 object-cover" src={avatarUrl} alt="Avatar" />
-                        <div className="absolute bottom-0 right-0 transform translate-x-1 translate-y-1 bg-[#FFBA00] rounded-full p-1 border-2 border-white">
+                        <div className="absolute bottom-0 right-0 transform translate-x-1 translate-y-1 bg-brand-accent rounded-full p-1 border-2 border-white">
                             {ICONS.EDIT}
                         </div>
                     </div>
@@ -105,7 +108,7 @@ const PopupProfile = ({ isOpen, onClose }) => {
                                 <div className="w-4 h-4 flex items-center justify-center scale-90">{ICONS.CHOTOT_COIN}</div>
                             </div>
                         </div>
-                        <button className="w-full h-7 bg-[#FFBA00] hover:bg-[#e6bf00] rounded-lg text-neutral-800 text-xs font-bold transition-all active:scale-[0.98]">
+                        <button className="w-full h-7 bg-brand-primary hover:bg-brand-hover rounded-lg text-neutral-800 text-xs font-bold transition-all active:scale-[0.98]">
                             Nạp ngay
                         </button>
                     </div>
@@ -114,6 +117,7 @@ const PopupProfile = ({ isOpen, onClose }) => {
                 {/* Menu List (Scrollable) */}
                 <div className="flex-1 overflow-y-auto">
                     <SectionHeader title="Tiện ích" />
+                    <MenuItem label="Hộp thư nhắn tin" icon={<MessageCircle size={18} className="text-gray-400" />} onClick={() => { navigate('/chat'); onClose(); }} />
                     <MenuItem label="Tin đăng đã lưu" icon={ICONS.SAVED_POSTS} />
                     <MenuItem label="Tìm kiếm đã lưu" icon={ICONS.SAVED_SEARCH} />
                     <MenuItem label="Lịch sử xem tin" icon={ICONS.HISTORY} />

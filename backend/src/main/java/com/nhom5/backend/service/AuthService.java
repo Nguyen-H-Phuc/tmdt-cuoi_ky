@@ -186,6 +186,22 @@ public class AuthService {
 
         // 4. Create and return JWT
         String token = jwtService.generateToken(user.getEmail());
-        return new LoginResponse(token, user.getFullName(), user.getRole().name());
+        return new LoginResponse(token, user.getFullName(), user.getRole().name(), user.getUserId(), user.getEmail(), user.getAvatar());
+    }
+
+    @Transactional
+    public void changePassword(Integer userId, PasswordUpdateRequest request) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
+
+        LocalAccount localAccount = localAccountRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Tài khoản liên kết mạng xã hội không hỗ trợ đổi mật khẩu qua đây."));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), localAccount.getPasswordHash())) {
+            throw new RuntimeException("Mật khẩu hiện tại không chính xác.");
+        }
+
+        localAccount.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        localAccountRepository.save(localAccount);
     }
 }
