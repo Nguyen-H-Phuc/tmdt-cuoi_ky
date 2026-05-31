@@ -15,6 +15,7 @@ import com.nhom5.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -157,6 +158,38 @@ public class ProductService {
         product.setIsHidden(hidden);
         Product savedProduct = productRepository.save(product);
         return convertToDTO(savedProduct);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductDTO> getFilteredProducts(String location, Integer categoryId, Double priceMin, Double priceMax, String status, String sortBy) {
+        Sort sort = Sort.unsorted();
+        if (sortBy != null) {
+            switch (sortBy) {
+                case "newest":
+                    sort = Sort.by(Sort.Direction.DESC, "createdAt");
+                    break;
+                case "priceAsc":
+                    sort = Sort.by(Sort.Direction.ASC, "price");
+                    break;
+                case "priceDesc":
+                    sort = Sort.by(Sort.Direction.DESC, "price");
+                    break;
+                case "mostViewed":
+                    sort = Sort.by(Sort.Direction.DESC, "viewCount");
+                    break;
+                case "relevance":
+                default:
+                    sort = Sort.by(Sort.Direction.DESC, "productId");
+                    break;
+            }
+        } else {
+            sort = Sort.by(Sort.Direction.DESC, "productId");
+        }
+
+        List<Product> products = productRepository.filterProducts(location, categoryId, priceMin, priceMax, status, sort);
+        return products.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     public ProductDTO convertToDTO(Product product) {

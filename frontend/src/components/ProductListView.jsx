@@ -4,7 +4,7 @@ import ProductCard from './ProductCard';
 import { ChevronDown, Grid, List } from 'lucide-react';
 import axios from 'axios';
 
-const ProductListView = () => {
+const ProductListView = ({ filters }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -28,7 +28,17 @@ const ProductListView = () => {
         const fetchProducts = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get('http://localhost:8080/api/products');
+                
+                // Build request parameters for backend sorting & filtering
+                const params = {};
+                if (filters?.location) params.location = filters.location;
+                if (filters?.categoryId !== null && filters?.categoryId !== undefined) params.categoryId = filters.categoryId;
+                if (filters?.priceMin !== '') params.priceMin = filters.priceMin;
+                if (filters?.priceMax !== '') params.priceMax = filters.priceMax;
+                if (filters?.status) params.status = filters.status;
+                if (sortBy) params.sortBy = sortBy;
+
+                const response = await axios.get('http://localhost:8080/api/products', { params });
                 // Map the backend data to match the frontend expectations
                 const mappedProducts = response.data.map(p => ({
                     id: p.productId,
@@ -48,6 +58,8 @@ const ProductListView = () => {
                     sellerAvatar: p.seller?.avatar || "https://placehold.co/100x100/333333/FFFFFF?text=U",
                     isProSeller: p.seller?.role === 'admin',
                     category: typeof p.category === 'object' ? p.category : { categoryName: p.category },
+                    categoryId: p.categoryId,
+                    status: p.status,
                     user: p.seller
                 }));
                 setProducts(mappedProducts);
@@ -60,7 +72,7 @@ const ProductListView = () => {
         };
 
         fetchProducts();
-    }, []);
+    }, [filters?.location, filters?.categoryId, filters?.priceMin, filters?.priceMax, filters?.status, sortBy]);
 
     // Close sort dropdown when clicking outside
     useEffect(() => {
@@ -75,24 +87,8 @@ const ProductListView = () => {
         };
     }, []);
 
-    // Sort products based on selected option
-    const sortedProducts = [...products].sort((a, b) => {
-        switch (sortBy) {
-            case 'newest':
-                const timeA = a.rawCreatedAt ? new Date(a.rawCreatedAt).getTime() : 0;
-                const timeB = b.rawCreatedAt ? new Date(b.rawCreatedAt).getTime() : 0;
-                return timeB - timeA;
-            case 'priceAsc':
-                return a.rawPrice - b.rawPrice;
-            case 'priceDesc':
-                return b.rawPrice - a.rawPrice;
-            case 'mostViewed':
-                return b.viewCount - a.viewCount;
-            case 'relevance':
-            default:
-                return 0; // Keep original api order
-        }
-    });
+    // Products are already filtered and sorted by the backend
+    const sortedProducts = products;
 
     return (
         <div className="w-full max-w-4xl mx-auto bg-white rounded-md shadow-sm border border-gray-100 mt-6">
