@@ -7,11 +7,27 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Integer> {
+
+    @Query("SELECT p FROM Product p WHERE p.approvalStatus = 'approved' AND p.isDeleted = false AND p.isHidden = false " +
+           "AND (:location IS NULL OR :location = 'Toàn quốc' OR LOWER(p.seller.address) LIKE LOWER(CONCAT('%', :location, '%'))) " +
+           "AND (:categoryId IS NULL OR p.category.categoryId = :categoryId) " +
+           "AND (:priceMin IS NULL OR p.price >= :priceMin) " +
+           "AND (:priceMax IS NULL OR p.price <= :priceMax) " +
+           "AND (:status IS NULL OR :status = '' OR p.status = :status)")
+    List<Product> filterProducts(
+            @Param("location") String location,
+            @Param("categoryId") Integer categoryId,
+            @Param("priceMin") Double priceMin,
+            @Param("priceMax") Double priceMax,
+            @Param("status") String status,
+            Sort sort
+    );
     // Lấy tất cả sản phẩm đã duyệt và chưa bị ẩn/xóa
     List<Product> findByApprovalStatusAndIsDeletedFalseAndIsHiddenFalse(String approvalStatus);
 

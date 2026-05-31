@@ -31,13 +31,16 @@ public class ProductController {
     @Autowired
     private CloudinaryService cloudinaryService;
 
-    // 1. Lấy tất cả sản phẩm công khai (đã duyệt, chưa bị ẩn và chưa bị xóa)
+    // 1. Lấy tất cả sản phẩm công khai (đã duyệt, chưa bị ẩn và chưa bị xóa) có bộ lọc
     @GetMapping
-    public ResponseEntity<List<ProductDTO>> getAllProducts() {
-        List<Product> products = productRepository.findByApprovalStatusAndIsDeletedFalseAndIsHiddenFalse("approved");
-        List<ProductDTO> dtos = products.stream()
-                .map(productService::convertToDTO)
-                .collect(Collectors.toList());
+    public ResponseEntity<List<ProductDTO>> getAllProducts(
+            @RequestParam(value = "location", required = false) String location,
+            @RequestParam(value = "categoryId", required = false) Integer categoryId,
+            @RequestParam(value = "priceMin", required = false) Double priceMin,
+            @RequestParam(value = "priceMax", required = false) Double priceMax,
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "sortBy", required = false) String sortBy) {
+        List<ProductDTO> dtos = productService.getFilteredProducts(location, categoryId, priceMin, priceMax, status, sortBy);
         return ResponseEntity.ok(dtos);
     }
 
