@@ -1,9 +1,11 @@
 import React from 'react';
 import { Heart, Image as ImageIcon, MapPin } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const ProductListItem = ({ product }) => {
     // Fallback data if product is not provided
     const {
+        productId = 1,
         title = "Tủ quần áo Tủ quần áo # Tủ quần áo ,Tủ quần áo",
         specs = "Mới • Nhựa",
         price = "1.900.000 đ",
@@ -18,7 +20,7 @@ const ProductListItem = ({ product }) => {
     } = product || {};
 
     return (
-        <div className="flex w-full gap-4 py-4 border-b border-gray-100 bg-white hover:bg-gray-50 transition-colors cursor-pointer group">
+        <Link to={`/product/${productId}`} className="flex w-full gap-4 py-4 border-b border-gray-100 bg-white hover:bg-gray-50 transition-colors cursor-pointer group">
             {/* Left: Media Section */}
             <div className="relative w-32 h-32 md:w-36 md:h-36 flex-shrink-0">
                 <img 
@@ -88,13 +90,19 @@ const ProductListItem = ({ product }) => {
                         </div>
                         
                         {/* Heart Button */}
-                        <button className="text-gray-400 hover:text-[#e51c24] transition-colors p-1" onClick={(e) => e.stopPropagation()}>
+                        <button 
+                            className="text-gray-400 hover:text-[#e51c24] transition-colors p-1" 
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                            }}
+                        >
                             <Heart size={20} strokeWidth={1.5} />
                         </button>
                     </div>
                 </div>
             </div>
-        </div>
+        </Link>
     );
 };
 
