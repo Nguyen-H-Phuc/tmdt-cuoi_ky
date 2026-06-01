@@ -192,6 +192,29 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<ProductDTO> getAllProductsForAdmin() {
+        List<Product> products = productRepository.findByIsDeletedFalseOrderByCreatedAtDesc();
+        return products.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public ProductDTO updateApprovalStatus(Integer productId, String approvalStatus) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
+        product.setApprovalStatus(approvalStatus);
+        
+        // Nếu đã phê duyệt, đảm bảo trạng thái bán là available
+        if ("approved".equals(approvalStatus)) {
+            product.setStatus("available");
+        }
+        
+        Product savedProduct = productRepository.save(product);
+        return convertToDTO(savedProduct);
+    }
+
     public ProductDTO convertToDTO(Product product) {
         ProductDTO dto = new ProductDTO();
         dto.setProductId(product.getProductId());
