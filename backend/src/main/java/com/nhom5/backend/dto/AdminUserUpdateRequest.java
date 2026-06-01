@@ -21,6 +21,8 @@ public class AdminUserUpdateRequest {
 
     private String address;
 
+    private String bio;
+
     @NotBlank(message = "Vai trò không được để trống")
     private String role;
 }
