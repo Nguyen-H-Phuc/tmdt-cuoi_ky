@@ -25,20 +25,9 @@ const AdminDashboardPage = () => {
         const reportsRes = await axios.get('http://localhost:8080/api/reviews/reports');
         setRecentReports(reportsRes.data.slice(0, 3)); // Only show top 3 on dashboard
 
-        // Fetch products to compute stats
-        const productsRes = await axios.get('http://localhost:8080/api/products');
-        
-        // Fetch users to compute stats (in a real app, these would come from an admin stats API endpoint)
-        // Here we mock/derive statistics based on existing datasets
-        const activeCount = productsRes.data.filter(p => p.status === 'available').length;
-        const pendingCount = productsRes.data.filter(p => p.approvalStatus === 'pending').length;
-        
-        setStats({
-          totalRevenue: 15480000, // Derived or mocked revenue for demo
-          activeProducts: activeCount || 5,
-          pendingProducts: pendingCount || 2,
-          totalUsers: 45
-        });
+        // Fetch dashboard statistics from backend
+        const statsRes = await axios.get('http://localhost:8080/api/statistics/admin');
+        setStats(statsRes.data);
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
       } finally {
@@ -109,7 +98,7 @@ const AdminDashboardPage = () => {
         
         {/* Chart View */}
         <div className="lg:col-span-2 h-full">
-          <RevenueChart />
+          <RevenueChart isAdmin={true} />
         </div>
 
         {/* Action Center Sidebar Card */}
