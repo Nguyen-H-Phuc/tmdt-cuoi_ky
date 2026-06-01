@@ -40,51 +40,13 @@ const AdminProductsPage = () => {
     try {
       setIsLoading(true);
       setError(null);
-      // Fetch products from public API (or admin API if written)
-      const response = await axios.get('http://localhost:8080/api/products');
-      
-      // Fallback: If public endpoint returns only approved, we add some mock pending ones for admin simulation
-      let data = response.data;
-      if (data.length > 0) {
-        // If there are no pending products, mock a couple of them for administration demo
-        const hasPending = data.some(p => p.approvalStatus === 'pending');
-        if (!hasPending) {
-          const mockPending = [
-            {
-              productId: 991,
-              title: '[Chờ Duyệt] Sách Giải Tích 1 + 2 Bách Khoa',
-              price: 50000,
-              category: 'Giải trí, Thể thao, Sở thích',
-              status: 'available',
-              approvalStatus: 'pending',
-              quantity: 1,
-              viewCount: 0,
-              description: 'Sách còn mới 95%, không viết vẽ bậy, thích hợp cho sinh viên năm nhất học đại cương.',
-              images: ['https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=400&q=80'],
-              seller: { fullName: 'Trần Văn Hoàng', email: 'hoangtv@student.edu.vn', phone: '0933221144' }
-            },
-            {
-              productId: 992,
-              title: '[Chờ Duyệt] Xe đạp địa hình Asama cũ',
-              price: 1200000,
-              category: 'Xe cộ',
-              status: 'available',
-              approvalStatus: 'pending',
-              quantity: 1,
-              viewCount: 2,
-              description: 'Xe đạp đi học bình thường, xích hơi rỉ nhưng đã tra dầu êm ru. Lốp còn bám đường tốt.',
-              images: ['https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=400&q=80'],
-              seller: { fullName: 'Nguyễn Minh Thuận', email: 'thuanmn@student.edu.vn', phone: '0977665544' }
-            }
-          ];
-          data = [...mockPending, ...data];
-        }
-      }
-      setProducts(data);
+      const response = await axios.get('http://localhost:8080/api/products/admin');
+      setProducts(response.data);
     } catch (err) {
-      console.error('Error fetching products:', err);
-      // Fail-safe mock data in case backend is offline
+      console.error('Error fetching products from backend:', err);
+      // Fallback: in case backend is offline, load mock products
       setProducts(getMockProducts());
+      showToast('Không thể kết nối đến backend, đang hiển thị dữ liệu mẫu.', 'warning');
     } finally {
       setIsLoading(false);
     }
@@ -96,20 +58,17 @@ const AdminProductsPage = () => {
 
   const handleApprove = async (productId) => {
     try {
-      // Opt-in: Try calling API if backend implemented `/api/admin/products/{id}/approve`
-      // For now, we update local state first
+      await axios.put(`http://localhost:8080/api/products/${productId}/approval`, null, { params: { status: 'approved' } });
       setProducts(prev => 
-        prev.map(p => p.productId === productId ? { ...p, approvalStatus: 'approved' } : p)
+        prev.map(p => p.productId === productId ? { ...p, approvalStatus: 'approved', status: 'available' } : p)
       );
       if (selectedProduct?.productId === productId) {
-        setSelectedProduct(prev => ({ ...prev, approvalStatus: 'approved' }));
+        setSelectedProduct(prev => ({ ...prev, approvalStatus: 'approved', status: 'available' }));
       }
-      // Silently try put call
-      await axios.put(`http://localhost:8080/api/products/${productId}/status`, null, { params: { status: 'available' } });
       showToast('Đã phê duyệt sản phẩm thành công!', 'success');
     } catch (err) {
-      console.log('Backend approval endpoint not fully setup, simulated locally.');
-      showToast('Phê duyệt sản phẩm thành công (Simulated)!', 'success');
+      console.error('Error approving product:', err);
+      showToast('Không thể kết nối với máy chủ để phê duyệt.', 'error');
     }
   };
 
@@ -126,14 +85,20 @@ const AdminProductsPage = () => {
     );
   };
 
-  const executeReject = (productId) => {
-    setProducts(prev => 
-      prev.map(p => p.productId === productId ? { ...p, approvalStatus: 'rejected' } : p)
-    );
-    if (selectedProduct?.productId === productId) {
-      setSelectedProduct(prev => ({ ...prev, approvalStatus: 'rejected' }));
+  const executeReject = async (productId) => {
+    try {
+      await axios.put(`http://localhost:8080/api/products/${productId}/approval`, null, { params: { status: 'rejected' } });
+      setProducts(prev => 
+        prev.map(p => p.productId === productId ? { ...p, approvalStatus: 'rejected' } : p)
+      );
+      if (selectedProduct?.productId === productId) {
+        setSelectedProduct(prev => ({ ...prev, approvalStatus: 'rejected' }));
+      }
+      showToast('Đã từ chối bài đăng này.', 'warning');
+    } catch (err) {
+      console.error('Error rejecting product:', err);
+      showToast('Không thể kết nối với máy chủ để từ chối bài đăng.', 'error');
     }
-    showToast('Đã từ chối bài đăng này.', 'warning');
   };
 
   const handleDelete = (productId) => {
@@ -149,9 +114,19 @@ const AdminProductsPage = () => {
     );
   };
 
-  const executeDelete = (productId) => {
-    setProducts(prev => prev.filter(p => p.productId !== productId));
-    showToast('Đã xóa sản phẩm thành công.', 'info');
+  const executeDelete = async (productId) => {
+    try {
+      await axios.delete(`http://localhost:8080/api/products/${productId}`);
+      setProducts(prev => prev.filter(p => p.productId !== productId));
+      if (selectedProduct?.productId === productId) {
+        setSelectedProduct(null);
+        setModalOpen(false);
+      }
+      showToast('Đã xóa sản phẩm thành công.', 'info');
+    } catch (err) {
+      console.error('Error deleting product:', err);
+      showToast('Không thể kết nối với máy chủ để xóa sản phẩm.', 'error');
+    }
   };
 
   // Helper mock values
