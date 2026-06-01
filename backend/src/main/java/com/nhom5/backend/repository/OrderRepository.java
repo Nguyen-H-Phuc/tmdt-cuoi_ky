@@ -20,6 +20,18 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
     List<Order> findBySeller_UserIdOrderByOrderDateDesc(Integer sellerId);
 
+    List<Order> findAllByOrderByOrderDateDesc();
+
+    @Query("SELECT COALESCE(SUM(o.totalPrice), 0.0) FROM Order o WHERE o.status = 'COMPLETED'")
+    Double getTotalRevenue();
+
+    @Query(value = "SELECT DATE(order_date) as date, SUM(total_price) as revenue " +
+            "FROM orders " +
+            "WHERE status = 'COMPLETED' " +
+            "GROUP BY DATE(order_date) " +
+            "ORDER BY date ASC", nativeQuery = true)
+    List<DailyRevenue> getOverallDailyRevenue();
+
     @Query(value = "SELECT DATE(order_date) as date, SUM(total_price) as revenue " +
             "FROM orders " +
             "WHERE seller_id = :sellerId AND status = 'COMPLETED' " +

@@ -11,15 +11,18 @@ import {
     Cell
 } from 'recharts';
 
-const RevenueChart = () => {
+const RevenueChart = ({ isAdmin = false, sellerId = 1 }) => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeIndex, setActiveIndex] = useState(-1);
 
     useEffect(() => {
-        // Tạm thời gọi API trần để test
-        axios.get('http://localhost:8080/api/statistics/revenue?sellerId=1')
+        const url = isAdmin 
+            ? 'http://localhost:8080/api/statistics/admin/revenue'
+            : `http://localhost:8080/api/statistics/revenue?sellerId=${sellerId}`;
+
+        axios.get(url)
             .then(response => {
                 setData(response.data);
                 setLoading(false);
@@ -29,7 +32,7 @@ const RevenueChart = () => {
                 setError("Không thể tải dữ liệu biểu đồ.");
                 setLoading(false);
             });
-    }, []);
+    }, [isAdmin, sellerId]);
 
     // Hàm định dạng tiền tệ
     const formatCurrency = (value) => {

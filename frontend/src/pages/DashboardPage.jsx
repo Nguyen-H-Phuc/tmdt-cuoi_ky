@@ -167,7 +167,7 @@ const DashboardPage = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Biểu đồ giao dịch */}
                     <div className="w-full">
-                        <RevenueChart />
+                        <RevenueChart isAdmin={true} />
                     </div>
 
                     {/* Khối lối tắt tới quản lý báo cáo */}

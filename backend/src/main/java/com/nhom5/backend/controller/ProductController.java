@@ -157,4 +157,20 @@ public class ProductController {
             return ResponseEntity.status(500).body(Map.of("message", "Lỗi trong quá trình upload ảnh: " + e.getMessage()));
         }
     }
+
+    // 13. Admin lấy tất cả sản phẩm (chưa xóa mềm)
+    @GetMapping("/admin")
+    public ResponseEntity<List<ProductDTO>> getAllProductsForAdmin() {
+        List<ProductDTO> dtos = productService.getAllProductsForAdmin();
+        return ResponseEntity.ok(dtos);
+    }
+
+    // 14. Admin cập nhật trạng thái duyệt (approved / rejected)
+    @PutMapping("/{id}/approval")
+    public ResponseEntity<ProductDTO> updateProductApproval(
+            @PathVariable Integer id,
+            @RequestParam("status") String status) {
+        ProductDTO productDTO = productService.updateApprovalStatus(id, status);
+        return ResponseEntity.ok(productDTO);
+    }
 }

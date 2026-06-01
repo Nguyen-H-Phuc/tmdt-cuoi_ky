@@ -49,6 +49,13 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     // 4. Lấy tất cả bài đăng chưa xóa của một người bán
     List<Product> findBySellerUserIdAndIsDeletedFalseOrderByCreatedAtDesc(Integer userId);
 
+    // 5. Lấy tất cả bài đăng chưa xóa cho admin
+    List<Product> findByIsDeletedFalseOrderByCreatedAtDesc();
+
+    long countByStatusAndApprovalStatusAndIsDeletedFalseAndIsHiddenFalse(String status, String approvalStatus);
+
+    long countByApprovalStatusAndIsDeletedFalse(String approvalStatus);
+
     @Modifying
     @Query("UPDATE Product p SET p.viewCount = p.viewCount + 1 WHERE p.productId = :id")
     void incrementViewCount(@Param("id") Integer id);

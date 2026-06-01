@@ -1,15 +1,19 @@
 package com.nhom5.backend.controller;
 
+import com.nhom5.backend.dto.AdminUserUpdateRequest;
 import com.nhom5.backend.dto.PasswordUpdateRequest;
 import com.nhom5.backend.dto.ProfileUpdateRequest;
 import com.nhom5.backend.dto.UserDTO;
+import com.nhom5.backend.entity.LocalAccount;
 import com.nhom5.backend.entity.User;
+import com.nhom5.backend.repository.LocalAccountRepository;
 import com.nhom5.backend.repository.UserRepository;
 import com.nhom5.backend.service.AuthService;
 import com.nhom5.backend.service.CloudinaryService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,6 +35,12 @@ public class UserController {
     @Autowired
     private AuthService authService;
 
+    @Autowired
+    private LocalAccountRepository localAccountRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     private UserDTO convertToUserDTO(User user) {
         if (user == null) return null;
         UserDTO dto = new UserDTO();
@@ -42,6 +52,7 @@ public class UserController {
         dto.setAvatar(user.getAvatar());
         dto.setBio(user.getBio());
         dto.setIsActive(user.getIsActive());
+        dto.setRole(user.getRole() != null ? user.getRole().name() : null);
         dto.setCreatedAt(user.getCreatedAt());
         return dto;
     }
@@ -121,5 +132,90 @@ public class UserController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
+    }
+
+    // 5. Admin lấy tất cả người dùng
+    @GetMapping
+    public ResponseEntity<?> getAllUsers() {
+        return ResponseEntity.ok(userRepository.findAll().stream()
+                .map(this::convertToUserDTO)
+                .toList());
+    }
+
+    // 6. Admin cập nhật thông tin người dùng (FullName, Email, Phone, Address, Role, Bio)
+    @PutMapping("/{userId}/admin")
+    public ResponseEntity<?> adminUpdateUser(
+            @PathVariable Integer userId,
+            @Valid @RequestBody AdminUserUpdateRequest request) {
+        
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("message", "Không tìm thấy người dùng."));
+        }
+
+        User user = userOpt.get();
+
+        // Kiểm tra trùng email nếu email bị thay đổi
+        if (!user.getEmail().equalsIgnoreCase(request.getEmail())) {
+            Optional<User> duplicateEmailUser = userRepository.findByEmail(request.getEmail());
+            if (duplicateEmailUser.isPresent()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Email đã được sử dụng bởi tài khoản khác."));
+            }
+        }
+
+        user.setFullName(request.getFullName());
+        user.setEmail(request.getEmail());
+        user.setPhone(request.getPhone());
+        user.setAddress(request.getAddress());
+        user.setBio(request.getBio());
+        
+        try {
+            user.setRole(User.Role.valueOf(request.getRole().toLowerCase()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Vai trò không hợp lệ. Chỉ chấp nhận 'admin' hoặc 'member'."));
+        }
+
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        return ResponseEntity.ok(convertToUserDTO(user));
+    }
+
+    // 7. Admin kích hoạt/khóa tài khoản
+    @PutMapping("/{userId}/toggle-active")
+    public ResponseEntity<?> toggleActive(@PathVariable Integer userId) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("message", "Không tìm thấy người dùng."));
+        }
+
+        User user = userOpt.get();
+        user.setIsActive(!user.getIsActive());
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        return ResponseEntity.ok(convertToUserDTO(user));
+    }
+
+    // 8. Admin reset mật khẩu về mặc định
+    @PutMapping("/{userId}/reset-password")
+    public ResponseEntity<?> resetPassword(@PathVariable Integer userId) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("message", "Không tìm thấy người dùng."));
+        }
+
+        LocalAccount localAccount = localAccountRepository.findById(userId)
+                .orElse(new LocalAccount());
+        
+        if (localAccount.getUser() == null) {
+            localAccount.setUser(userOpt.get());
+            localAccount.setIsEmailVerified(true);
+        }
+
+        localAccount.setPasswordHash(passwordEncoder.encode("Student123@"));
+        localAccountRepository.save(localAccount);
+
+        return ResponseEntity.ok(Map.of("message", "Đặt lại mật khẩu thành công về mặc định (Student123@)!"));
     }
 }
