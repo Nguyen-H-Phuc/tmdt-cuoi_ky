@@ -80,26 +80,32 @@ const AdminCategoriesPage = () => {
       return;
     }
 
-    if (editMode && selectedCategory) {
-      // Edit local state mutation (Simulated CRUD)
-      setCategories(prev => 
-        prev.map(c => c.categoryId === selectedCategory.categoryId 
-          ? { ...c, categoryName, categoryImage } 
-          : c
-        )
-      );
-      showToast('Đã cập nhật danh mục thành công!', 'success');
-    } else {
-      // Add local state mutation
-      const newCategory = {
-        categoryId: categories.length > 0 ? Math.max(...categories.map(c => c.categoryId)) + 1 : 1,
-        categoryName,
-        categoryImage
-      };
-      setCategories(prev => [newCategory, ...prev]);
-      showToast('Đã thêm danh mục mới thành công!', 'success');
+    try {
+      if (editMode && selectedCategory) {
+        const response = await axios.put(`http://localhost:8080/api/categories/${selectedCategory.categoryId}`, {
+          categoryName,
+          categoryImage
+        });
+        const updatedCategory = response.data;
+        setCategories(prev => 
+          prev.map(c => c.categoryId === selectedCategory.categoryId ? updatedCategory : c)
+        );
+        showToast('Đã cập nhật danh mục thành công!', 'success');
+      } else {
+        const response = await axios.post('http://localhost:8080/api/categories', {
+          categoryName,
+          categoryImage
+        });
+        const newCategory = response.data;
+        setCategories(prev => [newCategory, ...prev]);
+        showToast('Đã thêm danh mục mới thành công!', 'success');
+      }
+      setModalOpen(false);
+    } catch (error) {
+      console.error('Error saving category:', error);
+      const errMsg = error.response?.data?.message || 'Có lỗi xảy ra khi lưu danh mục.';
+      showToast(errMsg, 'error');
     }
-    setModalOpen(false);
   };
 
   const handleDelete = (categoryId, name) => {
@@ -115,9 +121,16 @@ const AdminCategoriesPage = () => {
     );
   };
 
-  const executeDelete = (categoryId) => {
-    setCategories(prev => prev.filter(c => c.categoryId !== categoryId));
-    showToast('Đã xóa danh mục thành công.', 'info');
+  const executeDelete = async (categoryId) => {
+    try {
+      await axios.delete(`http://localhost:8080/api/categories/${categoryId}`);
+      setCategories(prev => prev.filter(c => c.categoryId !== categoryId));
+      showToast('Đã xóa danh mục thành công.', 'info');
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      const errMsg = error.response?.data?.message || 'Không thể xóa danh mục này.';
+      showToast(errMsg, 'error');
+    }
   };
 
   // Pagination Logic
