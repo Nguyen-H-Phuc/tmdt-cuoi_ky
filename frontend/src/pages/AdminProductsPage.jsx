@@ -16,6 +16,7 @@ const AdminProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterApproval, setFilterApproval] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [sortConfig, setSortConfig] = useState({ key: '', direction: '' });
 
   // Modal details state
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -181,11 +182,34 @@ const AdminProductsPage = () => {
     return matchesSearch && matchesApproval && matchesStatus;
   });
 
+  // Sort Logic
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    
+    let aVal = a[sortConfig.key];
+    let bVal = b[sortConfig.key];
+    
+    if (sortConfig.key === 'createdAt') {
+      aVal = aVal ? new Date(aVal) : 0;
+      bVal = bVal ? new Date(bVal) : 0;
+    }
+    
+    if (typeof aVal === 'string' && typeof bVal === 'string') {
+      return sortConfig.direction === 'asc' 
+        ? aVal.localeCompare(bVal) 
+        : bVal.localeCompare(aVal);
+    }
+    
+    if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+
   // Pagination Logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const currentItems = sortedProducts.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
 
   // Table columns definition
   const columns = [
@@ -335,6 +359,8 @@ const AdminProductsPage = () => {
         columns={columns}
         data={currentItems}
         isLoading={isLoading}
+        onSort={(key, dir) => setSortConfig({ key, direction: dir })}
+        currentSort={sortConfig}
         pagination={{
           currentPage,
           totalPages,

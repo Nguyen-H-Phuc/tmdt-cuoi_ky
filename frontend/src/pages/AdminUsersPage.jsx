@@ -13,6 +13,7 @@ const AdminUsersPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [sortConfig, setSortConfig] = useState({ key: '', direction: '' });
 
   // Edit User modal states
   const [selectedUser, setSelectedUser] = useState(null);
@@ -144,11 +145,34 @@ const AdminUsersPage = () => {
     return matchesSearch && matchesRole && matchesStatus;
   });
 
+  // Sort Logic
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    
+    let aVal = a[sortConfig.key];
+    let bVal = b[sortConfig.key];
+    
+    if (sortConfig.key === 'createdAt') {
+      aVal = aVal ? new Date(aVal) : 0;
+      bVal = bVal ? new Date(bVal) : 0;
+    }
+    
+    if (typeof aVal === 'string' && typeof bVal === 'string') {
+      return sortConfig.direction === 'asc' 
+        ? aVal.localeCompare(bVal) 
+        : bVal.localeCompare(aVal);
+    }
+    
+    if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+
   // Pagination Logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const currentItems = sortedUsers.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(sortedUsers.length / itemsPerPage);
 
   const columns = [
     {
@@ -285,6 +309,8 @@ const AdminUsersPage = () => {
         columns={columns}
         data={currentItems}
         isLoading={isLoading}
+        onSort={(key, dir) => setSortConfig({ key, direction: dir })}
+        currentSort={sortConfig}
         pagination={{
           currentPage,
           totalPages,

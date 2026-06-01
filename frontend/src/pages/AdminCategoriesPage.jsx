@@ -32,6 +32,7 @@ const AdminCategoriesPage = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+  const [sortConfig, setSortConfig] = useState({ key: '', direction: '' });
 
   const fetchCategories = async () => {
     try {
@@ -133,11 +134,29 @@ const AdminCategoriesPage = () => {
     }
   };
 
+  // Sort Logic
+  const sortedCategories = [...categories].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    
+    let aVal = a[sortConfig.key];
+    let bVal = b[sortConfig.key];
+    
+    if (typeof aVal === 'string' && typeof bVal === 'string') {
+      return sortConfig.direction === 'asc' 
+        ? aVal.localeCompare(bVal) 
+        : bVal.localeCompare(aVal);
+    }
+    
+    if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+
   // Pagination Logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = categories.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(categories.length / itemsPerPage);
+  const currentItems = sortedCategories.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(sortedCategories.length / itemsPerPage);
 
   const columns = [
     {
@@ -221,6 +240,8 @@ const AdminCategoriesPage = () => {
         columns={columns}
         data={currentItems}
         isLoading={isLoading}
+        onSort={(key, dir) => setSortConfig({ key, direction: dir })}
+        currentSort={sortConfig}
         pagination={{
           currentPage,
           totalPages,
