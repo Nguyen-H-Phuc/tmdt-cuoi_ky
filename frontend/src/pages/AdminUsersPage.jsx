@@ -40,47 +40,38 @@ const AdminUsersPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
+  const fetchUsers = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get('http://localhost:8080/api/users');
+      setUsers(response.data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      // Fallback
+      setUsers(getMockUsers());
+      showToast('Không thể kết nối đến backend, đang hiển thị dữ liệu mẫu.', 'warning');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setIsLoading(true);
-        // Standard user listing (in a real app, this would query an admin-only user endpoint)
-        // Since we don't have it, we use fallback mock data representing the database users
-        // as defined in script.sql:
-        // User 1 (member), User 2 (admin), User 3 (admin), User 4 (admin), User 5 (member)
-        const mockUsers = [
-          { userId: 1, fullName: 'Xe Máy Cũ Hải Nguyễn', email: 'hainguyen@example.com', phone: '0901234567', address: 'Đà Nẵng', avatar: 'https://placehold.co/100x100/333333/FFFFFF?text=XM', role: 'member', isActive: true, bio: 'Chuyên trao đổi xe máy cũ chất lượng cho sinh viên', createdAt: '2026-04-12T08:30:00' },
-          { userId: 2, fullName: 'Nhơn', email: 'nhon@example.com', phone: '0987654321', address: 'Tp Hồ Chí Minh', avatar: 'https://placehold.co/100x100/FFCC00/000000?text=N', role: 'admin', isActive: true, bio: 'Admin chính hệ thống', createdAt: '2026-04-13T10:15:00' },
-          { userId: 3, fullName: 'Cửa Hàng Xưởng Thành Phát', email: 'thanhphat@example.com', phone: '0912345678', address: 'Tp Hồ Chí Minh', avatar: 'https://placehold.co/100x100/ADD8E6/FFFFFF?text=CH', role: 'admin', isActive: true, bio: 'Chủ xưởng nội thất đồ gỗ sinh viên', createdAt: '2026-04-14T11:45:00' },
-          { userId: 4, fullName: 'Nội Thất Diễn Phát', email: 'dienphat@example.com', phone: '0998877665', address: 'Tp Hồ Chí Minh', avatar: 'https://placehold.co/100x100/FFCC00/000000?text=N', role: 'admin', isActive: true, bio: 'Cung cấp bàn ghế nhựa lắp ghép giá rẻ', createdAt: '2026-04-15T09:20:00' },
-          { userId: 5, fullName: 'Nguyen Van Admin', email: 'a@gmail.com', phone: '0900000000', address: 'Hà Nội', avatar: null, role: 'member', isActive: true, bio: 'Sinh viên năm 4 đam mê công nghệ', createdAt: '2026-04-26T23:31:05' },
-          { userId: 6, fullName: 'Lê Hoài Nam', email: 'namlh@student.vn', phone: '0955667788', address: 'Cần Thơ', avatar: null, role: 'member', isActive: false, bio: 'Thích mua bán trao đổi sách giáo trình cũ', createdAt: '2026-05-01T14:30:00' },
-          { userId: 7, fullName: 'Ngô Mỹ Linh', email: 'linhnm@student.vn', phone: '0922334455', address: 'Đà Nẵng', avatar: null, role: 'member', isActive: true, bio: 'Tìm kiếm đồ gia dụng phòng trọ', createdAt: '2026-05-03T16:40:00' }
-        ];
-
-        setUsers(mockUsers);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchUsers();
   }, []);
 
-  const handleToggleActive = (userId) => {
-    setUsers(prev => prev.map(u => {
-      if (u.userId === userId) {
-        const nextActive = !u.isActive;
-        showToast(`Tài khoản ${u.fullName} đã bị ${nextActive ? 'KÍCH HOẠT' : 'KHÓA'} thành công.`, 'success');
-        return { ...u, isActive: nextActive };
-      }
-      return u;
-    }));
+  const handleToggleActive = async (userId) => {
+    try {
+      const response = await axios.put(`http://localhost:8080/api/users/${userId}/toggle-active`);
+      const updatedUser = response.data;
+      setUsers(prev => prev.map(u => u.userId === userId ? { ...u, isActive: updatedUser.isActive } : u));
+      showToast(`Tài khoản ${updatedUser.fullName} đã bị ${updatedUser.isActive ? 'KÍCH HOẠT' : 'KHÓA'} thành công.`, 'success');
+    } catch (error) {
+      console.error('Error toggling user status:', error);
+      showToast('Lỗi khi kích hoạt/khóa tài khoản.', 'error');
+    }
   };
 
-  const handleSaveUser = () => {
+  const handleSaveUser = async () => {
     if (!selectedUser) return;
     
     if (!editFullName.trim()) {
@@ -92,31 +83,45 @@ const AdminUsersPage = () => {
       return;
     }
 
-    setUsers(prev => prev.map(u => {
-      if (u.userId === selectedUser.userId) {
-        return { 
-          ...u, 
-          fullName: editFullName,
-          email: editEmail,
-          phone: editPhone,
-          address: editAddress,
-          bio: editBio,
-          isActive: editIsActive,
-          role: selectedRole 
-        };
-      }
-      return u;
-    }));
+    try {
+      const response = await axios.put(`http://localhost:8080/api/users/${selectedUser.userId}/admin`, {
+        fullName: editFullName,
+        email: editEmail,
+        phone: editPhone,
+        address: editAddress,
+        bio: editBio,
+        role: selectedRole
+      });
+      
+      let updatedUser = response.data;
 
-    showToast(`Đã cập nhật thông tin thành viên ${editFullName} thành công.`, 'success');
-    setEditModalOpen(false);
+      // Nếu trạng thái active trong modal khác với trạng thái ban đầu của user, gọi toggle-active
+      if (editIsActive !== selectedUser.isActive) {
+        const toggleResponse = await axios.put(`http://localhost:8080/api/users/${selectedUser.userId}/toggle-active`);
+        updatedUser = { ...updatedUser, isActive: toggleResponse.data.isActive };
+      }
+
+      setUsers(prev => prev.map(u => u.userId === selectedUser.userId ? updatedUser : u));
+      showToast(`Đã cập nhật thông tin thành viên ${editFullName} thành công.`, 'success');
+      setEditModalOpen(false);
+    } catch (error) {
+      console.error('Error saving user profile:', error);
+      const errorMsg = error.response?.data?.message || 'Lỗi khi cập nhật thông tin thành viên.';
+      showToast(errorMsg, 'error');
+    }
   };
 
   const handleResetPassword = () => {
     if (!selectedUser) return;
     triggerConfirm(
-      () => {
-        showToast(`Đã đặt lại mật khẩu cho thành viên ${selectedUser.fullName} về mặc định (Student123@) thành công!`, 'success');
+      async () => {
+        try {
+          await axios.put(`http://localhost:8080/api/users/${selectedUser.userId}/reset-password`);
+          showToast(`Đã đặt lại mật khẩu cho thành viên ${selectedUser.fullName} về mặc định (Student123@) thành công!`, 'success');
+        } catch (error) {
+          console.error('Error resetting password:', error);
+          showToast('Lỗi khi đặt lại mật khẩu thành viên.', 'error');
+        }
       },
       {
         title: 'Đặt lại mật khẩu',
@@ -528,3 +533,13 @@ const AdminUsersPage = () => {
 };
 
 export default AdminUsersPage;
+
+const getMockUsers = () => [
+  { userId: 1, fullName: 'Xe Máy Cũ Hải Nguyễn', email: 'hainguyen@example.com', phone: '0901234567', address: 'Đà Nẵng', avatar: 'https://placehold.co/100x100/333333/FFFFFF?text=XM', role: 'member', isActive: true, bio: 'Chuyên trao đổi xe máy cũ chất lượng cho sinh viên', createdAt: '2026-04-12T08:30:00' },
+  { userId: 2, fullName: 'Nhơn', email: 'nhon@example.com', phone: '0987654321', address: 'Tp Hồ Chí Minh', avatar: 'https://placehold.co/100x100/FFCC00/000000?text=N', role: 'admin', isActive: true, bio: 'Admin chính hệ thống', createdAt: '2026-04-13T10:15:00' },
+  { userId: 3, fullName: 'Cửa Hàng Xưởng Thành Phát', email: 'thanhphat@example.com', phone: '0912345678', address: 'Tp Hồ Chí Minh', avatar: 'https://placehold.co/100x100/ADD8E6/FFFFFF?text=CH', role: 'admin', isActive: true, bio: 'Chủ xưởng nội thất đồ gỗ sinh viên', createdAt: '2026-04-14T11:45:00' },
+  { userId: 4, fullName: 'Nội Thất Diễn Phát', email: 'dienphat@example.com', phone: '0998877665', address: 'Tp Hồ Chí Minh', avatar: 'https://placehold.co/100x100/FFCC00/000000?text=N', role: 'admin', isActive: true, bio: 'Cung cấp bàn ghế nhựa lắp ghép giá rẻ', createdAt: '2026-04-15T09:20:00' },
+  { userId: 5, fullName: 'Nguyen Van Admin', email: 'a@gmail.com', phone: '0900000000', address: 'Hà Nội', avatar: null, role: 'member', isActive: true, bio: 'Sinh viên năm 4 đam mê công nghệ', createdAt: '2026-04-26T23:31:05' },
+  { userId: 6, fullName: 'Lê Hoài Nam', email: 'namlh@student.vn', phone: '0955667788', address: 'Cần Thơ', avatar: null, role: 'member', isActive: false, bio: 'Thích mua bán trao đổi sách giáo trình cũ', createdAt: '2026-05-01T14:30:00' },
+  { userId: 7, fullName: 'Ngô Mỹ Linh', email: 'linhnm@student.vn', phone: '0922334455', address: 'Đà Nẵng', avatar: null, role: 'member', isActive: true, bio: 'Tìm kiếm đồ gia dụng phòng trọ', createdAt: '2026-05-03T16:40:00' }
+];
