@@ -2,7 +2,7 @@ import React from 'react';
 import { X, MapPin, User, Phone, CreditCard, Clock, Truck, Calendar, FileText, ShoppingBag, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const OrderDetailModal = ({ isOpen, onClose, order, onCancelOrder, onPayNow }) => {
+const OrderDetailModal = ({ isOpen, onClose, order, onCancelOrder, onPayNow, isAdminView = false }) => {
   const navigate = useNavigate();
   if (!isOpen || !order) return null;
 
@@ -39,6 +39,8 @@ const OrderDetailModal = ({ isOpen, onClose, order, onCancelOrder, onPayNow }) =
         return { label: 'Chờ thanh toán', color: 'bg-amber-50 text-amber-600 border-amber-200', desc: 'Đơn hàng đang chờ thanh toán qua cổng VNPAY.' };
       case 'PENDING':
         return { label: 'Chờ xác nhận', color: 'bg-blue-50 text-blue-600 border-blue-200', desc: 'Đã tạo đơn hàng thành công, chờ người bán xác nhận.' };
+      case 'ACCEPTED':
+        return { label: 'Đã nhận đơn', color: 'bg-indigo-50 text-indigo-600 border-indigo-200', desc: 'Người bán đã nhận đơn hàng và đang chuẩn bị bàn giao.' };
       case 'COMPLETED':
         return { label: 'Hoàn thành', color: 'bg-emerald-50 text-emerald-600 border-emerald-200', desc: 'Đơn hàng đã được thanh toán và giao dịch thành công.' };
       case 'CANCELLED':
@@ -114,12 +116,13 @@ const OrderDetailModal = ({ isOpen, onClose, order, onCancelOrder, onPayNow }) =
               </div>
               {order.statusDate && (
                 <div className="flex items-center gap-2 font-bold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0 animate-ping"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0"></span>
                   <span>
                     {order.status?.toUpperCase() === 'COMPLETED' && 'Thời gian hoàn thành: '}
                     {order.status?.toUpperCase() === 'CANCELLED' && 'Thời gian hủy đơn: '}
                     {order.status?.toUpperCase() === 'PENDING_PAYMENT' && 'Cập nhật thanh toán: '}
                     {order.status?.toUpperCase() === 'PENDING' && 'Cập nhật trạng thái: '}
+                    {order.status?.toUpperCase() === 'ACCEPTED' && 'Thời gian nhận đơn: '}
                     {formatDate(order.statusDate)}
                   </span>
                 </div>
@@ -187,7 +190,7 @@ const OrderDetailModal = ({ isOpen, onClose, order, onCancelOrder, onPayNow }) =
               <div className="space-y-2 text-[11px] text-gray-600">
                 <div>
                   <span className="font-semibold text-gray-800">Hình thức:</span> {
-                    order.paymentMethod === 'vnpay' ? 'Thanh toán trực tuyến qua VNPAY' : 'Thanh toán khi nhận hàng (COD)'
+                    order.paymentMethod?.toLowerCase() === 'vnpay' ? 'Thanh toán trực tuyến qua VNPAY' : 'Thanh toán khi nhận hàng (COD)'
                   }
                 </div>
                 <div>
@@ -199,6 +202,37 @@ const OrderDetailModal = ({ isOpen, onClose, order, onCancelOrder, onPayNow }) =
             </div>
 
           </div>
+
+          {/* Admin specific buyer/seller accounts view */}
+          {isAdminView && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-neutral-50/50 p-4 rounded-xl border border-neutral-100">
+              {/* Buyer account */}
+              <div className="space-y-2.5">
+                <h4 className="text-xs font-bold text-gray-800 flex items-center gap-1.5 border-b border-gray-200 pb-1.5">
+                  <User size={14} className="text-brand-primary" />
+                  Tài khoản mua hàng (Admin)
+                </h4>
+                <div className="space-y-1.5 text-[11px] text-gray-600">
+                  <p><span className="font-semibold text-gray-850">Họ tên:</span> {order.buyer?.fullName || 'N/A'}</p>
+                  <p><span className="font-semibold text-gray-850">Số điện thoại:</span> {order.buyer?.phone || 'Chưa cung cấp'}</p>
+                  <p><span className="font-semibold text-gray-850">Email:</span> <span className="font-mono">{order.buyer?.email || 'N/A'}</span></p>
+                </div>
+              </div>
+
+              {/* Seller account */}
+              <div className="space-y-2.5">
+                <h4 className="text-xs font-bold text-gray-800 flex items-center gap-1.5 border-b border-gray-200 pb-1.5">
+                  <User size={14} className="text-brand-primary" />
+                  Tài khoản bán hàng (Admin)
+                </h4>
+                <div className="space-y-1.5 text-[11px] text-gray-600">
+                  <p><span className="font-semibold text-gray-850">Họ tên:</span> {order.seller?.fullName || 'N/A'}</p>
+                  <p><span className="font-semibold text-gray-850">Số điện thoại:</span> {order.seller?.phone || 'Chưa cung cấp'}</p>
+                  <p><span className="font-semibold text-gray-850">Email:</span> <span className="font-mono">{order.seller?.email || 'N/A'}</span></p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Product section */}
           <div className="space-y-3">
@@ -220,13 +254,15 @@ const OrderDetailModal = ({ isOpen, onClose, order, onCancelOrder, onPayNow }) =
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-brand-accent">{formatPrice(order.product.price)}</span>
-                    <button
-                      onClick={handleChatWithSeller}
-                      className="text-[10px] font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 border border-gray-200"
-                    >
-                      <MessageSquare size={12} />
-                      Chat với người bán
-                    </button>
+                    {!isAdminView && (
+                      <button
+                        onClick={handleChatWithSeller}
+                        className="text-[10px] font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 border border-gray-200"
+                      >
+                        <MessageSquare size={12} />
+                        Chat với người bán
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -262,19 +298,31 @@ const OrderDetailModal = ({ isOpen, onClose, order, onCancelOrder, onPayNow }) =
           
           {/* Secondary / Danger Actions on Left */}
           <div>
-            {(order.status?.toUpperCase() === 'PENDING' || order.status?.toUpperCase() === 'PENDING_PAYMENT') && (
-              <button
-                onClick={() => onCancelOrder(order.orderId)}
-                className="px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition-all border border-red-200"
-              >
-                Hủy đơn hàng
-              </button>
+            {isAdminView ? (
+              (order.status?.toUpperCase() === 'PENDING' || order.status?.toUpperCase() === 'ACCEPTED' || order.status?.toUpperCase() === 'PENDING_PAYMENT') && (
+                <button
+                  onClick={() => onCancelOrder(order.orderId)}
+                  className="px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-100 rounded-xl transition-all border border-red-200 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <X size={14} />
+                  Hủy cưỡng chế (Quyền Admin)
+                </button>
+              )
+            ) : (
+              (order.status?.toUpperCase() === 'PENDING' || order.status?.toUpperCase() === 'PENDING_PAYMENT') && (
+                <button
+                  onClick={() => onCancelOrder(order.orderId)}
+                  className="px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition-all border border-red-200 cursor-pointer"
+                >
+                  Hủy đơn hàng
+                </button>
+              )
             )}
           </div>
 
           {/* Primary Actions on Right */}
           <div className="flex gap-2">
-            {order.status?.toUpperCase() === 'PENDING_PAYMENT' && order.paymentUrl && (
+            {!isAdminView && order.status?.toUpperCase() === 'PENDING_PAYMENT' && order.paymentUrl && (
               <button
                 onClick={() => onPayNow(order.paymentUrl)}
                 className="px-5 py-2 text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 rounded-xl shadow-sm transition-all flex items-center gap-1.5"
@@ -285,7 +333,7 @@ const OrderDetailModal = ({ isOpen, onClose, order, onCancelOrder, onPayNow }) =
             )}
             <button
               onClick={onClose}
-              className="px-5 py-2 text-xs font-bold text-gray-700 bg-white border border-gray-250 hover:bg-gray-50 rounded-xl transition-all shadow-sm"
+              className="px-5 py-2 text-xs font-bold text-gray-700 bg-white border border-gray-250 hover:bg-gray-50 rounded-xl transition-all shadow-sm cursor-pointer"
             >
               Đóng
             </button>
