@@ -29,91 +29,13 @@ const AdminOrdersPage = () => {
   const fetchOrders = async () => {
     try {
       setIsLoading(true);
-      // In a real app, we would fetch from `/api/admin/orders` or similar.
-      // Since it is not implemented on the backend yet, we use a robust fallback mock dataset
-      // matching the SQL schema and existing dummy data.
-      const mockOrders = [
-        {
-          orderId: 101,
-          orderCode: 'ORD-5849-231',
-          buyer: { userId: 5, fullName: 'Nguyen Van Admin', email: 'a@gmail.com', phone: '0900000000', avatar: null },
-          seller: { userId: 1, fullName: 'Xe Máy Cũ Hải Nguyễn', email: 'hainguyen@example.com', phone: '0901234567', avatar: 'https://placehold.co/100x100/333333/FFFFFF?text=XM' },
-          product: { productId: 1, title: 'Ex xuống áo 2010 vàng đen siêu đẹp nợ xấu đưa 8tr5', price: 26800000, imageUrl: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=400&q=80' },
-          totalPrice: 26800000,
-          status: 'PENDING',
-          paymentMethod: 'vnpay',
-          receiverName: 'Nguyen Van Admin',
-          receiverPhone: '0900000000',
-          deliveryMethod: 'home',
-          university: 'Đại học Bách Khoa Đà Nẵng',
-          dormInfo: 'Ký túc xá khu B, Phòng 402',
-          specificAddress: '54 Nguyễn Lương Bằng, Hòa Khánh Bắc, Liên Chiểu',
-          notes: 'Gọi điện trước khi giao hàng tầm 15 phút giúp mình.',
-          orderDate: '2026-05-28T09:15:00',
-          statusDate: '2026-05-28T09:15:00'
-        },
-        {
-          orderId: 102,
-          orderCode: 'ORD-9821-492',
-          buyer: { userId: 1, fullName: 'Xe Máy Cũ Hải Nguyễn', email: 'hainguyen@example.com', phone: '0901234567', avatar: 'https://placehold.co/100x100/333333/FFFFFF?text=XM' },
-          seller: { userId: 2, fullName: 'Nhơn', email: 'nhon@example.com', phone: '0987654321', avatar: 'https://placehold.co/100x100/FFCC00/000000?text=N' },
-          product: { productId: 3, title: 'Nghỉ bán thanh lý đồ Nam shop', price: 120000, imageUrl: 'https://images.unsplash.com/photo-1562157873-818bc0726f68?auto=format&fit=crop&w=400&q=80' },
-          totalPrice: 120000,
-          status: 'COMPLETED',
-          paymentMethod: 'cod',
-          receiverName: 'Hải Nguyễn',
-          receiverPhone: '0901234567',
-          deliveryMethod: 'campus',
-          university: 'Đại học Sư phạm Kỹ thuật TP.HCM',
-          dormInfo: null,
-          specificAddress: '1 Võ Văn Ngân, Linh Chiểu, Thủ Đức',
-          notes: 'Hẹn gặp ở cổng phụ đường Lê Văn Chí.',
-          orderDate: '2026-05-29T14:40:00',
-          statusDate: '2026-05-29T17:30:00'
-        },
-        {
-          orderId: 103,
-          orderCode: 'ORD-1209-847',
-          buyer: { userId: 7, fullName: 'Ngô Mỹ Linh', email: 'linhnm@student.vn', phone: '0922334455', avatar: null },
-          seller: { userId: 3, fullName: 'Cửa Hàng Xưởng Thành Phát', email: 'thanhphat@example.com', phone: '0912345678', avatar: 'https://placehold.co/100x100/ADD8E6/FFFFFF?text=CH' },
-          product: { productId: 4, title: 'Tủ quần áo nhựa lắp ghép đa năng', price: 1900000, imageUrl: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=400&q=80' },
-          totalPrice: 1900000,
-          status: 'ACCEPTED',
-          paymentMethod: 'vnpay',
-          receiverName: 'Mỹ Linh',
-          receiverPhone: '0922334455',
-          deliveryMethod: 'campus',
-          university: 'Đại học Kinh Tế TP.HCM',
-          dormInfo: 'KTX Nguyễn Chí Thanh, Phòng 309',
-          specificAddress: '275 Nguyễn Chí Thanh, Quận 5',
-          notes: null,
-          orderDate: '2026-05-30T10:11:00',
-          statusDate: '2026-05-30T11:00:00'
-        },
-        {
-          orderId: 104,
-          orderCode: 'ORD-4310-994',
-          buyer: { userId: 6, fullName: 'Lê Hoài Nam', email: 'namlh@student.vn', phone: '0955667788', avatar: null },
-          seller: { userId: 4, fullName: 'Nội Thất Diễn Phát', email: 'dienphat@example.com', phone: '0998877665', avatar: 'https://placehold.co/100x100/FFCC00/000000?text=N' },
-          product: { productId: 5, title: 'Tủ gỗ mdf thanh lý sale 50%', price: 3000000, imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80' },
-          totalPrice: 3000000,
-          status: 'CANCELLED',
-          paymentMethod: 'vnpay',
-          receiverName: 'Hoài Nam',
-          receiverPhone: '0955667788',
-          deliveryMethod: 'home',
-          university: 'Đại học Cần Thơ',
-          dormInfo: null,
-          specificAddress: 'Khu II, Đường 3/2, Xuân Khánh, Ninh Kiều',
-          notes: 'Đặt nhầm kích thước tủ nên muốn hủy đơn.',
-          orderDate: '2026-05-31T09:20:00',
-          statusDate: '2026-05-31T10:05:00'
-        }
-      ];
-
-      setOrders(mockOrders);
+      const response = await axios.get('http://localhost:8080/api/orders/admin');
+      setOrders(response.data);
     } catch (error) {
       console.error('Error fetching orders:', error);
+      // Fallback
+      setOrders(getMockOrders());
+      showToast('Không thể kết nối đến backend, đang hiển thị dữ liệu mẫu.', 'warning');
     } finally {
       setIsLoading(false);
     }
@@ -128,16 +50,18 @@ const AdminOrdersPage = () => {
     setConfirmOpen(true);
   };
 
-  const confirmForceCancel = (orderId) => {
-    setOrders(prev => prev.map(o => {
-      if (o.orderId === orderId) {
-        showToast(`Admin đã hủy cưỡng chế đơn hàng ${o.orderCode} thành công.`, 'success');
-        return { ...o, status: 'CANCELLED', statusDate: new Date().toISOString() };
+  const confirmForceCancel = async (orderId) => {
+    try {
+      const response = await axios.put(`http://localhost:8080/api/orders/${orderId}/force-cancel`);
+      const updatedOrder = response.data;
+      setOrders(prev => prev.map(o => o.orderId === orderId ? updatedOrder : o));
+      if (selectedOrder?.orderId === orderId) {
+        setSelectedOrder(updatedOrder);
       }
-      return o;
-    }));
-    if (selectedOrder?.orderId === orderId) {
-      setSelectedOrder(prev => ({ ...prev, status: 'CANCELLED', statusDate: new Date().toISOString() }));
+      showToast(`Admin đã hủy cưỡng chế đơn hàng ${updatedOrder.orderCode} thành công.`, 'success');
+    } catch (error) {
+      console.error('Error force cancelling order:', error);
+      showToast('Lỗi khi hủy cưỡng chế đơn hàng.', 'error');
     }
   };
 
@@ -374,3 +298,82 @@ const AdminOrdersPage = () => {
 };
 
 export default AdminOrdersPage;
+
+const getMockOrders = () => [
+  {
+    orderId: 101,
+    orderCode: 'ORD-5849-231',
+    buyer: { userId: 5, fullName: 'Nguyen Van Admin', email: 'a@gmail.com', phone: '0900000000', avatar: null },
+    seller: { userId: 1, fullName: 'Xe Máy Cũ Hải Nguyễn', email: 'hainguyen@example.com', phone: '0901234567', avatar: 'https://placehold.co/100x100/333333/FFFFFF?text=XM' },
+    product: { productId: 1, title: 'Ex xuống áo 2010 vàng đen siêu đẹp nợ xấu đưa 8tr5', price: 26800000, imageUrl: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=400&q=80' },
+    totalPrice: 26800000,
+    status: 'PENDING',
+    paymentMethod: 'vnpay',
+    receiverName: 'Nguyen Van Admin',
+    receiverPhone: '0900000000',
+    deliveryMethod: 'home',
+    university: 'Đại học Bách Khoa Đà Nẵng',
+    dormInfo: 'Ký túc xá khu B, Phòng 402',
+    specificAddress: '54 Nguyễn Lương Bằng, Hòa Khánh Bắc, Liên Chiểu',
+    notes: 'Gọi điện trước khi giao hàng tầm 15 phút giúp mình.',
+    orderDate: '2026-05-28T09:15:00',
+    statusDate: '2026-05-28T09:15:00'
+  },
+  {
+    orderId: 102,
+    orderCode: 'ORD-9821-492',
+    buyer: { userId: 1, fullName: 'Xe Máy Cũ Hải Nguyễn', email: 'hainguyen@example.com', phone: '0901234567', avatar: 'https://placehold.co/100x100/333333/FFFFFF?text=XM' },
+    seller: { userId: 2, fullName: 'Nhơn', email: 'nhon@example.com', phone: '0987654321', avatar: 'https://placehold.co/100x100/FFCC00/000000?text=N' },
+    product: { productId: 3, title: 'Nghỉ bán thanh lý đồ Nam shop', price: 120000, imageUrl: 'https://images.unsplash.com/photo-1562157873-818bc0726f68?auto=format&fit=crop&w=400&q=80' },
+    totalPrice: 120000,
+    status: 'COMPLETED',
+    paymentMethod: 'cod',
+    receiverName: 'Hải Nguyễn',
+    receiverPhone: '0901234567',
+    deliveryMethod: 'campus',
+    university: 'Đại học Sư phạm Kỹ thuật TP.HCM',
+    dormInfo: null,
+    specificAddress: '1 Võ Văn Ngân, Linh Chiểu, Thủ Đức',
+    notes: 'Hẹn gặp ở cổng phụ đường Lê Văn Chí.',
+    orderDate: '2026-05-29T14:40:00',
+    statusDate: '2026-05-29T17:30:00'
+  },
+  {
+    orderId: 103,
+    orderCode: 'ORD-1209-847',
+    buyer: { userId: 7, fullName: 'Ngô Mỹ Linh', email: 'linhnm@student.vn', phone: '0922334455', avatar: null },
+    seller: { userId: 3, fullName: 'Cửa Hàng Xưởng Thành Phát', email: 'thanhphat@example.com', phone: '0912345678', avatar: 'https://placehold.co/100x100/ADD8E6/FFFFFF?text=CH' },
+    product: { productId: 4, title: 'Tủ quần áo nhựa lắp ghép đa năng', price: 1900000, imageUrl: 'https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&w=400&q=80' },
+    totalPrice: 1900000,
+    status: 'ACCEPTED',
+    paymentMethod: 'vnpay',
+    receiverName: 'Mỹ Linh',
+    receiverPhone: '0922334455',
+    deliveryMethod: 'campus',
+    university: 'Đại học Kinh Tế TP.HCM',
+    dormInfo: 'KTX Nguyễn Chí Thanh, Phòng 309',
+    specificAddress: '275 Nguyễn Chí Thanh, Quận 5',
+    notes: null,
+    orderDate: '2026-05-30T10:11:00',
+    statusDate: '2026-05-30T11:00:00'
+  },
+  {
+    orderId: 104,
+    orderCode: 'ORD-4310-994',
+    buyer: { userId: 6, fullName: 'Lê Hoài Nam', email: 'namlh@student.vn', phone: '0955667788', avatar: null },
+    seller: { userId: 4, fullName: 'Nội Thất Diễn Phát', email: 'dienphat@example.com', phone: '0998877665', avatar: 'https://placehold.co/100x100/FFCC00/000000?text=N' },
+    product: { productId: 5, title: 'Tủ gỗ mdf thanh lý sale 50%', price: 3000000, imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80' },
+    totalPrice: 3000000,
+    status: 'CANCELLED',
+    paymentMethod: 'vnpay',
+    receiverName: 'Hoài Nam',
+    receiverPhone: '0955667788',
+    deliveryMethod: 'home',
+    university: 'Đại học Cần Thơ',
+    dormInfo: null,
+    specificAddress: 'Khu II, Đường 3/2, Xuân Khánh, Ninh Kiều',
+    notes: 'Đặt nhầm kích thước tủ nên muốn hủy đơn.',
+    orderDate: '2026-05-31T09:20:00',
+    statusDate: '2026-05-31T10:05:00'
+  }
+];
