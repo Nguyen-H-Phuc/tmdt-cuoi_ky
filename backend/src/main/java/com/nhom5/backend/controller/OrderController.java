@@ -101,4 +101,27 @@ public class OrderController {
             return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
         }
     }
+
+    // 9. Admin lấy tất cả đơn hàng
+    @GetMapping("/admin")
+    public ResponseEntity<?> getAllOrdersForAdmin() {
+        try {
+            return ResponseEntity.ok(orderService.getAllOrdersForAdmin());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    // 10. Admin hủy cưỡng chế đơn hàng
+    @PutMapping("/{orderId}/force-cancel")
+    public ResponseEntity<?> forceCancelOrder(@PathVariable Integer orderId) {
+        try {
+            OrderResponse response = orderService.forceCancelOrder(orderId);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
+        }
+    }
 }

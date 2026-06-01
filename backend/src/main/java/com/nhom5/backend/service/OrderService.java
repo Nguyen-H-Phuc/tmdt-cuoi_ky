@@ -400,4 +400,37 @@ public class OrderService {
 
         return convertToResponse(savedOrder);
     }
+
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getAllOrdersForAdmin() {
+        List<Order> orders = orderRepository.findAllByOrderByOrderDateDesc();
+        List<OrderResponse> responses = new ArrayList<>();
+        for (Order order : orders) {
+            responses.add(convertToResponse(order));
+        }
+        return responses;
+    }
+
+    @Transactional
+    public OrderResponse forceCancelOrder(Integer orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng."));
+
+        if ("CANCELLED".equalsIgnoreCase(order.getStatus())) {
+            throw new IllegalArgumentException("Đơn hàng này đã được hủy trước đó.");
+        }
+
+        order.setStatus("CANCELLED");
+        order.setStatusDate(LocalDateTime.now());
+        Order savedOrder = orderRepository.save(order);
+
+        List<OrderDetail> details = orderDetailRepository.findByOrder_OrderId(order.getOrderId());
+        if (details != null && !details.isEmpty()) {
+            Product product = details.get(0).getProduct();
+            product.setStatus("available");
+            productRepository.save(product);
+        }
+
+        return convertToResponse(savedOrder);
+    }
 }
