@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Outlet, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuth } from './context/AuthContext.jsx';
 import { CartProvider } from './context/CartContext.jsx';
@@ -6,7 +6,6 @@ import LoginPage from "./pages/LoginPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import Footer from "./components/Footer.jsx";
 import Header from "./components/Header.jsx";
-import DashboardPage from "./pages/DashboardPage.jsx";
 import HomePage from "./pages/HomePage.jsx";
 import ProductListPage from "./pages/ProductListPage.jsx";
 import ProfilePage from "./pages/ProfilePage.jsx";
@@ -17,6 +16,16 @@ import ProductDetailPage from "./pages/ProductDetailPage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
 import CheckoutPage from "./pages/CheckoutPage.jsx";
 import CartPage from "./pages/CartPage.jsx";
+
+// Import Admin layout & nested views
+import AdminLayout from "./components/AdminLayout.jsx";
+import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
+import AdminProductsPage from "./pages/AdminProductsPage.jsx";
+import AdminUsersPage from "./pages/AdminUsersPage.jsx";
+import AdminCategoriesPage from "./pages/AdminCategoriesPage.jsx";
+import AdminReportsPage from "./pages/AdminReportsPage.jsx";
+import AdminTransactionsPage from "./pages/AdminTransactionsPage.jsx";
+import AdminOrdersPage from "./pages/AdminOrdersPage.jsx";
 
 const SocialLoginHandler = () => {
     const location = useLocation();
@@ -58,13 +67,25 @@ function App() {
             }>
               <Route path="/" element={<HomePage />} />
               <Route path="/products" element={<ProductListPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/dashboard" element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/chat" element={<ChatPage />} />
               <Route path="/cart" element={<CartPage />} />
               <Route path="/" element={<CategoryGrid />} />
               <Route path="/product/:id" element={<ProductDetailPage />} />
               <Route path="/checkout/:productId" element={<CheckoutPage />} />
+            </Route>
+
+            {/* Admin Route Group with custom AdminLayout (different shell from Main Shop) */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
+              <Route path="dashboard" element={<AdminDashboardPage />} />
+              <Route path="products" element={<AdminProductsPage />} />
+              <Route path="orders" element={<AdminOrdersPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="categories" element={<AdminCategoriesPage />} />
+              <Route path="reports" element={<AdminReportsPage />} />
+              <Route path="transactions" element={<AdminTransactionsPage />} />
             </Route>
 
             <Route path="/register" element={<RegisterPage />} />
