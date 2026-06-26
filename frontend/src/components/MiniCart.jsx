@@ -57,7 +57,7 @@ const MiniCart = ({ isOpen, onClose }) => {
                                     <div key={item.productId} className="p-4 flex gap-3 hover:bg-gray-50 transition-colors">
                                         <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden shrink-0 border border-gray-100">
                                             <img
-                                                src={item.imageUrl ? `http://localhost:8080/uploads/${item.imageUrl}` : 'https://placehold.co/100x100?text=Product'}
+                                                src={item.imageUrl ? (item.imageUrl.startsWith('http://') || item.imageUrl.startsWith('https://') ? item.imageUrl : `http://localhost:8080/uploads/${item.imageUrl}`) : 'https://placehold.co/100x100?text=Product'}
                                                 alt={item.title}
                                                 className="w-full h-full object-cover"
                                                 onError={(e) => {
