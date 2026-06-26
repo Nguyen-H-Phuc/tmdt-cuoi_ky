@@ -5,6 +5,8 @@ import com.nhom5.backend.dto.OrderRequest;
 import com.nhom5.backend.dto.OrderResponse;
 import com.nhom5.backend.dto.ProductDTO;
 import com.nhom5.backend.dto.UserDTO;
+import com.nhom5.backend.dto.OrderItemRequest;
+import com.nhom5.backend.dto.OrderDetailDTO;
 import com.nhom5.backend.entity.Order;
 import com.nhom5.backend.entity.OrderDetail;
 import com.nhom5.backend.entity.Product;
@@ -44,83 +46,173 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(OrderRequest request, HttpServletRequest httpRequest) {
-        Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm."));
-
-        if (!"available".equals(product.getStatus())) {
-            throw new IllegalArgumentException("Sản phẩm này không còn khả dụng để mua.");
+        List<OrderItemRequest> items = request.getItems();
+        if (items == null || items.isEmpty()) {
+            if (request.getProductId() == null) {
+                throw new IllegalArgumentException("Mã sản phẩm không được trống.");
+            }
+            OrderItemRequest singleItem = new OrderItemRequest();
+            singleItem.setProductId(request.getProductId());
+            singleItem.setQuantity(1);
+            items = Collections.singletonList(singleItem);
         }
 
         User buyer = userRepository.findById(request.getBuyerId())
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy thông tin người mua."));
 
-        User seller = product.getSeller();
-        if (seller == null) {
-            throw new IllegalArgumentException("Không tìm thấy thông tin người bán.");
+        // Group products by seller
+        Map<User, List<OrderItemRequest>> sellerGroups = new HashMap<>();
+        Map<Integer, Product> productMap = new HashMap<>();
+
+        for (OrderItemRequest item : items) {
+            Product product = productRepository.findById(item.getProductId())
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm với ID: " + item.getProductId()));
+
+            if (!"available".equals(product.getStatus())) {
+                throw new IllegalArgumentException("Sản phẩm '" + product.getTitle() + "' không còn khả dụng để mua.");
+            }
+
+            User seller = product.getSeller();
+            if (seller == null) {
+                throw new IllegalArgumentException("Không tìm thấy thông tin người bán cho sản phẩm '" + product.getTitle() + "'.");
+            }
+
+            if (buyer.getUserId().equals(seller.getUserId())) {
+                throw new IllegalArgumentException("Bạn không thể mua sản phẩm của chính mình ('" + product.getTitle() + "').");
+            }
+
+            productMap.put(product.getProductId(), product);
+
+            User existingSellerKey = null;
+            for (User key : sellerGroups.keySet()) {
+                if (key.getUserId().equals(seller.getUserId())) {
+                    existingSellerKey = key;
+                    break;
+                }
+            }
+            if (existingSellerKey == null) {
+                sellerGroups.put(seller, new ArrayList<>(Collections.singletonList(item)));
+            } else {
+                sellerGroups.get(existingSellerKey).add(item);
+            }
         }
 
-        if (buyer.getUserId().equals(seller.getUserId())) {
-            throw new IllegalArgumentException("Bạn không thể mua sản phẩm của chính mình.");
-        }
+        List<Order> createdOrders = new ArrayList<>();
+        List<OrderDetailDTO> allOrderDetailDTOs = new ArrayList<>();
+        double grandTotalPrice = 0.0;
+        String paymentMethod = request.getPaymentMethod();
+        String initialStatus = "vnpay".equalsIgnoreCase(paymentMethod) ? "PENDING_PAYMENT" : "PENDING";
 
-        // Calculate Pricing
-        // Shipping fee: 20,000 VND for home delivery, 0 for campus pickup
         double shippingFee = "home".equalsIgnoreCase(request.getDeliveryMethod()) ? 20000.0 : 0.0;
-        // Default voucher discount for student exchange app is 10,000 VND
         double voucherDiscount = 10000.0;
-        double totalPrice = product.getPrice() + shippingFee - voucherDiscount;
-        if (totalPrice < 0) {
-            totalPrice = 0.0;
+
+        int sellerIndex = 0;
+        for (Map.Entry<User, List<OrderItemRequest>> entry : sellerGroups.entrySet()) {
+            User seller = entry.getKey();
+            List<OrderItemRequest> groupItems = entry.getValue();
+
+            double subtotal = 0.0;
+            for (OrderItemRequest item : groupItems) {
+                Product p = productMap.get(item.getProductId());
+                subtotal += p.getPrice() * item.getQuantity();
+            }
+
+            double orderShipping = (sellerIndex == 0) ? shippingFee : 0.0;
+            double orderVoucher = (sellerIndex == 0) ? voucherDiscount : 0.0;
+            double orderTotal = subtotal + orderShipping - orderVoucher;
+            if (orderTotal < 0) {
+                orderTotal = 0.0;
+            }
+
+            String orderCode;
+            do {
+                orderCode = "DH" + (100000 + new Random().nextInt(900000));
+            } while (orderRepository.findByOrderCode(orderCode).isPresent());
+
+            Order order = Order.builder()
+                    .orderCode(orderCode)
+                    .buyer(buyer)
+                    .seller(seller)
+                    .totalPrice(orderTotal)
+                    .status(initialStatus)
+                    .paymentMethod(paymentMethod)
+                    .receiverName(request.getFullName())
+                    .receiverPhone(request.getPhone())
+                    .deliveryMethod(request.getDeliveryMethod())
+                    .university(request.getUniversity())
+                    .dormInfo(request.getDormInfo())
+                    .specificAddress(request.getSpecificAddress())
+                    .notes(request.getNotes())
+                    .orderDate(LocalDateTime.now())
+                    .build();
+
+            if ("cod".equalsIgnoreCase(paymentMethod)) {
+                for (OrderItemRequest item : groupItems) {
+                    Product p = productMap.get(item.getProductId());
+                    p.setStatus("sold");
+                    productRepository.save(p);
+                }
+            }
+
+            Order savedOrder = orderRepository.save(order);
+            createdOrders.add(savedOrder);
+            grandTotalPrice += orderTotal;
+
+            for (OrderItemRequest item : groupItems) {
+                Product p = productMap.get(item.getProductId());
+                OrderDetail orderDetail = OrderDetail.builder()
+                        .order(savedOrder)
+                        .product(p)
+                        .quantity(item.getQuantity())
+                        .unitPrice(p.getPrice())
+                        .build();
+                orderDetailRepository.save(orderDetail);
+
+                OrderDetailDTO detailDTO = new OrderDetailDTO();
+                detailDTO.setOrderDetailId(orderDetail.getOrderDetailId());
+                detailDTO.setProduct(productService.convertToDTO(p));
+                detailDTO.setQuantity(item.getQuantity());
+                detailDTO.setUnitPrice(p.getPrice());
+                allOrderDetailDTOs.add(detailDTO);
+            }
+
+            sellerIndex++;
         }
 
-        // Generate custom order code (e.g. DH123456)
-        String orderCode;
-        do {
-            orderCode = "DH" + (100000 + new Random().nextInt(900000));
-        } while (orderRepository.findByOrderCode(orderCode).isPresent());
+        OrderResponse response = new OrderResponse();
+        Order firstOrder = createdOrders.get(0);
+        response.setOrderId(firstOrder.getOrderId());
 
-        // Initial status
-        String status = "vnpay".equalsIgnoreCase(request.getPaymentMethod()) ? "PENDING_PAYMENT" : "PENDING";
+        StringBuilder combinedCode = new StringBuilder();
+        for (int i = 0; i < createdOrders.size(); i++) {
+            combinedCode.append(createdOrders.get(i).getOrderCode());
+            if (i < createdOrders.size() - 1) {
+                combinedCode.append("_");
+            }
+        }
+        response.setOrderCode(combinedCode.toString());
+        response.setBuyer(convertToUserDTO(firstOrder.getBuyer()));
+        response.setSeller(convertToUserDTO(firstOrder.getSeller()));
 
-        Order order = Order.builder()
-                .orderCode(orderCode)
-                .buyer(buyer)
-                .seller(seller)
-                .totalPrice(totalPrice)
-                .status(status)
-                .paymentMethod(request.getPaymentMethod())
-                .receiverName(request.getFullName())
-                .receiverPhone(request.getPhone())
-                .deliveryMethod(request.getDeliveryMethod())
-                .university(request.getUniversity())
-                .dormInfo(request.getDormInfo())
-                .specificAddress(request.getSpecificAddress())
-                .notes(request.getNotes())
-                .orderDate(LocalDateTime.now())
-                .build();
-
-        // If COD: mark product as sold immediately
-        if ("cod".equalsIgnoreCase(request.getPaymentMethod())) {
-            product.setStatus("sold");
-            productRepository.save(product);
+        if (!allOrderDetailDTOs.isEmpty()) {
+            response.setProduct(allOrderDetailDTOs.get(0).getProduct());
         }
 
-        Order savedOrder = orderRepository.save(order);
+        response.setDetails(allOrderDetailDTOs);
+        response.setTotalPrice(grandTotalPrice);
+        response.setStatus(firstOrder.getStatus());
+        response.setPaymentMethod(firstOrder.getPaymentMethod());
+        response.setReceiverName(firstOrder.getReceiverName());
+        response.setReceiverPhone(firstOrder.getReceiverPhone());
+        response.setDeliveryMethod(firstOrder.getDeliveryMethod());
+        response.setUniversity(firstOrder.getUniversity());
+        response.setDormInfo(firstOrder.getDormInfo());
+        response.setSpecificAddress(firstOrder.getSpecificAddress());
+        response.setNotes(firstOrder.getNotes());
+        response.setOrderDate(firstOrder.getOrderDate());
 
-        // Save order details
-        OrderDetail orderDetail = OrderDetail.builder()
-                .order(savedOrder)
-                .product(product)
-                .quantity(1)
-                .unitPrice(product.getPrice())
-                .build();
-        orderDetailRepository.save(orderDetail);
-
-        OrderResponse response = convertToResponse(savedOrder);
-
-        // Generate VNPAY payment url if paymentMethod is vnpay
-        if ("vnpay".equalsIgnoreCase(request.getPaymentMethod())) {
-            String paymentUrl = generateVNPayUrl(savedOrder, httpRequest);
+        if ("vnpay".equalsIgnoreCase(paymentMethod)) {
+            String paymentUrl = generateCombinedVNPayUrl(combinedCode.toString(), grandTotalPrice, httpRequest);
             response.setPaymentUrl(paymentUrl);
         }
 
@@ -129,9 +221,38 @@ public class OrderService {
 
     @Transactional
     public OrderResponse getOrderByCode(String orderCode) {
-        Order order = orderRepository.findByOrderCode(orderCode)
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng."));
-        return convertToResponse(order);
+        if (orderCode.contains("_")) {
+            String[] codes = orderCode.split("_");
+            OrderResponse combinedResponse = null;
+            List<OrderDetailDTO> combinedDetails = new ArrayList<>();
+            double combinedTotalPrice = 0.0;
+
+            for (String code : codes) {
+                Order order = orderRepository.findByOrderCode(code)
+                        .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng: " + code));
+                OrderResponse resp = convertToResponse(order);
+                if (combinedResponse == null) {
+                    combinedResponse = resp;
+                }
+                if (resp.getDetails() != null) {
+                    combinedDetails.addAll(resp.getDetails());
+                }
+                combinedTotalPrice += resp.getTotalPrice();
+            }
+            if (combinedResponse != null) {
+                combinedResponse.setOrderCode(orderCode);
+                combinedResponse.setDetails(combinedDetails);
+                combinedResponse.setTotalPrice(combinedTotalPrice);
+                if (!combinedDetails.isEmpty()) {
+                    combinedResponse.setProduct(combinedDetails.get(0).getProduct());
+                }
+            }
+            return combinedResponse;
+        } else {
+            Order order = orderRepository.findByOrderCode(orderCode)
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng."));
+            return convertToResponse(order);
+        }
     }
 
     @Transactional
@@ -174,41 +295,64 @@ public class OrderService {
     @Transactional
     public String processVNPayCallback(Map<String, String> params) {
         String vnp_SecureHash = params.get("vnp_SecureHash");
-        String vnp_TxnRef = params.get("vnp_TxnRef"); // Order Code
+        String vnp_TxnRef = params.get("vnp_TxnRef"); // Order Code (can be combined like DH111111_DH222222)
         String vnp_ResponseCode = params.get("vnp_ResponseCode");
 
         // Verify Signature
         boolean isSignatureValid = verifyVNPaySignature(params, vnp_SecureHash);
 
-        Order order = orderRepository.findByOrderCode(vnp_TxnRef)
+        String[] orderCodes = vnp_TxnRef.split("_");
+        
+        // Find first order to determine product redirect page
+        Order firstOrder = orderRepository.findByOrderCode(orderCodes[0])
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng tương ứng với mã giao dịch VNPay."));
 
-        List<OrderDetail> details = orderDetailRepository.findByOrder_OrderId(order.getOrderId());
-        if (details == null || details.isEmpty()) {
-            throw new IllegalArgumentException("Không tìm thấy chi tiết sản phẩm cho đơn hàng này.");
-        }
-        Product product = details.get(0).getProduct();
-        Integer productId = product.getProductId();
+        List<OrderDetail> firstDetails = orderDetailRepository.findByOrder_OrderId(firstOrder.getOrderId());
+        Integer productId = (firstDetails != null && !firstDetails.isEmpty()) 
+                ? firstDetails.get(0).getProduct().getProductId() 
+                : 1;
 
         if (isSignatureValid && "00".equals(vnp_ResponseCode)) {
-            // Payment success
-            order.setStatus("COMPLETED");
-            order.setStatusDate(LocalDateTime.now());
-            orderRepository.save(order);
+            // Payment success: Set status to PAID and mark products as sold
+            for (String code : orderCodes) {
+                Order order = orderRepository.findByOrderCode(code).orElse(null);
+                if (order != null) {
+                    order.setStatus("PAID");
+                    order.setStatusDate(LocalDateTime.now());
+                    orderRepository.save(order);
 
-            // Mark product as sold
-            product.setStatus("sold");
-            productRepository.save(product);
+                    List<OrderDetail> details = orderDetailRepository.findByOrder_OrderId(order.getOrderId());
+                    if (details != null) {
+                        for (OrderDetail detail : details) {
+                            Product product = detail.getProduct();
+                            product.setStatus("sold");
+                            productRepository.save(product);
+                        }
+                    }
+                }
+            }
 
-            // Redirect back to frontend success result
-            return "http://localhost:5173/checkout/" + productId + "?status=success&orderCode=" + vnp_TxnRef;
+            if (orderCodes.length > 1) {
+                return "http://localhost:5173/checkout/cart?status=success&orderCode=" + vnp_TxnRef;
+            } else {
+                return "http://localhost:5173/checkout/" + productId + "?status=success&orderCode=" + vnp_TxnRef;
+            }
         } else {
-            // Payment failed or cancelled
-            order.setStatus("CANCELLED");
-            order.setStatusDate(LocalDateTime.now());
-            orderRepository.save(order);
+            // Payment failed or cancelled: Set status to CANCELLED
+            for (String code : orderCodes) {
+                Order order = orderRepository.findByOrderCode(code).orElse(null);
+                if (order != null) {
+                    order.setStatus("CANCELLED");
+                    order.setStatusDate(LocalDateTime.now());
+                    orderRepository.save(order);
+                }
+            }
 
-            return "http://localhost:5173/checkout/" + productId + "?status=fail&orderCode=" + vnp_TxnRef;
+            if (orderCodes.length > 1) {
+                return "http://localhost:5173/checkout/cart?status=fail&orderCode=" + vnp_TxnRef;
+            } else {
+                return "http://localhost:5173/checkout/" + productId + "?status=fail&orderCode=" + vnp_TxnRef;
+            }
         }
     }
 
@@ -301,6 +445,62 @@ public class OrderService {
         return vnPayConfig.getPayUrl() + "?" + queryUrl;
     }
 
+    private String generateCombinedVNPayUrl(String combinedCode, double totalPrice, HttpServletRequest request) {
+        String vnp_Version = vnPayConfig.getVersion();
+        String vnp_Command = vnPayConfig.getCommand();
+        String vnp_TxnRef = combinedCode;
+        String vnp_OrderInfo = "Thanh toan don hang " + vnp_TxnRef;
+        String vnp_OrderType = "other";
+        String vnp_TmnCode = vnPayConfig.getTmnCode();
+
+        long amount = (long) (totalPrice * 100);
+
+        Map<String, String> vnp_Params = new HashMap<>();
+        vnp_Params.put("vnp_Version", vnp_Version);
+        vnp_Params.put("vnp_Command", vnp_Command);
+        vnp_Params.put("vnp_TmnCode", vnp_TmnCode);
+        vnp_Params.put("vnp_Amount", String.valueOf(amount));
+        vnp_Params.put("vnp_CurrCode", "VND");
+        vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
+        vnp_Params.put("vnp_OrderInfo", vnp_OrderInfo);
+        vnp_Params.put("vnp_OrderType", vnp_OrderType);
+        vnp_Params.put("vnp_Locale", "vn");
+        vnp_Params.put("vnp_ReturnUrl", vnPayConfig.getReturnUrl());
+        vnp_Params.put("vnp_IpAddr", vnPayConfig.getIpAddress(request));
+
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        vnp_Params.put("vnp_CreateDate", now.format(formatter));
+
+        List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
+        Collections.sort(fieldNames);
+        StringBuilder hashData = new StringBuilder();
+        StringBuilder query = new StringBuilder();
+        boolean first = true;
+        for (String fieldName : fieldNames) {
+            String fieldValue = vnp_Params.get(fieldName);
+            if ((fieldValue != null) && (fieldValue.length() > 0)) {
+                if (!first) {
+                    hashData.append('&');
+                    query.append('&');
+                }
+                hashData.append(urlEncode(fieldName));
+                hashData.append('=');
+                hashData.append(urlEncode(fieldValue));
+                
+                query.append(urlEncode(fieldName));
+                query.append('=');
+                query.append(urlEncode(fieldValue));
+                
+                first = false;
+            }
+        }
+        String queryUrl = query.toString();
+        String vnp_SecureHash = vnPayConfig.hmacSHA512(vnPayConfig.getHashSecret(), hashData.toString());
+        queryUrl += "&vnp_SecureHash=" + vnp_SecureHash.toUpperCase();
+        return vnPayConfig.getPayUrl() + "?" + queryUrl;
+    }
+
     private OrderResponse convertToResponse(Order order) {
         OrderResponse response = new OrderResponse();
         response.setOrderId(order.getOrderId());
@@ -325,9 +525,19 @@ public class OrderService {
             response.setSeller(convertToUserDTO(order.getSeller()));
         }
         List<OrderDetail> details = orderDetailRepository.findByOrder_OrderId(order.getOrderId());
+        List<OrderDetailDTO> detailDTOs = new ArrayList<>();
         if (details != null && !details.isEmpty()) {
             response.setProduct(productService.convertToDTO(details.get(0).getProduct()));
+            for (OrderDetail detail : details) {
+                OrderDetailDTO detailDTO = new OrderDetailDTO();
+                detailDTO.setOrderDetailId(detail.getOrderDetailId());
+                detailDTO.setProduct(productService.convertToDTO(detail.getProduct()));
+                detailDTO.setQuantity(detail.getQuantity());
+                detailDTO.setUnitPrice(detail.getUnitPrice());
+                detailDTOs.add(detailDTO);
+            }
         }
+        response.setDetails(detailDTOs);
 
         return response;
     }
@@ -343,6 +553,115 @@ public class OrderService {
         dto.setCreatedAt(user.getCreatedAt());
         return dto;
     }
+
+    @Transactional
+    public OrderResponse confirmReceipt(Integer orderId, Integer userId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng."));
+
+        if (!order.getBuyer().getUserId().equals(userId)) {
+            throw new IllegalArgumentException("Bạn không có quyền xác nhận đơn hàng này.");
+        }
+
+        if (!"PAID".equalsIgnoreCase(order.getStatus())) {
+            throw new IllegalArgumentException("Chỉ đơn hàng đã thanh toán trực tuyến mới cần xác nhận nhận hàng.");
+        }
+
+        order.setStatus("COMPLETED");
+        order.setStatusDate(LocalDateTime.now());
+        Order savedOrder = orderRepository.save(order);
+
+        return convertToResponse(savedOrder);
+    }
+
+    @Transactional
+    public OrderResponse requestRefund(Integer orderId, Integer userId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng."));
+
+        if (!order.getBuyer().getUserId().equals(userId)) {
+            throw new IllegalArgumentException("Bạn không có quyền yêu cầu hoàn tiền cho đơn hàng này.");
+        }
+
+        if (!"PAID".equalsIgnoreCase(order.getStatus())) {
+            throw new IllegalArgumentException("Chỉ đơn hàng đã thanh toán trực tuyến (sàn giữ tiền) mới có thể yêu cầu hoàn tiền.");
+        }
+
+        order.setStatus("REFUND_REQUESTED");
+        order.setStatusDate(LocalDateTime.now());
+        Order savedOrder = orderRepository.save(order);
+
+        return convertToResponse(savedOrder);
+    }
+
+    @Transactional
+    public OrderResponse sellerHandleRefund(Integer orderId, Integer sellerId, String action) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng."));
+
+        if (!order.getSeller().getUserId().equals(sellerId)) {
+            throw new IllegalArgumentException("Bạn không có quyền xử lý yêu cầu hoàn tiền cho đơn hàng này.");
+        }
+
+        if (!"REFUND_REQUESTED".equalsIgnoreCase(order.getStatus())) {
+            throw new IllegalArgumentException("Đơn hàng không ở trạng thái yêu cầu hoàn tiền.");
+        }
+
+        if ("approve".equalsIgnoreCase(action)) {
+            order.setStatus("REFUNDED");
+            order.setStatusDate(LocalDateTime.now());
+
+            List<OrderDetail> details = orderDetailRepository.findByOrder_OrderId(order.getOrderId());
+            if (details != null) {
+                for (OrderDetail detail : details) {
+                    Product product = detail.getProduct();
+                    product.setStatus("available");
+                    productRepository.save(product);
+                }
+            }
+        } else if ("reject".equalsIgnoreCase(action)) {
+            order.setStatus("DISPUTED");
+            order.setStatusDate(LocalDateTime.now());
+        } else {
+            throw new IllegalArgumentException("Hành động không hợp lệ: " + action);
+        }
+
+        Order savedOrder = orderRepository.save(order);
+        return convertToResponse(savedOrder);
+    }
+
+    @Transactional
+    public OrderResponse adminHandleRefund(Integer orderId, String action) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng."));
+
+        if (!"REFUND_REQUESTED".equalsIgnoreCase(order.getStatus()) && !"DISPUTED".equalsIgnoreCase(order.getStatus())) {
+            throw new IllegalArgumentException("Chỉ đơn hàng đang yêu cầu hoàn tiền hoặc có tranh chấp mới cần Admin xử lý.");
+        }
+
+        if ("approve".equalsIgnoreCase(action)) {
+            order.setStatus("REFUNDED");
+            order.setStatusDate(LocalDateTime.now());
+
+            List<OrderDetail> details = orderDetailRepository.findByOrder_OrderId(order.getOrderId());
+            if (details != null) {
+                for (OrderDetail detail : details) {
+                    Product product = detail.getProduct();
+                    product.setStatus("available");
+                    productRepository.save(product);
+                }
+            }
+        } else if ("complete".equalsIgnoreCase(action)) {
+            order.setStatus("COMPLETED");
+            order.setStatusDate(LocalDateTime.now());
+        } else {
+            throw new IllegalArgumentException("Hành động không hợp lệ: " + action);
+        }
+
+        Order savedOrder = orderRepository.save(order);
+        return convertToResponse(savedOrder);
+    }
+
 
     @Transactional
     public List<OrderResponse> getOrdersBySeller(Integer sellerId) {
