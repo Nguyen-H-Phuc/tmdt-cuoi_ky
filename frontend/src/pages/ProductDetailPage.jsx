@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Share2, MoreVertical, ChevronLeft, ChevronRight, Heart, MapPin, Clock, MessageCircle, Send, Check, Star, ShoppingBag, ShoppingCart, AlertCircle, Info, Lock } from 'lucide-react';
+import { Share2, MoreVertical, ChevronLeft, ChevronRight, Heart, MapPin, Clock, MessageCircle, Send, Check, Star, ShoppingBag, ShoppingCart, AlertCircle, Info, Lock, Eye, Tag } from 'lucide-react';
 import SockJS from 'sockjs-client/dist/sockjs';
 import { Stomp } from '@stomp/stompjs';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -298,52 +298,64 @@ const ProductDetailPage = () => {
     const currentImageUrl = images[currentImageIndex];
 
     return (
-        <div className="bg-[#F4F4F4] min-h-screen pb-10">
-            <div className="max-w-[1000px] mx-auto px-4 pt-4">
-                {/* Breadcrumb */}
-                <div className="text-sm text-gray-500 mb-3 flex items-center gap-2">
-                    <Link to="/" className="hover:underline text-blue-600">Trang chủ</Link>
-                    <ChevronRight size={14} />
-                    <span className="capitalize text-gray-600">{product.category || 'Danh mục'}</span>
-                    <ChevronRight size={14} />
-                    <span className="text-gray-400 truncate max-w-[200px]">{product.title}</span>
+        <div className="bg-[#f8f9fa] min-h-screen pb-16 font-sans">
+            <div className="max-w-6xl mx-auto px-4 pt-6">
+                
+                {/* Flat Breadcrumb */}
+                <div className="text-xs text-gray-500 mb-6 flex items-center gap-2 py-2">
+                    <Link to="/" className="hover:text-black transition-colors font-medium">Trang chủ</Link>
+                    <ChevronRight size={12} className="text-gray-400" />
+                    <span className="capitalize hover:text-black transition-colors cursor-pointer font-medium">{product.category || 'Danh mục'}</span>
+                    <ChevronRight size={12} className="text-gray-400" />
+                    <span className="text-gray-450 truncate max-w-[250px] font-normal">{product.title}</span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                     
                     {/* Left Column (2/3) */}
-                    <div className="md:col-span-2 space-y-4">
-                        {/* Image Gallery */}
-                        <div className="bg-white rounded-md overflow-hidden shadow-sm">
-                            <div className="relative group bg-black flex justify-center items-center h-[350px] md:h-[450px]">
-                                <img src={currentImageUrl} alt="Product" className="max-h-full object-contain" />
+                    <div className="lg:col-span-2 space-y-6">
+                        
+                        {/* Flat Image Gallery */}
+                        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                            <div className="relative group bg-neutral-100 h-[380px] sm:h-[480px] w-full">
+                                <img src={currentImageUrl} alt="Product" className="w-full h-full object-cover" />
                                 
-                                {/* Navigation arrows */}
+                                {/* Navigation arrows (Flat Square) */}
                                 {images.length > 1 && (
                                     <>
-                                        <button onClick={handlePrevImage} className="absolute left-2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full transition">
-                                            <ChevronLeft size={24} />
+                                        <button 
+                                            onClick={handlePrevImage} 
+                                            className="absolute left-4 bg-white/90 hover:bg-white text-gray-800 p-3 rounded-lg border border-gray-300 transition-colors cursor-pointer shadow-none"
+                                        >
+                                            <ChevronLeft size={20} className="stroke-[2.5]" />
                                         </button>
-                                        <button onClick={handleNextImage} className="absolute right-2 bg-black/40 hover:bg-black/60 text-white p-2 rounded-full transition">
-                                            <ChevronRight size={24} />
+                                        <button 
+                                            onClick={handleNextImage} 
+                                            className="absolute right-4 bg-white/90 hover:bg-white text-gray-800 p-3 rounded-lg border border-gray-300 transition-colors cursor-pointer shadow-none"
+                                        >
+                                            <ChevronRight size={20} className="stroke-[2.5]" />
                                         </button>
                                     </>
                                 )}
                                 
                                 {/* Image counter */}
-                                <div className="absolute bottom-3 right-3 bg-black/60 text-white px-3 py-1 text-xs rounded-full font-medium">
+                                <div className="absolute bottom-4 right-4 bg-black/80 text-white px-3 py-1 text-xs rounded-md font-bold">
                                     {currentImageIndex + 1} / {images.length}
                                 </div>
                             </div>
                             
-                            {/* Thumbnails */}
+                            {/* Flat Thumbnails list */}
                             {images.length > 1 && (
-                                <div className="p-2 flex gap-2 overflow-x-auto items-center bg-white border-t">
+                                <div className="p-3 flex gap-2 overflow-x-auto items-center bg-gray-50 border-t border-gray-200 scrollbar-thin">
                                     {images.map((img, i) => (
                                         <div 
                                             key={i} 
                                             onClick={() => setCurrentImageIndex(i)}
-                                            className={`flex-shrink-0 w-16 h-16 rounded overflow-hidden cursor-pointer border-2 ${i === currentImageIndex ? 'border-brand-accent' : 'border-transparent'}`}
+                                            className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden cursor-pointer border transition-all ${
+                                                i === currentImageIndex 
+                                                    ? 'border-gray-900 scale-95' 
+                                                    : 'border-gray-200 hover:border-gray-400'
+                                            }`}
                                         >
                                             <img src={img} alt="Thumbnail" className="w-full h-full object-cover" />
                                         </div>
@@ -352,71 +364,99 @@ const ProductDetailPage = () => {
                             )}
                         </div>
                         
-                        {/* Product Info */}
-                        <div className="bg-white rounded-md p-4 shadow-sm">
-                            <h1 className="text-[20px] font-bold text-gray-800 leading-snug">
-                                {product.title}
-                            </h1>
+                        {/* Flat Product Core Info */}
+                        <div className="bg-white p-6 border border-gray-200 rounded-2xl space-y-6 shadow-sm">
+                            <div className="space-y-2">
+                                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 leading-snug">
+                                    {product.title}
+                                </h1>
+                                
+                                <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                                    <span className="flex items-center gap-1.5 font-medium">
+                                        <Clock size={14} className="text-gray-400" /> 
+                                        {product.createdAt ? new Date(product.createdAt).toLocaleString('vi-VN') : 'Mới đây'}
+                                    </span>
+                                    <span className="flex items-center gap-1.5 font-medium">
+                                        <Eye size={14} className="text-gray-400" />
+                                        Lượt xem: {product.viewCount || 0}
+                                    </span>
+                                </div>
+                            </div>
                             
-                            <div className="flex justify-between items-center mt-3">
-                                <span className="text-2xl font-bold text-brand-price">
-                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
-                                </span>
-                                <div className="flex gap-3">
-                                    <button className="flex flex-col items-center text-gray-500 hover:text-red-500 transition">
-                                        <Share2 size={22} />
-                                        <span className="text-[10px] mt-1">Chia sẻ</span>
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 py-4 bg-transparent border-b border-gray-150">
+                                <div>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Giá bán</p>
+                                    <span className="text-2xl sm:text-3xl font-bold text-gray-900">
+                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
+                                    </span>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button className="flex items-center justify-center w-10 h-10 bg-white hover:bg-gray-150 rounded-lg border border-gray-300 text-gray-600 transition-colors cursor-pointer">
+                                        <Share2 size={18} />
                                     </button>
-                                    <button onClick={toggleFavorite} className={`flex flex-col items-center transition ${isFavorite ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}>
-                                        <Heart size={22} fill={isFavorite ? 'currentColor' : 'none'} /> 
-                                        <span className="text-[10px] mt-1">{isFavorite ? 'Đã lưu' : 'Lưu tin'}</span>
+                                    <button 
+                                        onClick={toggleFavorite} 
+                                        className={`flex items-center justify-center w-10 h-10 rounded-lg border transition-all cursor-pointer ${
+                                            isFavorite 
+                                                ? 'bg-rose-50 border-rose-200 text-rose-600' 
+                                                : 'bg-white hover:bg-gray-150 border-gray-300 text-gray-600 hover:text-rose-500'
+                                        }`}
+                                    >
+                                        <Heart size={18} fill={isFavorite ? 'currentColor' : 'none'} />
                                     </button>
                                 </div>
                             </div>
                             
-                            <div className="text-gray-500 text-[13px] flex items-center gap-4 mt-2 mb-4">
-                                <span className="flex items-center gap-1"><Clock size={14} /> {product.createdAt ? new Date(product.createdAt).toLocaleString('vi-VN') : 'Mới đây'}</span>
-                            </div>
-                            
-                            <div className="border-t pt-4">
-                                <p className="font-bold text-[15px] mb-3">Đặc điểm tin đăng</p>
-                                <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
-                                    <div className="flex items-start gap-2">
-                                        <span className="text-gray-500 w-24">Tình trạng:</span>
-                                        <span className="font-medium">{product.status === 'available' ? 'Đã sử dụng (chưa sửa chữa)' : 'Đã bán'}</span>
+                            {/* Specifications Section */}
+                            <div className="border-t border-gray-200 pt-6">
+                                <h3 className="font-bold text-xs text-gray-400 uppercase tracking-wider mb-4">Thông số sản phẩm</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="flex items-center gap-3 py-2 bg-transparent">
+                                        <div className="text-gray-550 flex items-center justify-center shrink-0">
+                                            <Info size={18} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Tình trạng</p>
+                                            <p className="text-sm font-semibold text-gray-800 mt-0.5">
+                                                {product.status === 'available' ? 'Đã sử dụng' : 'Đã bán'}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="flex items-start gap-2">
-                                        <span className="text-gray-500 w-24">Danh mục:</span>
-                                        <span className="font-medium capitalize">{product.category || 'Khác'}</span>
-                                    </div>
-                                    <div className="flex items-start gap-2">
-                                        <span className="text-gray-500 w-24">Lượt xem:</span>
-                                        <span className="font-medium">{product.viewCount || 0}</span>
+                                    
+                                    <div className="flex items-center gap-3 py-2 bg-transparent">
+                                        <div className="text-gray-550 flex items-center justify-center shrink-0">
+                                            <Tag size={18} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Danh mục</p>
+                                            <p className="text-sm font-semibold text-gray-800 mt-0.5 capitalize">
+                                                {product.category || 'Khác'}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div className="mt-6 border-t pt-4">
-                                <p className="font-bold text-[15px] mb-3">Mô tả chi tiết</p>
-                                <div className="text-gray-700 whitespace-pre-line text-sm leading-relaxed">
+                            {/* Description */}
+                            <div className="border-t border-gray-200 pt-6">
+                                <h3 className="font-bold text-xs text-gray-400 uppercase tracking-wider mb-3">Mô tả chi tiết</h3>
+                                <div className="text-gray-700 whitespace-pre-line text-xs sm:text-sm leading-relaxed mt-2">
                                     {product.description}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Comment & Rating section */}
-                        <div className="bg-white rounded-2xl shadow-sm border border-neutral-100 overflow-hidden flex flex-col p-6 space-y-6">
-                            {/* Header */}
-                            <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
+                        {/* Flat Reviews Section */}
+                        <div className="bg-white border border-gray-200 p-6 rounded-2xl space-y-6 shadow-sm">
+                            <div className="flex items-center justify-between border-b border-gray-200 pb-4">
                                 <div className="flex items-center gap-2">
-                                    <MessageCircle className="text-brand-accent animate-pulse" size={22} />
-                                    <h2 className="font-bold text-[17px] text-gray-800">
+                                    <MessageCircle className="text-gray-900" size={18} />
+                                    <h2 className="font-bold text-xs sm:text-sm text-gray-800 uppercase tracking-wider">
                                         Đánh giá & Bình luận ({reviews.length})
                                     </h2>
                                 </div>
                             </div>
 
-                            {/* Summary Dashboard */}
                             {reviews.length > 0 && (() => {
                                 const totalReviews = reviews.length;
                                 const avgRating = (reviews.reduce((acc, r) => acc + (r.rating || 5), 0) / totalReviews).toFixed(1);
@@ -427,39 +467,36 @@ const ProductDetailPage = () => {
                                 });
 
                                 return (
-                                    <div className="bg-neutral-50/50 rounded-2xl p-5 flex flex-col md:flex-row items-center gap-6 md:gap-10 border border-neutral-100">
-                                        {/* Left: Big score */}
-                                        <div className="text-center md:border-r border-neutral-200 md:pr-10 shrink-0">
-                                            <div className="text-5xl font-black text-gray-800 tracking-tight">{avgRating}</div>
-                                            {/* Stars */}
-                                            <div className="flex gap-1 justify-center my-2">
+                                    <div className="bg-gray-50 rounded-xl p-5 flex flex-col md:flex-row items-center gap-6 border border-gray-200">
+                                        <div className="text-center md:border-r border-gray-200 md:pr-10 shrink-0">
+                                            <div className="text-5xl font-black text-gray-85 tracking-tight">{avgRating}</div>
+                                            <div className="flex gap-0.5 justify-center my-2">
                                                 {[1, 2, 3, 4, 5].map((s) => (
                                                     <Star 
                                                         key={s} 
-                                                        size={16} 
+                                                        size={14} 
                                                         className={s <= Math.round(avgRating) ? "text-amber-400 fill-amber-400" : "text-gray-300"} 
                                                     />
                                                 ))}
                                             </div>
-                                            <p className="text-[12px] text-gray-500 font-medium">({totalReviews} đánh giá)</p>
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">({totalReviews} đánh giá)</p>
                                         </div>
 
-                                        {/* Right: Progress bars */}
                                         <div className="flex-1 w-full space-y-2 max-w-sm">
                                             {[5, 4, 3, 2, 1].map((stars) => {
                                                 const count = distribution[stars] || 0;
                                                 const percentage = ((count / totalReviews) * 100).toFixed(0);
                                                 return (
-                                                    <div key={stars} className="flex items-center gap-3 text-xs text-gray-600">
-                                                        <span className="w-3 text-right font-medium">{stars}</span>
+                                                    <div key={stars} className="flex items-center gap-3 text-xs text-gray-655">
+                                                        <span className="w-3 text-right font-bold">{stars}</span>
                                                         <Star size={12} className="text-amber-400 fill-amber-400 shrink-0" />
-                                                        <div className="flex-1 h-2 bg-neutral-200 rounded-full overflow-hidden">
+                                                        <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden border border-gray-300">
                                                             <div 
-                                                                className="h-full bg-amber-400 rounded-full transition-all duration-500" 
+                                                                className="h-full bg-gray-800 rounded-full transition-all duration-500" 
                                                                 style={{ width: `${percentage}%` }}
                                                             ></div>
                                                         </div>
-                                                        <span className="w-8 text-right text-gray-400 font-medium">{percentage}%</span>
+                                                        <span className="w-8 text-right text-gray-400 font-bold">{percentage}%</span>
                                                     </div>
                                                 );
                                             })}
@@ -469,49 +506,41 @@ const ProductDetailPage = () => {
                             })()}
 
                             {/* Reviews list */}
-                            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1">
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1 scrollbar-thin">
                                 {reviews.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center text-center text-gray-500 py-10">
-                                        <div className="w-16 h-16 bg-neutral-50 rounded-full flex items-center justify-center border border-neutral-100 text-neutral-300 mb-3">
-                                            <MessageCircle size={28} />
+                                        <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-200 text-gray-400 mb-3">
+                                            <MessageCircle size={22} />
                                         </div>
-                                        <p className="text-[13px] font-medium text-gray-400">Chưa có bình luận hay đánh giá nào.</p>
-                                        <p className="text-[11px] text-gray-400">Hãy là người đầu tiên để lại đánh giá cho sản phẩm này!</p>
+                                        <p className="text-xs font-bold text-gray-700">Chưa có bình luận hay đánh giá nào.</p>
+                                        <p className="text-[10px] text-gray-400 mt-1">Hãy là người đầu tiên để lại đánh giá cho sản phẩm này!</p>
                                     </div>
                                 ) : (
                                     reviews.map((rev, index) => (
-                                        <div key={index} className="flex gap-4 p-4 rounded-xl bg-neutral-50/30 hover:bg-neutral-50/60 transition border border-neutral-100/50">
+                                        <div key={index} className="flex gap-4 p-4 rounded-xl bg-white border border-gray-200 shadow-sm">
                                             <img 
                                                 src={rev.user?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${rev.user?.fullName || 'U'}`} 
                                                 alt="avatar" 
-                                                className="w-10 h-10 rounded-full object-cover border border-neutral-200 shrink-0" 
+                                                className="w-10 h-10 rounded-full object-cover border border-gray-200 shrink-0" 
                                             />
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex justify-between items-baseline mb-1">
-                                                    <div className="font-bold text-[13px] text-gray-800 truncate">
+                                                    <div className="font-bold text-xs text-gray-900 truncate">
                                                         {rev.user?.fullName}
-                                                    </div>
-                                                    <div className="text-[10px] text-gray-400 font-medium">
-                                                        {new Date(rev.createdAt).toLocaleString('vi-VN', { 
-                                                            year: 'numeric', month: '2-digit', day: '2-digit', 
-                                                            hour: '2-digit', minute: '2-digit' 
-                                                        })}
                                                     </div>
                                                 </div>
 
-                                                {/* Rating stars of reviewer */}
                                                 <div className="flex gap-0.5 mb-2">
                                                     {[1, 2, 3, 4, 5].map((s) => (
                                                         <Star 
                                                             key={s} 
                                                             size={12} 
-                                                            className={s <= (rev.rating || 5) ? "text-amber-400 fill-amber-400" : "text-gray-200"} 
+                                                            className={s <= (rev.rating || 5) ? "text-amber-400 fill-amber-400" : "text-gray-205"} 
                                                         />
                                                     ))}
                                                 </div>
 
-                                                {/* Comment text */}
-                                                <p className="text-[13px] text-gray-750 leading-relaxed bg-white border border-gray-100/80 px-3.5 py-2.5 rounded-2xl rounded-tl-none inline-block max-w-full break-words shadow-sm">
+                                                <p className="text-[13px] text-gray-805 leading-relaxed bg-gray-50 border border-gray-200 px-3.5 py-2 rounded-lg inline-block max-w-full break-words">
                                                     {rev.content}
                                                 </p>
                                             </div>
@@ -520,25 +549,25 @@ const ProductDetailPage = () => {
                                 )}
                             </div>
 
-                            {/* Write Review box */}
+                            {/* Write Review block */}
                             {(!currentUser?.userId || !eligibility.isEdit) && (
-                                <div className="border-t border-neutral-100 pt-6">
+                                <div className="border-t border-gray-200 pt-6">
                                     {!currentUser?.userId ? (
-                                        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 text-center space-y-3">
-                                            <Lock className="mx-auto text-slate-400 stroke-1" size={32} />
-                                            <h4 className="text-sm font-bold text-slate-700">Đăng nhập để đánh giá</h4>
-                                            <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+                                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center space-y-3">
+                                            <Lock className="mx-auto text-gray-450 stroke-[1.5]" size={26} />
+                                            <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider">Đăng nhập để đánh giá</h4>
+                                            <p className="text-[11px] text-gray-500 max-w-xs mx-auto leading-relaxed">
                                                 Chỉ những khách hàng đã mua sản phẩm này thành công mới có thể đánh giá và nhận xét.
                                             </p>
                                             <button
                                                 onClick={() => navigate('/login')}
-                                                className="px-5 py-2 text-xs font-bold text-white bg-brand-accent hover:bg-brand-accent/90 rounded-xl transition cursor-pointer"
+                                                className="px-5 py-2.5 text-xs font-bold text-white bg-gray-900 hover:bg-black rounded-lg border border-black transition-colors cursor-pointer select-none"
                                             >
                                                 Đăng nhập ngay
                                             </button>
                                         </div>
                                     ) : !eligibility.eligible ? (
-                                        <div className="bg-gray-55/70 border border-gray-200 rounded-2xl p-5 flex gap-3 text-xs text-gray-600 leading-relaxed">
+                                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4.5 flex gap-3 text-xs text-gray-600 leading-relaxed">
                                             <AlertCircle size={18} className="text-gray-400 shrink-0 mt-0.5" />
                                             <div>
                                                 <p className="font-bold text-gray-800">Không thể viết đánh giá</p>
@@ -546,34 +575,29 @@ const ProductDetailPage = () => {
                                             </div>
                                         </div>
                                     ) : (
-                                        <div>
-                                            <p className="font-bold text-[14px] text-gray-800 mb-3">
+                                        <div className="space-y-4">
+                                            <p className="font-bold text-xs text-gray-400 uppercase tracking-wider">
                                                 Gửi đánh giá của bạn
                                             </p>
                                             
-                                            {/* Warning box */}
-                                            <div className="bg-amber-50/60 border border-amber-100 rounded-2xl p-4 flex gap-3 text-xs text-amber-800 mb-4 leading-relaxed">
-                                                <Info size={18} className="text-amber-500 shrink-0 mt-0.5" />
+                                            <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-4 flex gap-3 text-xs text-amber-900 leading-relaxed">
+                                                <Info size={18} className="text-amber-550 shrink-0 mt-0.5" />
                                                 <div className="flex-1">
-                                                    <p className="font-bold">
-                                                        Đánh giá của bạn có thể chỉnh sửa tối đa 2 lần.
-                                                    </p>
-                                                    <p className="text-amber-700/80 mt-0.5">
-                                                        Lưu ý: Sau khi gửi, bạn chỉ có thể chỉnh sửa đánh giá này từ Lịch sử mua hàng trong vòng 7 ngày.
-                                                    </p>
+                                                    <p className="font-bold">Đánh giá của bạn có thể chỉnh sửa tối đa 2 lần.</p>
+                                                    <p className="text-amber-700 mt-0.5">Lưu ý: Sau khi gửi, bạn chỉ có thể chỉnh sửa đánh giá này từ Lịch sử mua hàng trong vòng 7 ngày.</p>
                                                 </div>
                                             </div>
 
-                                            {/* Star Rating Input selector */}
-                                            <div className="flex items-center gap-3 mb-4">
-                                                <span className="text-xs text-gray-500 font-medium">Chọn số sao:</span>
-                                                <div className="flex gap-1.5">
+                                            {/* Star selector */}
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Chọn số sao:</span>
+                                                <div className="flex gap-1">
                                                     {[1, 2, 3, 4, 5].map((s) => (
                                                         <button 
                                                             key={s} 
                                                             type="button" 
                                                             onClick={() => setRatingInput(s)}
-                                                            className="transition transform active:scale-90 hover:scale-110 cursor-pointer"
+                                                            className="transition transform active:scale-95 cursor-pointer"
                                                         >
                                                             <Star 
                                                                 size={22} 
@@ -582,7 +606,7 @@ const ProductDetailPage = () => {
                                                         </button>
                                                     ))}
                                                 </div>
-                                                <span className="text-xs font-bold text-amber-600 uppercase tracking-wider ml-1">
+                                                <span className="text-xs font-bold text-amber-700 uppercase tracking-wider ml-1">
                                                     {ratingInput === 5 && 'Rất tốt'}
                                                     {ratingInput === 4 && 'Tốt'}
                                                     {ratingInput === 3 && 'Bình thường'}
@@ -591,26 +615,25 @@ const ProductDetailPage = () => {
                                                 </span>
                                             </div>
 
-                                            <div className="flex gap-3 items-start">
+                                            <div className="flex gap-4 items-start">
                                                 <img 
                                                     src={currentUser?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${currentUser?.fullName || 'U'}`} 
                                                     alt="You" 
-                                                    className="w-10 h-10 rounded-full object-cover border border-neutral-200 shrink-0" 
+                                                    className="w-10 h-10 rounded-full object-cover border border-gray-200 shrink-0" 
                                                 />
-                                                <div className="flex-1">
+                                                <div className="flex-1 space-y-3">
                                                     <textarea 
                                                         rows={3}
                                                         value={reviewInput}
                                                         onChange={(e) => setReviewInput(e.target.value)}
-                                                        placeholder="Chia sẻ trải nghiệm thực tế của bạn về chất lượng và độ bền của món đồ nhé..." 
-                                                        className="w-full bg-neutral-50/50 border border-neutral-200 focus:border-brand-accent focus:bg-white transition rounded-2xl px-4 py-3.5 text-xs outline-none resize-none placeholder:text-gray-400 text-gray-800" 
+                                                        placeholder="Chia sẻ trải nghiệm thực tế của bạn về chất lượng..." 
+                                                        className="w-full bg-white border border-gray-200 focus:border-gray-900 transition-colors rounded-lg px-4 py-3 text-xs outline-none resize-none placeholder:text-gray-400 text-gray-800" 
                                                     />
-                                                    <div className="flex justify-end mt-3">
+                                                    <div className="flex justify-end">
                                                         <button
                                                             onClick={handleAddReview}
                                                             disabled={!reviewInput.trim()}
-                                                            className="px-6 py-2.5 bg-brand-accent hover:bg-brand-accent/90 disabled:bg-gray-250 text-white font-bold rounded-xl text-xs transition shadow-sm hover:shadow flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                                                            title="Gửi đánh giá"
+                                                            className="px-6 py-2.5 bg-gray-900 hover:bg-black disabled:opacity-50 text-white font-bold rounded-lg text-xs transition-colors cursor-pointer"
                                                         >
                                                             <Send size={14} />
                                                             Gửi đánh giá
@@ -626,101 +649,109 @@ const ProductDetailPage = () => {
                     </div>
                     
                     {/* Right Column (1/3) */}
-                    <div className="space-y-4">
-                        {/* Seller Profile Card - Style Chợ Tốt */}
-                        <div className="bg-white rounded-md p-4 shadow-sm border border-gray-100">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="relative">
+                    <div className="space-y-6">
+                        
+                        {/* Seller Profile Card */}
+                        <div className="bg-white rounded-2xl p-6 border border-gray-200 space-y-6 shadow-sm">
+                            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="relative shrink-0">
                                         <img src={product.seller?.avatar || "/user_avatar.png"} alt="Avatar" className="w-12 h-12 rounded-full object-cover border border-gray-200" />
-                                        <div className={`absolute bottom-0 right-0 w-3 h-3 border-2 border-white rounded-full ${product.seller?.isActive ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                                        <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 border-2 border-white rounded-full ${product.seller?.isActive ? 'bg-green-500' : 'bg-gray-455'}`}></div>
                                     </div>
-                                    <div>
-                                        <h3 className="font-bold text-[15px] text-gray-800">{product.seller?.fullName || "Người bán ẩn danh"}</h3>
-                                        <div className="text-[12px] text-gray-500 flex items-center gap-1 mt-0.5">
-                                            <span>Bán chuyên</span>
+                                    <div className="min-w-0">
+                                        <h3 className="font-bold text-[14px] text-gray-900 truncate">{product.seller?.fullName || "Người bán ẩn danh"}</h3>
+                                        <div className="text-[9px] text-gray-455 font-bold uppercase tracking-wider flex items-center gap-1 mt-0.5">
+                                            <span>Thành viên</span>
                                             <span>•</span>
-                                            <span className="flex items-center gap-1"><Check size={12} className="text-green-500"/> Đã xác thực</span>
+                                            <span className="flex items-center gap-0.5 text-green-600"><Check size={10} className="stroke-[3]"/> Đã xác thực</span>
                                         </div>
                                     </div>
                                 </div>
-                                <button className="text-[12px] font-bold text-blue-600 border border-blue-600 rounded-full px-3 py-1 hover:bg-blue-50 transition">
+                                <button className="text-[10px] font-bold text-gray-800 hover:text-black border border-gray-300 hover:border-gray-500 rounded-lg px-2.5 py-1.5 transition-colors cursor-pointer">
                                     Xem trang
                                 </button>
                             </div>
                             
-                            {/* Action Buttons */}
+                            {/* Action Buttons (Flat styling) */}
                             <div className="flex flex-col gap-2">
                                 <button 
                                     onClick={handleBuyNow} 
-                                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-primary text-neutral-900 font-bold rounded-xl hover:bg-brand-hover transition shadow-sm uppercase text-sm cursor-pointer"
+                                    className="w-full flex items-center justify-center gap-2 py-3 bg-[#ffc107] hover:bg-[#e0a800] text-gray-900 font-bold rounded-lg border border-[#ffc107] hover:border-[#e0a800] transition-colors uppercase text-xs tracking-wider cursor-pointer"
                                 >
-                                    <ShoppingBag size={18} /> ĐẶT HÀNG (MUA NGAY)
+                                    <ShoppingBag size={16} className="stroke-[2.5]" /> ĐẶT HÀNG (MUA NGAY)
                                 </button>
+                                
                                 <button 
                                     onClick={handleAddToCart} 
-                                    className="w-full flex items-center justify-center gap-2 py-2.5 border border-brand-primary hover:bg-brand-primary/10 text-gray-900 font-bold rounded-xl transition shadow-sm uppercase text-sm cursor-pointer"
+                                    className="w-full flex items-center justify-center gap-2 py-3 border border-gray-900 hover:bg-gray-50 text-gray-955 font-bold rounded-lg transition-colors uppercase text-xs tracking-wider cursor-pointer"
                                 >
-                                    <ShoppingCart size={18} /> Thêm vào giỏ hàng
+                                    <ShoppingCart size={16} className="stroke-[2.5]" /> Thêm vào giỏ hàng
                                 </button>
+                                
                                 <button 
                                     onClick={() => setShowPhone(!showPhone)} 
-                                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#589f39] text-white font-bold rounded-xl hover:bg-[#4d8c32] transition"
+                                    className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-colors uppercase text-xs tracking-wider cursor-pointer"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                                     {showPhone ? (product.seller?.phone || '0987654321') : 'BẤM ĐỂ HIỆN SỐ'}
                                 </button>
+                                
                                 <button 
-                                    onClick={() => document.getElementById('chat-input').focus()} 
-                                    className="w-full flex items-center justify-center gap-2 py-2.5 border border-brand-accent text-brand-accent font-bold rounded-xl hover:bg-brand-accent/5 transition"
+                                    onClick={() => document.getElementById('chat-input')?.focus()} 
+                                    className="w-full flex items-center justify-center gap-2 py-3 border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition-all uppercase text-xs tracking-wider cursor-pointer"
                                 >
-                                    <MessageCircle size={18} /> CHAT VỚI NGƯỜI BÁN
+                                    <MessageCircle size={16} className="stroke-[2.5]" /> CHAT VỚI NGƯỜI BÁN
                                 </button>
                             </div>
                         </div>
 
                         {/* Location Box */}
-                        <div className="bg-white rounded-md p-4 shadow-sm border border-gray-100">
-                            <p className="font-bold text-[15px] mb-3">Khu vực</p>
-                            <div className="flex gap-2 items-start text-sm">
-                                <MapPin className="text-gray-500 shrink-0 mt-0.5" size={18} />
-                                <p className="text-gray-700">
+                        <div className="bg-white rounded-2xl p-6 border border-gray-200 space-y-4 shadow-sm">
+                            <p className="font-bold text-xs text-gray-400 uppercase tracking-wider mb-2">Khu vực giao dịch</p>
+                            <div className="flex gap-2.5 items-start text-xs sm:text-sm">
+                                <MapPin className="text-gray-900 shrink-0 mt-0.5" size={18} />
+                                <p className="text-gray-700 font-semibold">
                                     {product.specificAddress && `${product.specificAddress}, `}
                                     {product.district && `${product.district}, `}
                                     {product.province || 'Huyện Tiền Hải, Thái Bình'}
                                 </p>
                             </div>
-                            <img src="https://i.imgur.com/3N4oX61.png" alt="Map mockup" className="w-full h-24 object-cover rounded mt-3 cursor-pointer opacity-80 hover:opacity-100 transition" />
+                            <div className="relative rounded-xl overflow-hidden border border-gray-250 mt-3 shadow-inner">
+                                <img src="https://i.imgur.com/3N4oX61.png" alt="Map mockup" className="w-full h-24 object-cover opacity-90 transition-opacity" />
+                            </div>
                         </div>
 
                         {/* Chat Mini Section (Right column) */}
-                        <div className="bg-white border border-neutral-100 rounded-2xl shadow-sm overflow-hidden flex flex-col h-[350px]">
-                            <div className="p-4 border-b border-neutral-50 font-bold text-[14px] text-gray-800 flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden flex flex-col h-[380px] shadow-sm">
+                            <div className="p-4 border-b border-gray-200 font-bold text-[10px] text-gray-400 uppercase tracking-wider bg-gray-50 shrink-0">
+                                <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 mr-2 align-middle"></span>
                                 Khung Chat Trực Tuyến
                             </div>
                             {!currentUser?.userId ? (
-                                <div className="flex-1 flex flex-col items-center justify-center p-6 bg-neutral-50/50 text-center gap-3">
-                                    <MessageCircle size={32} className="text-gray-300" />
-                                    <p className="text-[12px] text-gray-500 leading-relaxed max-w-[200px]">Vui lòng đăng nhập để bắt đầu trò chuyện với người bán.</p>
-                                    <Link to="/login" className="px-5 py-2 bg-brand-primary text-black font-bold text-xs rounded-xl hover:bg-brand-hover transition shadow-sm">
+                                <div className="flex-1 flex flex-col items-center justify-center p-6 bg-gray-50 text-center gap-3">
+                                    <div className="w-12 h-12 bg-white rounded-xl border border-gray-200 text-gray-400 flex items-center justify-center">
+                                        <MessageCircle size={20} />
+                                    </div>
+                                    <p className="text-xs text-gray-500 leading-relaxed max-w-[200px]">Vui lòng đăng nhập để bắt đầu trò chuyện với người bán.</p>
+                                    <Link to="/login" className="px-5 py-2.5 bg-gray-900 hover:bg-black text-white font-bold text-xs rounded-lg border border-black transition-colors cursor-pointer">
                                         Đăng nhập ngay
                                     </Link>
                                 </div>
                             ) : (
                                 <>
-                                    <div className="flex-1 p-4 overflow-y-auto bg-neutral-50/40 flex flex-col gap-3">
+                                    <div className="flex-1 p-4 overflow-y-auto bg-gray-50 flex flex-col gap-3 scrollbar-thin">
                                         {/* Product Context Card inside chat */}
-                                        <div className="bg-white p-2.5 rounded-xl border border-neutral-100/80 mb-2 flex gap-2.5 items-center shadow-sm shrink-0">
-                                            <img src={currentImageUrl} alt="Product" className="w-10 h-10 object-cover rounded-lg border border-neutral-100" />
+                                        <div className="bg-white p-2.5 rounded-lg border border-gray-200 mb-2 flex gap-2.5 items-center shrink-0">
+                                            <img src={currentImageUrl} alt="Product" className="w-10 h-10 object-cover rounded-md border border-gray-200" />
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-[12px] font-bold text-gray-800 truncate">{product.title}</p>
-                                                <p className="text-[11px] text-brand-price font-bold">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}</p>
+                                                <p className="text-xs font-bold text-gray-800 truncate">{product.title}</p>
+                                                <p className="text-[11px] text-gray-900 font-bold">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}</p>
                                             </div>
                                         </div>
 
                                         {chatMessages.length === 0 ? (
-                                            <div className="text-center text-[12px] text-gray-400 mt-10">
+                                            <div className="text-center text-xs text-gray-400 mt-10 font-bold">
                                                 Hãy gửi tin nhắn để hỏi thêm về sản phẩm!
                                             </div>
                                         ) : (
@@ -730,10 +761,10 @@ const ProductDetailPage = () => {
                                                 return (
                                                     <div 
                                                         key={idx} 
-                                                        className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-[13px] leading-relaxed shadow-sm ${
+                                                        className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-xs leading-relaxed border ${
                                                             isMe 
-                                                                ? 'bg-brand-primary text-neutral-900 rounded-br-none self-end border border-brand-hover/10' 
-                                                                : 'bg-white border border-neutral-100 text-gray-800 rounded-bl-none self-start'
+                                                                ? 'bg-gray-800 text-white border-gray-800 rounded-br-none self-end' 
+                                                                : 'bg-white border-gray-200 text-gray-800 rounded-bl-none self-start'
                                                         }`}
                                                     >
                                                         {msg.content || msg.messageText}
@@ -742,7 +773,7 @@ const ProductDetailPage = () => {
                                             })
                                         )}
                                     </div>
-                                    <div className="p-3 border-t border-neutral-50 bg-white flex gap-2 items-center">
+                                    <div className="p-3 border-t border-gray-200 bg-white flex gap-2 items-center shrink-0">
                                         <input 
                                             id="chat-input"
                                             type="text" 
@@ -750,13 +781,13 @@ const ProductDetailPage = () => {
                                             onChange={(e) => setChatInput(e.target.value)}
                                             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                                             placeholder="Nhập tin nhắn..." 
-                                            className="flex-1 bg-neutral-50 border border-transparent focus:border-brand-primary-300 focus:bg-white transition rounded-full px-4 py-2 text-[13px] outline-none" 
+                                            className="flex-1 bg-gray-50 border border-gray-205 focus:border-gray-500 transition-colors rounded-lg px-4 py-2 text-xs outline-none text-gray-850" 
                                         />
                                         <button 
                                             onClick={handleSendMessage} 
-                                            className="bg-brand-primary hover:bg-brand-hover text-black p-2 rounded-full transition shrink-0 shadow-sm"
+                                            className="bg-gray-900 hover:bg-black text-white p-2.5 rounded-lg border border-black transition-colors cursor-pointer"
                                         >
-                                            <Send size={16} />
+                                            <Send size={14} />
                                         </button>
                                     </div>
                                 </>
