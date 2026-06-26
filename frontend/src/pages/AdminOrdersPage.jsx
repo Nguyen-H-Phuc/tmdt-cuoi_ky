@@ -66,6 +66,27 @@ const AdminOrdersPage = () => {
     }
   };
 
+  const handleAdminRefund = async (orderId, action) => {
+    try {
+      const response = await axios.put(`http://localhost:8080/api/orders/${orderId}/admin-handle-refund?action=${action}`);
+      const updatedOrder = response.data;
+      setOrders(prev => prev.map(o => o.orderId === orderId ? updatedOrder : o));
+      if (selectedOrder?.orderId === orderId) {
+        setSelectedOrder(updatedOrder);
+      }
+      setModalOpen(false);
+      if (action === 'approve') {
+        showToast(`Admin đã duyệt hoàn tiền thành công cho đơn hàng ${updatedOrder.orderCode}.`, 'success');
+      } else {
+        showToast(`Admin đã bác bỏ khiếu nại và hoàn tất đơn hàng ${updatedOrder.orderCode}.`, 'success');
+      }
+    } catch (error) {
+      console.error('Error handling admin refund:', error);
+      const errMsg = error.response?.data?.message || error.message || 'Lỗi khi xử lý yêu cầu hoàn tiền.';
+      showToast(`Lỗi: ${errMsg}`, 'error');
+    }
+  };
+
   // Filter & Search Logic
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.orderCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -179,9 +200,24 @@ const AdminOrdersPage = () => {
               ? 'bg-red-50 border-red-150 text-red-700'
               : status === 'ACCEPTED'
               ? 'bg-blue-50 border-blue-150 text-blue-700'
+              : status === 'PAID'
+              ? 'bg-indigo-50 border-indigo-150 text-indigo-700'
+              : status === 'REFUND_REQUESTED'
+              ? 'bg-orange-50 border-orange-150 text-orange-700'
+              : status === 'REFUNDED'
+              ? 'bg-gray-100 border-gray-200 text-gray-600'
+              : status === 'DISPUTED'
+              ? 'bg-rose-50 border-rose-150 text-rose-700'
               : 'bg-amber-55 bg-amber-50 border border-amber-100 text-amber-600'
           }`}>
-            {status === 'COMPLETED' ? 'Hoàn tất' : status === 'CANCELLED' ? 'Đã hủy' : status === 'ACCEPTED' ? 'Đã nhận' : 'Chờ xác nhận'}
+            {status === 'COMPLETED' ? 'Hoàn tất' : 
+             status === 'CANCELLED' ? 'Đã hủy' : 
+             status === 'ACCEPTED' ? 'Đã nhận' : 
+             status === 'PAID' ? 'Đã thanh toán (Sàn giữ)' : 
+             status === 'REFUND_REQUESTED' ? 'Yêu cầu hoàn tiền' :
+             status === 'REFUNDED' ? 'Đã hoàn tiền' :
+             status === 'DISPUTED' ? 'Tranh chấp' :
+             'Chờ xác nhận'}
           </span>
         );
       }
@@ -269,7 +305,11 @@ const AdminOrdersPage = () => {
             options: [
               { value: 'all', label: 'Tất cả trạng thái' },
               { value: 'PENDING', label: 'Chờ xác nhận' },
+              { value: 'PAID', label: 'Đã thanh toán (Sàn giữ)' },
               { value: 'ACCEPTED', label: 'Đã nhận đơn' },
+              { value: 'REFUND_REQUESTED', label: 'Yêu cầu hoàn tiền' },
+              { value: 'REFUNDED', label: 'Đã hoàn tiền' },
+              { value: 'DISPUTED', label: 'Khiếu nại/Tranh chấp' },
               { value: 'COMPLETED', label: 'Đã hoàn tất' },
               { value: 'CANCELLED', label: 'Đã hủy' }
             ]
@@ -297,6 +337,7 @@ const AdminOrdersPage = () => {
         onClose={() => setModalOpen(false)}
         order={selectedOrder}
         onCancelOrder={handleForceCancelOrder}
+        onAdminHandleRefund={handleAdminRefund}
         isAdminView={true}
       />
 
