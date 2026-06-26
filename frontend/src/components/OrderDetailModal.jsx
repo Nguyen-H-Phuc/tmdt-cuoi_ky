@@ -2,7 +2,7 @@ import React from 'react';
 import { X, MapPin, User, Phone, CreditCard, Clock, Truck, Calendar, FileText, ShoppingBag, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const OrderDetailModal = ({ isOpen, onClose, order, onCancelOrder, onPayNow, isAdminView = false }) => {
+const OrderDetailModal = ({ isOpen, onClose, order, onCancelOrder, onPayNow, onAdminHandleRefund, isAdminView = false }) => {
   const navigate = useNavigate();
   if (!isOpen || !order) return null;
 
@@ -41,6 +41,14 @@ const OrderDetailModal = ({ isOpen, onClose, order, onCancelOrder, onPayNow, isA
         return { label: 'Chờ xác nhận', color: 'bg-blue-50 text-blue-600 border-blue-200', desc: 'Đã tạo đơn hàng thành công, chờ người bán xác nhận.' };
       case 'ACCEPTED':
         return { label: 'Đã nhận đơn', color: 'bg-indigo-50 text-indigo-600 border-indigo-200', desc: 'Người bán đã nhận đơn hàng và đang chuẩn bị bàn giao.' };
+      case 'PAID':
+        return { label: 'Đã thanh toán', color: 'bg-indigo-50 text-indigo-650 border-indigo-200', desc: 'Người mua đã thanh toán trực tuyến thành công, sàn đang tạm giữ tiền.' };
+      case 'REFUND_REQUESTED':
+        return { label: 'Yêu cầu hoàn tiền', color: 'bg-orange-50 text-orange-600 border-orange-200', desc: 'Người mua đã gửi yêu cầu trả hàng và hoàn tiền cho đơn hàng này.' };
+      case 'REFUNDED':
+        return { label: 'Đã hoàn tiền', color: 'bg-gray-100 text-gray-500 border-gray-200', desc: 'Đơn hàng đã được hoàn tiền. Sản phẩm đã sẵn sàng bán lại.' };
+      case 'DISPUTED':
+        return { label: 'Khiếu nại/Tranh chấp', color: 'bg-rose-50 text-rose-700 border-rose-200', desc: 'Người bán từ chối hoàn tiền và chuyển tranh chấp lên sàn phân xử.' };
       case 'COMPLETED':
         return { label: 'Hoàn thành', color: 'bg-emerald-50 text-emerald-600 border-emerald-200', desc: 'Đơn hàng đã được thanh toán và giao dịch thành công.' };
       case 'CANCELLED':
@@ -123,6 +131,9 @@ const OrderDetailModal = ({ isOpen, onClose, order, onCancelOrder, onPayNow, isA
                     {order.status?.toUpperCase() === 'PENDING_PAYMENT' && 'Cập nhật thanh toán: '}
                     {order.status?.toUpperCase() === 'PENDING' && 'Cập nhật trạng thái: '}
                     {order.status?.toUpperCase() === 'ACCEPTED' && 'Thời gian nhận đơn: '}
+                    {order.status?.toUpperCase() === 'REFUND_REQUESTED' && 'Thời gian yêu cầu hoàn tiền: '}
+                    {order.status?.toUpperCase() === 'REFUNDED' && 'Thời gian hoàn tiền: '}
+                    {order.status?.toUpperCase() === 'DISPUTED' && 'Thời gian ghi nhận tranh chấp: '}
                     {formatDate(order.statusDate)}
                   </span>
                 </div>
@@ -299,15 +310,33 @@ const OrderDetailModal = ({ isOpen, onClose, order, onCancelOrder, onPayNow, isA
           {/* Secondary / Danger Actions on Left */}
           <div>
             {isAdminView ? (
-              (order.status?.toUpperCase() === 'PENDING' || order.status?.toUpperCase() === 'ACCEPTED' || order.status?.toUpperCase() === 'PENDING_PAYMENT') && (
-                <button
-                  onClick={() => onCancelOrder(order.orderId)}
-                  className="px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-100 rounded-xl transition-all border border-red-200 flex items-center gap-1.5 cursor-pointer"
-                >
-                  <X size={14} />
-                  Hủy cưỡng chế (Quyền Admin)
-                </button>
-              )
+              <div className="flex gap-2">
+                {(order.status?.toUpperCase() === 'PENDING' || order.status?.toUpperCase() === 'ACCEPTED' || order.status?.toUpperCase() === 'PENDING_PAYMENT') && (
+                  <button
+                    onClick={() => onCancelOrder(order.orderId)}
+                    className="px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-100 rounded-xl transition-all border border-red-200 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <X size={14} />
+                    Hủy cưỡng chế (Quyền Admin)
+                  </button>
+                )}
+                {(order.status?.toUpperCase() === 'REFUND_REQUESTED' || order.status?.toUpperCase() === 'DISPUTED') && (
+                  <>
+                    <button
+                      onClick={() => onAdminHandleRefund(order.orderId, 'approve')}
+                      className="px-4 py-2 text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                    >
+                      Duyệt hoàn tiền cho khách
+                    </button>
+                    <button
+                      onClick={() => onAdminHandleRefund(order.orderId, 'complete')}
+                      className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                    >
+                      Bác bỏ khiếu nại (Hoàn tất đơn)
+                    </button>
+                  </>
+                )}
+              </div>
             ) : (
               (order.status?.toUpperCase() === 'PENDING' || order.status?.toUpperCase() === 'PENDING_PAYMENT') && (
                 <button

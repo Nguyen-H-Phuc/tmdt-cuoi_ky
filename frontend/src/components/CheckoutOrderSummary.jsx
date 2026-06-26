@@ -2,8 +2,7 @@ import React from 'react';
 import { ShoppingBag, Lock } from 'lucide-react';
 
 const CheckoutOrderSummary = ({
-  product,
-  coverImage,
+  checkoutItems = [],
   appliedVoucher,
   shippingFee,
   voucherDiscount,
@@ -11,20 +10,32 @@ const CheckoutOrderSummary = ({
   paymentMethod,
   handlePlaceOrder
 }) => {
+  const itemsSubtotal = checkoutItems.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0);
+
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-neutral-100 sticky top-20">
       <h3 className="font-bold text-sm text-gray-800 mb-4 pb-2 border-b border-neutral-100">Chi tiết sản phẩm</h3>
       
-      {/* Product brief */}
-      <div className="flex gap-3 mb-4">
-        <img src={coverImage} alt={product.title} className="w-16 h-16 rounded-xl object-cover bg-neutral-100 border border-neutral-100" />
-        <div className="min-w-0">
-          <h4 className="font-bold text-xs text-gray-800 line-clamp-2 leading-snug">{product.title}</h4>
-          <p className="text-[10px] text-gray-400 mt-1 uppercase font-semibold">Người bán: {product.seller?.fullName || "Ẩn danh"}</p>
-          <p className="text-sm font-bold text-brand-price mt-1">
-            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
-          </p>
-        </div>
+      {/* Product list */}
+      <div className="space-y-3 mb-4 max-h-60 overflow-y-auto pr-1 scrollbar-thin">
+        {checkoutItems.map((item, idx) => {
+          const itemImage = item.images?.length > 0 ? item.images[0] : (item.imageUrl || '/house_1.png');
+          return (
+            <div key={item.productId || idx} className="flex gap-3 pb-3 border-b border-neutral-50 last:border-0 last:pb-0">
+              <img src={itemImage} alt={item.title} className="w-12 h-12 rounded-lg object-cover bg-neutral-100 border border-neutral-100 shrink-0" />
+              <div className="min-w-0 flex-1">
+                <h4 className="font-bold text-[11px] text-gray-800 line-clamp-2 leading-snug">{item.title}</h4>
+                <p className="text-[9px] text-gray-400 mt-0.5 uppercase font-semibold">
+                  Người bán: {item.seller?.fullName || item.sellerName || "Ẩn danh"}
+                  {item.quantity > 1 && <span className="text-neutral-650 font-bold ml-2">x{item.quantity}</span>}
+                </p>
+                <p className="text-xs font-bold text-brand-price mt-0.5">
+                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(item.price)}
+                </p>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Student Voucher Alert */}
@@ -43,7 +54,7 @@ const CheckoutOrderSummary = ({
         <div className="flex justify-between text-gray-500">
           <span>Giá sản phẩm</span>
           <span className="font-semibold text-gray-700">
-            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.price)}
+            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(itemsSubtotal)}
           </span>
         </div>
 

@@ -7,6 +7,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useCart } from '../context/CartContext.jsx';
 
 // Import sub-components
 import CheckoutReceiverForm from '../components/CheckoutReceiverForm.jsx';
@@ -20,8 +21,9 @@ const CheckoutPage = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
+  const { removeFromCart } = useCart();
 
-  const [product, setProduct] = useState(null);
+  const [checkoutItems, setCheckoutItems] = useState([]);
   const [loading, setLoading] = useState(true);
   
   // Checkout Form States
@@ -59,7 +61,19 @@ const CheckoutPage = () => {
             setLoading(true);
             const res = await axios.get(`http://localhost:8080/api/orders/code/${code}`);
             const orderData = res.data;
-            setProduct(orderData.product);
+            
+            if (orderData.details && orderData.details.length > 0) {
+              setCheckoutItems(orderData.details.map(d => ({
+                ...d.product,
+                quantity: d.quantity
+              })));
+            } else if (orderData.product) {
+              setCheckoutItems([{
+                ...orderData.product,
+                quantity: 1
+              }]);
+            }
+            
             setFullName(orderData.receiverName);
             setPhone(orderData.receiverPhone);
             setDeliveryMethod(orderData.deliveryMethod);
@@ -70,6 +84,16 @@ const CheckoutPage = () => {
             setPaymentMethod(orderData.paymentMethod);
             setOrderId(code);
             setStep(2);
+            
+            // Sync cart: Remove purchased products from cart
+            if (orderData.details && orderData.details.length > 0) {
+              for (const detail of orderData.details) {
+                removeFromCart(detail.product.productId);
+              }
+            } else if (orderData.product) {
+              removeFromCart(orderData.product.productId);
+            }
+            
             setLoading(false);
           } catch (err) {
             console.error("Error fetching order details", err);
@@ -79,11 +103,41 @@ const CheckoutPage = () => {
         fetchOrderDetails();
       } else {
         alert("Thanh toán qua cổng VNPay thất bại hoặc đã bị hủy.");
-        // Fetch product information normally
+        if (productId === 'cart') {
+          const items = JSON.parse(localStorage.getItem('checkout_items')) || [];
+          setCheckoutItems(items);
+          setLoading(false);
+        } else {
+          const fetchProduct = async () => {
+            try {
+              const res = await axios.get(`http://localhost:8080/api/products/${productId}`);
+              setCheckoutItems([{
+                ...res.data,
+                quantity: 1
+              }]);
+              setLoading(false);
+            } catch (err) {
+              console.error("Error fetching product for checkout", err);
+              setLoading(false);
+            }
+          };
+          fetchProduct();
+        }
+      }
+    } else {
+      // Normal checkout page load
+      if (productId === 'cart') {
+        const items = JSON.parse(localStorage.getItem('checkout_items')) || [];
+        setCheckoutItems(items);
+        setLoading(false);
+      } else {
         const fetchProduct = async () => {
           try {
             const res = await axios.get(`http://localhost:8080/api/products/${productId}`);
-            setProduct(res.data);
+            setCheckoutItems([{
+              ...res.data,
+              quantity: 1
+            }]);
             setLoading(false);
           } catch (err) {
             console.error("Error fetching product for checkout", err);
@@ -92,19 +146,6 @@ const CheckoutPage = () => {
         };
         fetchProduct();
       }
-    } else {
-      // Normal checkout page load
-      const fetchProduct = async () => {
-        try {
-          const res = await axios.get(`http://localhost:8080/api/products/${productId}`);
-          setProduct(res.data);
-          setLoading(false);
-        } catch (err) {
-          console.error("Error fetching product for checkout", err);
-          setLoading(false);
-        }
-      };
-      fetchProduct();
     }
   }, [productId]);
 
@@ -132,24 +173,25 @@ const CheckoutPage = () => {
     );
   }
 
-  if (!product) {
+  if (checkoutItems.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F4F4F4]">
         <div className="bg-white p-8 rounded-2xl shadow-sm text-center max-w-md">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Sản phẩm không hợp lệ</h2>
-          <p className="text-gray-500 mb-6">Không tìm thấy thông tin sản phẩm bạn muốn đặt hàng. Vui lòng thử lại.</p>
-          <Link to="/" className="inline-block px-6 py-2.5 bg-brand-primary hover:bg-brand-hover text-neutral-900 font-bold rounded-xl transition">
-            Về trang chủ
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Không có sản phẩm để thanh toán</h2>
+          <p className="text-gray-500 mb-6">Giỏ hàng thanh toán của bạn trống hoặc không hợp lệ. Vui lòng quay lại giỏ hàng.</p>
+          <Link to="/cart" className="inline-block px-6 py-2.5 bg-brand-primary hover:bg-brand-hover text-neutral-900 font-bold rounded-xl transition">
+            Về giỏ hàng
           </Link>
         </div>
       </div>
     );
   }
 
+  const itemsSubtotal = checkoutItems.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0);
   const shippingFee = deliveryMethod === 'home' ? 20000 : 0;
   const voucherDiscount = appliedVoucher ? 10000 : 0;
-  const totalAmount = product.price + shippingFee - voucherDiscount;
+  const totalAmount = Math.max(0, itemsSubtotal + shippingFee - voucherDiscount);
 
   const validateForm = () => {
     const newErrors = {};
@@ -181,7 +223,11 @@ const CheckoutPage = () => {
     setVnpayProcessing(true);
     try {
       const orderPayload = {
-        productId: parseInt(productId),
+        productId: checkoutItems[0]?.productId,
+        items: checkoutItems.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity || 1
+        })),
         buyerId: currentUser?.userId,
         fullName: fullName,
         phone: phone,
@@ -194,6 +240,15 @@ const CheckoutPage = () => {
       };
 
       const res = await axios.post('http://localhost:8080/api/orders', orderPayload);
+      
+      // Clear purchased items from cart on client side immediately
+      for (const item of checkoutItems) {
+        try {
+          await removeFromCart(item.productId);
+        } catch (err) {
+          console.error("Lỗi đồng bộ xóa giỏ hàng:", err);
+        }
+      }
       
       if (paymentMethod === 'vnpay') {
         if (res.data.paymentUrl) {
@@ -215,8 +270,9 @@ const CheckoutPage = () => {
     }
   };
 
-  const images = product.images?.length > 0 ? product.images : ['/house_1.png'];
-  const coverImage = images[0];
+  const coverImage = checkoutItems[0]?.images?.length > 0 
+    ? checkoutItems[0].images[0] 
+    : (checkoutItems[0]?.imageUrl || '/house_1.png');
 
   return (
     <div className="bg-[#F4F4F4] min-h-screen py-6">
@@ -286,8 +342,7 @@ const CheckoutPage = () => {
             {/* RIGHT COLUMN: Order Summary Card */}
             <div className="space-y-6">
               <CheckoutOrderSummary
-                product={product}
-                coverImage={coverImage}
+                checkoutItems={checkoutItems}
                 appliedVoucher={appliedVoucher}
                 shippingFee={shippingFee}
                 voucherDiscount={voucherDiscount}
@@ -303,7 +358,7 @@ const CheckoutPage = () => {
           <CheckoutSuccessReceipt
             paymentMethod={paymentMethod}
             orderId={orderId}
-            product={product}
+            checkoutItems={checkoutItems}
             fullName={fullName}
             phone={phone}
             deliveryMethod={deliveryMethod}

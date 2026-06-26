@@ -5,7 +5,7 @@ import { CheckCircle2 } from 'lucide-react';
 const CheckoutSuccessReceipt = ({
   paymentMethod,
   orderId,
-  product,
+  checkoutItems = [],
   fullName,
   phone,
   deliveryMethod,
@@ -36,14 +36,22 @@ const CheckoutSuccessReceipt = ({
           <span className="font-bold text-gray-800">{orderId}</span>
         </div>
 
-        <div className="flex justify-between items-center">
-          <span className="text-gray-400">Sản phẩm đặt mua</span>
-          <span className="font-semibold text-gray-800 truncate max-w-[200px]">{product.title}</span>
+        <div className="flex justify-between items-start">
+          <span className="text-gray-400 shrink-0">Sản phẩm đặt mua</span>
+          <div className="text-right max-w-[250px] space-y-1">
+            {checkoutItems.map((item, idx) => (
+              <div key={item.productId || idx} className="font-semibold text-gray-800 truncate" title={item.title}>
+                {item.title} {item.quantity > 1 ? `(x${item.quantity})` : ''}
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="flex justify-between items-center">
-          <span className="text-gray-400">Người bán</span>
-          <span className="font-semibold text-gray-800">{product.seller?.fullName || "Ẩn danh"}</span>
+        <div className="flex justify-between items-start">
+          <span className="text-gray-400 shrink-0">Người bán</span>
+          <span className="font-semibold text-gray-800 text-right max-w-[250px]">
+            {Array.from(new Set(checkoutItems.map(item => item.seller?.fullName || item.sellerName || "Ẩn danh"))).join(', ')}
+          </span>
         </div>
 
         <div className="flex justify-between items-center">

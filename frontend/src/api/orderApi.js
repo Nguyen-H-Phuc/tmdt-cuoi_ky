@@ -82,3 +82,49 @@ export const rejectOrder = async (orderId, sellerId) => {
   return response.data;
 };
 
+/**
+ * Xác nhận đã nhận hàng (Người mua)
+ * @param {number|string} orderId - ID đơn hàng
+ * @param {number} userId - ID người mua
+ * @returns {Promise}
+ */
+export const confirmReceipt = async (orderId, userId) => {
+  const response = await apiClient.put(`/api/orders/${orderId}/confirm-receipt?userId=${userId}`);
+  return response.data;
+};
+
+/**
+ * Yêu cầu hoàn tiền (Người mua)
+ * @param {number|string} orderId - ID đơn hàng
+ * @param {number} userId - ID người mua
+ * @returns {Promise}
+ */
+export const requestRefund = async (orderId, userId) => {
+  const response = await apiClient.put(`/api/orders/${orderId}/request-refund?userId=${userId}`);
+  return response.data;
+};
+
+/**
+ * Người bán xử lý yêu cầu hoàn tiền (chấp nhận/từ chối)
+ * @param {number|string} orderId - ID đơn hàng
+ * @param {number} sellerId - ID người bán
+ * @param {string} action - 'approve' hoặc 'reject'
+ * @returns {Promise}
+ */
+export const sellerHandleRefund = async (orderId, sellerId, action) => {
+  const response = await apiClient.put(`/api/orders/${orderId}/seller-handle-refund?sellerId=${sellerId}&action=${action}`);
+  return response.data;
+};
+
+/**
+ * Admin phân xử hoàn tiền (duyệt/hoàn tất cưỡng chế)
+ * @param {number|string} orderId - ID đơn hàng
+ * @param {string} action - 'approve' hoặc 'complete'
+ * @returns {Promise}
+ */
+export const adminHandleRefund = async (orderId, action) => {
+  const response = await apiClient.put(`/api/orders/${orderId}/admin-handle-refund?action=${action}`);
+  return response.data;
+};
+
+

@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class OrderRequest {
     private Integer productId;
+    private java.util.List<OrderItemRequest> items;
     private Integer buyerId;
     private String fullName;
     private String phone;

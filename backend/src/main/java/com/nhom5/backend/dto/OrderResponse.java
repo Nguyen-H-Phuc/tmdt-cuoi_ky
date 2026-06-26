@@ -10,6 +10,7 @@ public class OrderResponse {
     private UserDTO buyer;
     private UserDTO seller;
     private ProductDTO product;
+    private java.util.List<OrderDetailDTO> details;
     private Double totalPrice;
     private String status;
     private String paymentMethod;

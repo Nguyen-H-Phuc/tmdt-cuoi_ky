@@ -26,7 +26,10 @@ import {
   cancelOrder, 
   getSellerOrders, 
   acceptOrder, 
-  rejectOrder 
+  rejectOrder,
+  confirmReceipt,
+  requestRefund,
+  sellerHandleRefund
 } from '../api/orderApi';
 import OrderDetailModal from './OrderDetailModal';
 import ReviewModal from './ReviewModal';
@@ -49,10 +52,20 @@ const OrderHistoryCard = () => {
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
   const [isCancelling, setIsCancelling] = useState(false);
 
+  // Xác nhận đã nhận hàng (người mua)
+  const [confirmingReceiptOrderId, setConfirmingReceiptOrderId] = useState(null);
+  const [isConfirmingReceipt, setIsConfirmingReceipt] = useState(false);
+
   // Phê duyệt / Từ chối (người bán)
   const [acceptingOrderId, setAcceptingOrderId] = useState(null);
   const [rejectingOrderId, setRejectingOrderId] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Trả hàng / Hoàn tiền
+  const [requestingRefundOrderId, setRequestingRefundOrderId] = useState(null);
+  const [isRequestingRefund, setIsRequestingRefund] = useState(false);
+  const [refundHandleOrder, setRefundHandleOrder] = useState(null); // { orderId, action }
+  const [isProcessingRefundHandle, setIsProcessingRefundHandle] = useState(false);
 
   // Toast notification state
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
@@ -106,6 +119,25 @@ const OrderHistoryCard = () => {
     }
   };
 
+  // Handle Confirm Receipt (Buyer)
+  const handleConfirmReceipt = async () => {
+    if (!confirmingReceiptOrderId || !user?.userId) return;
+    setIsConfirmingReceipt(true);
+    try {
+      await confirmReceipt(confirmingReceiptOrderId, user.userId);
+      showToast('Xác nhận đã nhận hàng thành công! Đơn hàng đã hoàn thành.', 'success');
+      setConfirmingReceiptOrderId(null);
+      fetchOrders();
+      setSelectedOrder(null);
+    } catch (err) {
+      console.error('Lỗi khi xác nhận đã nhận hàng:', err);
+      const errMsg = err.response?.data?.message || err.message || 'Không thể xác nhận đã nhận hàng.';
+      showToast(`Lỗi: ${errMsg}`, 'error');
+    } finally {
+      setIsConfirmingReceipt(false);
+    }
+  };
+
   // Handle Accept Order (Seller)
   const handleAcceptOrder = async () => {
     if (!acceptingOrderId || !user?.userId) return;
@@ -142,6 +174,48 @@ const OrderHistoryCard = () => {
     }
   };
 
+  // Handle Request Refund (Buyer)
+  const handleRequestRefund = async () => {
+    if (!requestingRefundOrderId || !user?.userId) return;
+    setIsRequestingRefund(true);
+    try {
+      await requestRefund(requestingRefundOrderId, user.userId);
+      showToast('Gửi yêu cầu hoàn tiền thành công!', 'success');
+      setRequestingRefundOrderId(null);
+      fetchOrders();
+      setSelectedOrder(null);
+    } catch (err) {
+      console.error('Lỗi khi gửi yêu cầu hoàn tiền:', err);
+      const errMsg = err.response?.data?.message || err.message || 'Không thể gửi yêu cầu hoàn tiền.';
+      showToast(`Lỗi: ${errMsg}`, 'error');
+    } finally {
+      setIsRequestingRefund(false);
+    }
+  };
+
+  // Handle Seller Handle Refund (Seller)
+  const handleSellerRefund = async () => {
+    if (!refundHandleOrder || !user?.userId) return;
+    const { orderId, action } = refundHandleOrder;
+    setIsProcessingRefundHandle(true);
+    try {
+      await sellerHandleRefund(orderId, user.userId, action);
+      if (action === 'approve') {
+        showToast('Bạn đã đồng ý hoàn tiền cho người mua. Sản phẩm đã sẵn sàng bán lại.', 'success');
+      } else {
+        showToast('Bạn đã từ chối hoàn tiền và chuyển tranh chấp lên sàn phân xử.', 'info');
+      }
+      setRefundHandleOrder(null);
+      fetchOrders();
+    } catch (err) {
+      console.error('Lỗi khi xử lý hoàn tiền:', err);
+      const errMsg = err.response?.data?.message || err.message || 'Không thể xử lý hoàn tiền.';
+      showToast(`Lỗi: ${errMsg}`, 'error');
+    } finally {
+      setIsProcessingRefundHandle(false);
+    }
+  };
+
   // Handle Pay Now (VNPay)
   const handlePayNow = (paymentUrl) => {
     if (paymentUrl) {
@@ -173,6 +247,10 @@ const OrderHistoryCard = () => {
     { id: 'ALL', label: 'Tất cả' },
     { id: 'PENDING_PAYMENT', label: 'Chờ thanh toán' },
     { id: 'PENDING', label: 'Chờ xác nhận' },
+    { id: 'PAID', label: 'Chờ giao hàng' },
+    { id: 'REFUND_REQUESTED', label: 'Yêu cầu trả hàng' },
+    { id: 'REFUNDED', label: 'Đã hoàn tiền' },
+    { id: 'DISPUTED', label: 'Khiếu nại/Tranh chấp' },
     { id: 'COMPLETED', label: 'Hoàn thành' },
     { id: 'CANCELLED', label: 'Đã hủy' }
   ];
@@ -190,6 +268,14 @@ const OrderHistoryCard = () => {
         return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200">Chờ thanh toán</span>;
       case 'PENDING':
         return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-200">Chờ xác nhận</span>;
+      case 'PAID':
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-200">Đã thanh toán (Sàn giữ tiền)</span>;
+      case 'REFUND_REQUESTED':
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-50 text-orange-600 border border-orange-200">Yêu cầu hoàn tiền</span>;
+      case 'REFUNDED':
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-50 text-gray-500 border border-gray-200">Đã hoàn tiền</span>;
+      case 'DISPUTED':
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Tranh chấp (Chờ xử lý)</span>;
       case 'COMPLETED':
         return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">Hoàn thành</span>;
       case 'CANCELLED':
@@ -342,7 +428,36 @@ const OrderHistoryCard = () => {
               </div>
 
               {/* Thông tin sản phẩm */}
-              {order.product ? (
+              {order.details && order.details.length > 0 ? (
+                <div className="space-y-3">
+                  {order.details.map((detail, dIdx) => (
+                    <div key={detail.orderDetailId || dIdx} className="flex gap-4 border-b border-gray-50 pb-2 last:border-0 last:pb-0">
+                      <img 
+                        src={detail.product?.imageUrl || 'https://placehold.co/80'} 
+                        alt={detail.product?.title} 
+                        className="w-12 h-12 object-cover rounded-lg border border-gray-200 flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                        <div>
+                          <h4 className="text-xs font-bold text-gray-800 line-clamp-1">{detail.product?.title}</h4>
+                          <p className="text-[9px] text-gray-500 flex items-center gap-1 mt-0.5">
+                            Người bán: {order.seller?.fullName || 'Không tên'}
+                            {detail.quantity > 1 && <span className="font-bold text-gray-700 ml-2">x{detail.quantity}</span>}
+                          </p>
+                        </div>
+                        <div className="flex justify-between items-baseline mt-1">
+                          <span className="text-[9px] text-gray-500">Đơn giá: {formatPrice(detail.product?.price)}</span>
+                          <span className="text-xs font-bold text-brand-accent">{formatPrice(detail.product?.price * detail.quantity)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <p className="text-[9px] text-gray-400 mt-1 flex items-center gap-1">
+                    <Calendar size={10} />
+                    Đặt ngày: {formatDate(order.orderDate)}
+                  </p>
+                </div>
+              ) : order.product ? (
                 <div className="flex gap-4">
                   <img 
                     src={order.product.imageUrl || 'https://placehold.co/80'} 
@@ -441,6 +556,26 @@ const OrderHistoryCard = () => {
                         </button>
                       )}
 
+                      {/* Xác nhận đã nhận hàng */}
+                      {order.status?.toUpperCase() === 'PAID' && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setRequestingRefundOrderId(order.orderId)}
+                            className="px-3 py-1.5 text-[11px] font-bold text-orange-600 hover:bg-orange-50 rounded-lg border border-orange-200 transition-all flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <AlertCircle size={13} />
+                            Yêu cầu hoàn tiền
+                          </button>
+                          <button
+                            onClick={() => setConfirmingReceiptOrderId(order.orderId)}
+                            className="px-3 py-1.5 text-[11px] font-bold text-white bg-emerald-500 hover:bg-emerald-600 rounded-lg shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <ShieldCheck size={13} />
+                            Xác nhận đã nhận hàng
+                          </button>
+                        </div>
+                      )}
+
                       {/* Đánh giá sản phẩm */}
                       {order.status?.toUpperCase() === 'COMPLETED' && order.product && (() => {
                         const baseDateStr = order.statusDate || order.orderDate;
@@ -494,6 +629,25 @@ const OrderHistoryCard = () => {
                         >
                           Từ chối bán
                         </button>
+                      )}
+
+                      {/* Xử lý yêu cầu hoàn tiền */}
+                      {order.status?.toUpperCase() === 'REFUND_REQUESTED' && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setRefundHandleOrder({ orderId: order.orderId, action: 'reject' })}
+                            className="px-3 py-1.5 text-[11px] font-bold text-red-500 hover:bg-red-50 rounded-lg border border-red-200 transition-all flex items-center gap-1 cursor-pointer"
+                          >
+                            Từ chối hoàn tiền
+                          </button>
+                          <button
+                            onClick={() => setRefundHandleOrder({ orderId: order.orderId, action: 'approve' })}
+                            className="px-3 py-1.5 text-[11px] font-bold text-white bg-orange-500 hover:bg-orange-600 rounded-lg shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <CheckCircle size={13} />
+                            Đồng ý hoàn tiền
+                          </button>
+                        </div>
                       )}
                     </>
                   )}
@@ -605,6 +759,100 @@ const OrderHistoryCard = () => {
                 className="px-4 py-1.5 text-white bg-red-500 hover:bg-red-600 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer"
               >
                 {isProcessing ? 'Đang huỷ...' : 'Đúng, từ chối'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Xác nhận đã nhận hàng (Người mua) */}
+      {confirmingReceiptOrderId && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-[1000] p-4">
+          <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl border border-gray-100 p-5 flex flex-col gap-4 animate-in fade-in zoom-in duration-150">
+            <h3 className="text-sm font-bold text-gray-900">Xác nhận đã nhận hàng</h3>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              Bạn xác nhận đã nhận được đầy đủ sản phẩm từ người bán và sản phẩm đúng như mô tả? 
+              <br />
+              <span className="text-red-500 font-semibold">* Sau khi xác nhận, sàn sẽ tiến hành chuyển tiền cho người bán và giao dịch không thể hoàn tác.</span>
+            </p>
+            <div className="flex gap-2 justify-end mt-1">
+              <button
+                onClick={() => setConfirmingReceiptOrderId(null)}
+                disabled={isConfirmingReceipt}
+                className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg transition-all cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleConfirmReceipt}
+                disabled={isConfirmingReceipt}
+                className="px-4 py-1.5 text-white bg-emerald-500 hover:bg-emerald-600 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+              >
+                {isConfirmingReceipt ? 'Đang xử lý...' : 'Xác nhận'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Xác nhận Yêu cầu hoàn tiền (Người mua) */}
+      {requestingRefundOrderId && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-[1000] p-4">
+          <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl border border-gray-100 p-5 flex flex-col gap-4 animate-in fade-in zoom-in duration-150">
+            <h3 className="text-sm font-bold text-gray-900">Yêu cầu hoàn tiền</h3>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              Bạn có chắc chắn muốn gửi yêu cầu hoàn tiền cho đơn hàng này không? Sàn sẽ tạm khóa số tiền và thông báo cho người bán giải quyết.
+            </p>
+            <div className="flex gap-2 justify-end mt-1">
+              <button
+                onClick={() => setRequestingRefundOrderId(null)}
+                disabled={isRequestingRefund}
+                className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg transition-all cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleRequestRefund}
+                disabled={isRequestingRefund}
+                className="px-4 py-1.5 text-white bg-orange-500 hover:bg-orange-600 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+              >
+                {isRequestingRefund ? 'Đang xử lý...' : 'Yêu cầu'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Xác nhận xử lý hoàn tiền (Người bán) */}
+      {refundHandleOrder && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-[1000] p-4">
+          <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl border border-gray-100 p-5 flex flex-col gap-4 animate-in fade-in zoom-in duration-150">
+            <h3 className="text-sm font-bold text-gray-900">
+              {refundHandleOrder.action === 'approve' ? 'Chấp nhận hoàn tiền' : 'Từ chối hoàn tiền'}
+            </h3>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              {refundHandleOrder.action === 'approve' 
+                ? 'Bạn đồng ý hoàn lại tiền cho người mua? Đơn hàng sẽ chuyển sang Đã hoàn tiền, sản phẩm được đăng lại ở trạng thái Sẵn sàng bán.'
+                : 'Bạn không đồng ý hoàn tiền và muốn chuyển vụ việc cho Admin sàn phân xử?'}
+            </p>
+            <div className="flex gap-2 justify-end mt-1">
+              <button
+                onClick={() => setRefundHandleOrder(null)}
+                disabled={isProcessingRefundHandle}
+                className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg transition-all cursor-pointer"
+              >
+                Đóng
+              </button>
+              <button
+                onClick={handleSellerRefund}
+                disabled={isProcessingRefundHandle}
+                className={`px-4 py-1.5 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
+                  refundHandleOrder.action === 'approve' 
+                    ? 'bg-orange-500 hover:bg-orange-600' 
+                    : 'bg-red-500 hover:bg-red-600'
+                }`}
+              >
+                {isProcessingRefundHandle ? 'Đang xử lý...' : 'Xác nhận'}
               </button>
             </div>
           </div>

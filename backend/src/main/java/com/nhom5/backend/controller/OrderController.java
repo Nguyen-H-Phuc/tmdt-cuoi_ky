@@ -124,4 +124,57 @@ public class OrderController {
             return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
         }
     }
+
+    @PutMapping("/{orderId}/confirm-receipt")
+    public ResponseEntity<?> confirmReceipt(@PathVariable Integer orderId, @RequestParam Integer userId) {
+        try {
+            OrderResponse response = orderService.confirmReceipt(orderId, userId);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{orderId}/request-refund")
+    public ResponseEntity<?> requestRefund(@PathVariable Integer orderId, @RequestParam Integer userId) {
+        try {
+            OrderResponse response = orderService.requestRefund(orderId, userId);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{orderId}/seller-handle-refund")
+    public ResponseEntity<?> sellerHandleRefund(
+            @PathVariable Integer orderId,
+            @RequestParam Integer sellerId,
+            @RequestParam String action) {
+        try {
+            OrderResponse response = orderService.sellerHandleRefund(orderId, sellerId, action);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{orderId}/admin-handle-refund")
+    public ResponseEntity<?> adminHandleRefund(
+            @PathVariable Integer orderId,
+            @RequestParam String action) {
+        try {
+            OrderResponse response = orderService.adminHandleRefund(orderId, action);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
+        }
+    }
 }
