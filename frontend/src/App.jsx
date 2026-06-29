@@ -16,6 +16,7 @@ import ProductDetailPage from "./pages/ProductDetailPage.jsx";
 import ChatPage from "./pages/ChatPage.jsx";
 import CheckoutPage from "./pages/CheckoutPage.jsx";
 import CartPage from "./pages/CartPage.jsx";
+import SellerPage from "./pages/SellerPage.jsx";
 
 // Import Admin layout & nested views
 import AdminLayout from "./components/AdminLayout.jsx";
@@ -26,6 +27,7 @@ import AdminCategoriesPage from "./pages/AdminCategoriesPage.jsx";
 import AdminReportsPage from "./pages/AdminReportsPage.jsx";
 import AdminTransactionsPage from "./pages/AdminTransactionsPage.jsx";
 import AdminOrdersPage from "./pages/AdminOrdersPage.jsx";
+import AdminStatisticsPage from "./pages/AdminStatisticsPage.jsx";
 
 const SocialLoginHandler = () => {
     const location = useLocation();
@@ -74,6 +76,7 @@ function App() {
               <Route path="/" element={<CategoryGrid />} />
               <Route path="/product/:id" element={<ProductDetailPage />} />
               <Route path="/checkout/:productId" element={<CheckoutPage />} />
+              <Route path="/seller/:sellerId" element={<SellerPage />} />
             </Route>
 
             {/* Admin Route Group with custom AdminLayout (different shell from Main Shop) */}
@@ -86,6 +89,7 @@ function App() {
               <Route path="categories" element={<AdminCategoriesPage />} />
               <Route path="reports" element={<AdminReportsPage />} />
               <Route path="transactions" element={<AdminTransactionsPage />} />
+              <Route path="statistics" element={<AdminStatisticsPage />} />
             </Route>
 
             <Route path="/register" element={<RegisterPage />} />

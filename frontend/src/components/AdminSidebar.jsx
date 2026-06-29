@@ -12,7 +12,8 @@ import {
   Landmark, 
   ShoppingBag, 
   LogOut,
-  X
+  X,
+  BarChart2
 } from 'lucide-react';
 
 const AdminSidebar = ({ isOpen, onClose }) => {
@@ -38,6 +39,11 @@ const AdminSidebar = ({ isOpen, onClose }) => {
       path: '/admin/dashboard',
       label: 'Tổng quan',
       icon: LayoutDashboard,
+    },
+    {
+      path: '/admin/statistics',
+      label: 'Thống kê chi tiết',
+      icon: BarChart2,
     },
     {
       path: '/admin/products',
