@@ -11,6 +11,7 @@ public class CartItemDTO {
     private Double price;
     private String imageUrl;
     private Integer quantity;
+    private Integer productQuantity;
     private LocalDateTime addedAt;
     private UserDTO seller;
 }
