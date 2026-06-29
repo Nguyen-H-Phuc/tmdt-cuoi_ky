@@ -18,12 +18,15 @@ public class EmailService {
         mailSender.send(message);
     }
 
+    @org.springframework.beans.factory.annotation.Value("${app.frontend-url}")
+    private String frontendUrl;
+
     public void sendResetPasswordEmail(String toEmail, String token) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
         message.setSubject("Yêu cầu đặt lại mật khẩu");
-        // Giả sử link frontend là localhost:5173/reset-password?token=...
-        String resetLink = "http://localhost:5173/reset-password?token=" + token;
+        // Link frontend động dựa trên frontendUrl
+        String resetLink = frontendUrl + "/reset-password?token=" + token;
         message.setText("Bạn đã yêu cầu đặt lại mật khẩu. Vui lòng nhấn vào link bên dưới để thực hiện:\n" + resetLink + "\n\nLink có hiệu lực trong 15 phút.");
         mailSender.send(message);
     }

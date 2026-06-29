@@ -75,10 +75,13 @@ public class AuthController {
         }
     }
 
+    @org.springframework.beans.factory.annotation.Value("${app.frontend-url}")
+    private String frontendUrl;
+
     @GetMapping("/oauth2-success")
     public void oauth2Success(@AuthenticationPrincipal OAuth2User principal, HttpServletResponse response) throws IOException {
         if (principal == null) {
-            response.sendRedirect("http://localhost:5173/login?error=unauthorized");
+            response.sendRedirect(frontendUrl + "/login?error=unauthorized");
             return;
         }
 
@@ -89,7 +92,8 @@ public class AuthController {
         String token = jwtService.generateToken(user.getEmail());
 
         // Chuyển hướng người dùng quay lại React kèm Token trên URL
-        String redirectUrl = String.format("http://localhost:5173/?token=%s&fullName=%s&role=%s&userId=%d&email=%s&avatar=%s",
+        String redirectUrl = String.format("%s/?token=%s&fullName=%s&role=%s&userId=%d&email=%s&avatar=%s",
+                frontendUrl,
                 token,
                 URLEncoder.encode(user.getFullName(), StandardCharsets.UTF_8),
                 user.getRole().name(),

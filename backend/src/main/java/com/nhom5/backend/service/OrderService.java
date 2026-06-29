@@ -44,6 +44,9 @@ public class OrderService {
     @Autowired
     private VNPayConfig vnPayConfig;
 
+    @org.springframework.beans.factory.annotation.Value("${app.frontend-url}")
+    private String frontendUrl;
+
     @Transactional
     public OrderResponse createOrder(OrderRequest request, HttpServletRequest httpRequest) {
         List<OrderItemRequest> items = request.getItems();
@@ -301,19 +304,13 @@ public class OrderService {
         // Verify Signature
         boolean isSignatureValid = verifyVNPaySignature(params, vnp_SecureHash);
 
-        String[] orderCodes = vnp_TxnRef.split("_");
-        
-        // Find first order to determine product redirect page
-        Order firstOrder = orderRepository.findByOrderCode(orderCodes[0])
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng tương ứng với mã giao dịch VNPay."));
+        // Cú pháp vnp_TxnRef: orderCode1_orderCode2_productId
+        String[] parts = vnp_TxnRef.split("_");
+        String productId = parts[parts.length - 1]; // Phần tử cuối luôn là productId (hoặc 'cart')
+        String[] orderCodes = Arrays.copyOf(parts, parts.length - 1);
 
-        List<OrderDetail> firstDetails = orderDetailRepository.findByOrder_OrderId(firstOrder.getOrderId());
-        Integer productId = (firstDetails != null && !firstDetails.isEmpty()) 
-                ? firstDetails.get(0).getProduct().getProductId() 
-                : 1;
-
-        if (isSignatureValid && "00".equals(vnp_ResponseCode)) {
-            // Payment success: Set status to PAID and mark products as sold
+        if ("00".equals(vnp_ResponseCode)) {
+            // Payment success: Set status to PAID and set statusDate
             for (String code : orderCodes) {
                 Order order = orderRepository.findByOrderCode(code).orElse(null);
                 if (order != null) {
@@ -321,6 +318,7 @@ public class OrderService {
                     order.setStatusDate(LocalDateTime.now());
                     orderRepository.save(order);
 
+                    // Update product status to sold
                     List<OrderDetail> details = orderDetailRepository.findByOrder_OrderId(order.getOrderId());
                     if (details != null) {
                         for (OrderDetail detail : details) {
@@ -333,9 +331,9 @@ public class OrderService {
             }
 
             if (orderCodes.length > 1) {
-                return "http://localhost:5173/checkout/cart?status=success&orderCode=" + vnp_TxnRef;
+                return frontendUrl + "/checkout/cart?status=success&orderCode=" + vnp_TxnRef;
             } else {
-                return "http://localhost:5173/checkout/" + productId + "?status=success&orderCode=" + vnp_TxnRef;
+                return frontendUrl + "/checkout/" + productId + "?status=success&orderCode=" + vnp_TxnRef;
             }
         } else {
             // Payment failed or cancelled: Set status to CANCELLED
@@ -349,9 +347,9 @@ public class OrderService {
             }
 
             if (orderCodes.length > 1) {
-                return "http://localhost:5173/checkout/cart?status=fail&orderCode=" + vnp_TxnRef;
+                return frontendUrl + "/checkout/cart?status=fail&orderCode=" + vnp_TxnRef;
             } else {
-                return "http://localhost:5173/checkout/" + productId + "?status=fail&orderCode=" + vnp_TxnRef;
+                return frontendUrl + "/checkout/" + productId + "?status=fail&orderCode=" + vnp_TxnRef;
             }
         }
     }
