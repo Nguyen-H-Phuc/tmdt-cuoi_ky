@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
 
         try {
             // Gọi API ở background, không dùng await để không chặn UI
-            axios.post("http://localhost:8080/api/auth/logout");
+            axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/auth/logout`);
         } catch (error) {
             console.error("Lỗi khi gọi API logout:", error);
         }

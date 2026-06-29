@@ -48,7 +48,7 @@ const DashboardPage = () => {
     const fetchReports = async () => {
         try {
             setLoadingReports(true);
-            const response = await axios.get('http://localhost:8080/api/reviews/reports');
+            const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/reviews/reports`);
             setReports(response.data);
             setError(null);
         } catch (err) {
@@ -66,7 +66,7 @@ const DashboardPage = () => {
 
         try {
             setProcessingId(reportId);
-            await axios.post(`http://localhost:8080/api/reviews/reports/${reportId}/approve`);
+            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/reviews/reports/${reportId}/approve`);
             // Cập nhật danh sách reports cục bộ
             setReports(prev => prev.filter(r => r.reportId !== reportId));
             alert('Đã chấp nhận báo cáo và xóa đánh giá vi phạm thành công.');
@@ -85,7 +85,7 @@ const DashboardPage = () => {
 
         try {
             setProcessingId(reportId);
-            await axios.post(`http://localhost:8080/api/reviews/reports/${reportId}/reject`);
+            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/reviews/reports/${reportId}/reject`);
             // Cập nhật trạng thái trong list cục bộ
             setReports(prev => prev.map(r => r.reportId === reportId ? { ...r, status: 'REJECTED' } : r));
             alert('Đã từ chối báo cáo.');

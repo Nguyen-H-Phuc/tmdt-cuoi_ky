@@ -20,15 +20,15 @@ const SellerPage = () => {
             setLoading(true);
             try {
                 // 1. Fetch seller profile info
-                const userRes = await axios.get(`http://localhost:8080/api/users/profile/${sellerId}`);
+                const userRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/users/profile/${sellerId}`);
                 setSeller(userRes.data);
 
                 // 2. Fetch seller's public products
-                const productsRes = await axios.get(`http://localhost:8080/api/products/seller/${sellerId}`);
+                const productsRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/products/seller/${sellerId}`);
                 setProducts(productsRes.data || []);
 
                 // 3. Fetch seller's reviews
-                const reviewsRes = await axios.get(`http://localhost:8080/api/reviews/seller/${sellerId}`);
+                const reviewsRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/reviews/seller/${sellerId}`);
                 setReviews(reviewsRes.data || []);
             } catch (error) {
                 console.error("Lỗi khi tải thông tin người bán:", error);

@@ -51,7 +51,7 @@ const CartItem = ({ item }) => {
 
                     <div className="w-20 h-20 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-100 cursor-pointer">
                         <img
-                            src={item.imageUrl ? (item.imageUrl.startsWith('http://') || item.imageUrl.startsWith('https://') || item.imageUrl.startsWith('/') ? item.imageUrl : (!item.imageUrl.includes('/') ? `/${item.imageUrl}` : `http://localhost:8080/uploads/${item.imageUrl}`)) : 'https://placehold.co/150x150?text=Product'}
+                            src={item.imageUrl ? (item.imageUrl.startsWith('http://') || item.imageUrl.startsWith('https://') || item.imageUrl.startsWith('/') ? item.imageUrl : (!item.imageUrl.includes('/') ? `/${item.imageUrl}` : `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/uploads/${item.imageUrl}`)) : 'https://placehold.co/150x150?text=Product'}
                             alt={item.title}
                             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                             onError={(e) => {

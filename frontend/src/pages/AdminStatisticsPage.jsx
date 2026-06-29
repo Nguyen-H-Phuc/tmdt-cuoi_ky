@@ -67,15 +67,15 @@ const AdminStatisticsPage = () => {
       setLoading(true);
       
       // 1. Fetch Revenue (completed orders value)
-      const revRes = await axios.get('http://localhost:8080/api/statistics/admin/revenue');
+      const revRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/statistics/admin/revenue`);
       setRevenueData(revRes.data);
 
       // 2. Fetch Products
-      const prodRes = await axios.get('http://localhost:8080/api/products/admin');
+      const prodRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/products/admin`);
       setProductsData(prodRes.data);
 
       // 3. Fetch Users
-      const userRes = await axios.get('http://localhost:8080/api/users');
+      const userRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/users`);
       setUsersData(userRes.data);
 
       // Calculate overall stats

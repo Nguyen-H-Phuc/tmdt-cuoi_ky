@@ -8,6 +8,7 @@ CREATE TABLE users (
    email VARCHAR(100) UNIQUE NOT NULL, -- Email là định danh duy nhất để gộp các phương thức
    phone VARCHAR(15) NULL,
    address TEXT NULL,
+   university VARCHAR(255) NULL,
    avatar VARCHAR(255) NULL,
    bio TEXT NULL,
    role ENUM('admin', 'member') DEFAULT 'member',

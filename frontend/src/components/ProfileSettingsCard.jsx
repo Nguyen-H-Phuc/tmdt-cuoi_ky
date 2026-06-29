@@ -27,7 +27,7 @@ const ProfileSettingsCard = () => {
             if (!currentUser?.userId) return;
             setIsLoading(true);
             try {
-                const response = await axios.get(`http://localhost:8080/api/users/profile/${currentUser.userId}`);
+                const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/users/profile/${currentUser.userId}`);
                 const data = response.data;
                 const fetchedAvatar = (!data.avatar || data.avatar === 'null' || data.avatar === 'undefined')
                     ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.fullName || 'Default'}`
@@ -92,7 +92,7 @@ const ProfileSettingsCard = () => {
         setMessage({ type: '', text: '' });
 
         try {
-            const response = await axios.post('http://localhost:8080/api/users/upload-avatar', formData, {
+            const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/users/upload-avatar`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -100,7 +100,7 @@ const ProfileSettingsCard = () => {
             const newAvatarUrl = response.data.avatarUrl;
 
             // Lưu trực tiếp vào database ngay khi upload thành công
-            await axios.put(`http://localhost:8080/api/users/profile/${currentUser.userId}`, {
+            await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/users/profile/${currentUser.userId}`, {
                 fullName: profile.fullName || currentUser.fullName,
                 phone: profile.phone || currentUser.phone,
                 email: profile.email || currentUser.email,
@@ -135,7 +135,7 @@ const ProfileSettingsCard = () => {
         setMessage({ type: '', text: '' });
         
         try {
-            const response = await axios.put(`http://localhost:8080/api/users/profile/${currentUser.userId}`, {
+            const response = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/users/profile/${currentUser.userId}`, {
                 fullName: profile.fullName,
                 phone: profile.phone,
                 email: profile.email,

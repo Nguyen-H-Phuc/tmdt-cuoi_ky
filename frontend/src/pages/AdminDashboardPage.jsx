@@ -22,11 +22,11 @@ const AdminDashboardPage = () => {
         setLoading(true);
         
         // Fetch recent reports to show on dashboard overview
-        const reportsRes = await axios.get('http://localhost:8080/api/reviews/reports');
+        const reportsRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/reviews/reports`);
         setRecentReports(reportsRes.data.slice(0, 3)); // Only show top 3 on dashboard
 
         // Fetch dashboard statistics from backend
-        const statsRes = await axios.get('http://localhost:8080/api/statistics/admin');
+        const statsRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/statistics/admin`);
         setStats(statsRes.data);
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);

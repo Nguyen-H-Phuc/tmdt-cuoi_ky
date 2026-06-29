@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -21,4 +23,13 @@ apiClient.interceptors.request.use(
   }
 );
 
+export const getImageUrl = (imageUrl) => {
+  if (!imageUrl) return 'https://placehold.co/100x100?text=No+Image';
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('/')) {
+    return imageUrl;
+  }
+  return `${API_BASE_URL}/uploads/${imageUrl}`;
+};
+
+export { API_BASE_URL };
 export default apiClient;

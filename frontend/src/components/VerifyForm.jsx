@@ -12,7 +12,7 @@ const VerifyForm = ({ email, onBack, onSuccess }) => {
         setLoading(true);
         setError('');
         try {
-            await axios.post("http://localhost:8080/api/auth/verify-otp", {
+            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/auth/verify-otp`, {
                 email: email,
                 otp: otp
             });

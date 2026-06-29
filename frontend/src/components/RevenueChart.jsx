@@ -19,8 +19,8 @@ const RevenueChart = ({ isAdmin = false, sellerId = 1 }) => {
 
     useEffect(() => {
         const url = isAdmin 
-            ? 'http://localhost:8080/api/statistics/admin/revenue'
-            : `http://localhost:8080/api/statistics/revenue?sellerId=${sellerId}`;
+            ? `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/statistics/admin/revenue`
+            : `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/statistics/revenue?sellerId=${sellerId}`;
 
         axios.get(url)
             .then(response => {

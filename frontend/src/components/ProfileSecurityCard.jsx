@@ -72,7 +72,7 @@ const ProfileSecurityCard = () => {
         setIsSaving(true);
 
         try {
-            const response = await axios.put(`http://localhost:8080/api/users/profile/${currentUser.userId}/change-password`, {
+            const response = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/users/profile/${currentUser.userId}/change-password`, {
                 currentPassword: passwords.current,
                 newPassword: passwords.new
             });

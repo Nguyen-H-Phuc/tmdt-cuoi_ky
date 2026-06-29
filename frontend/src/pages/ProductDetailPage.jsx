@@ -47,17 +47,17 @@ const ProductDetailPage = () => {
         const fetchProductData = async () => {
             try {
                 // Fetch product details
-                const productRes = await axios.get(`http://localhost:8080/api/products/${productId}`);
+                const productRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/products/${productId}`);
                 setProduct(productRes.data);
                 
                 // Fetch reviews
-                const reviewRes = await axios.get(`http://localhost:8080/api/reviews/product/${productId}`);
+                const reviewRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/reviews/product/${productId}`);
                 setReviews(reviewRes.data);
                 
                 // Fetch review eligibility
                 if (currentUser?.userId) {
                     try {
-                        const eligibilityRes = await axios.get(`http://localhost:8080/api/reviews/eligibility?productId=${productId}&userId=${currentUser.userId}`);
+                        const eligibilityRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/reviews/eligibility?productId=${productId}&userId=${currentUser.userId}`);
                         const eligibilityData = eligibilityRes.data;
                         if (eligibilityData.review) {
                             setEligibility({
@@ -98,12 +98,12 @@ const ProductDetailPage = () => {
                 // Fetch chat history if product has seller and user is logged in
                 if (productRes.data.seller && currentUser?.userId) {
                     try {
-                        const convRes = await axios.get(`http://localhost:8080/api/chat/conversations/${currentUser.userId}`);
+                        const convRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/chat/conversations/${currentUser.userId}`);
                         const convs = convRes.data;
                         // Find conversation for this product and seller
                         const targetConv = convs.find(c => c.otherUser?.userId === productRes.data.seller.userId && c.product?.productId === parseInt(productId));
                         if (targetConv) {
-                            const msgRes = await axios.get(`http://localhost:8080/api/chat/messages/${targetConv.conversationId}`);
+                            const msgRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/chat/messages/${targetConv.conversationId}`);
                             setChatMessages(Array.isArray(msgRes.data) ? msgRes.data : []);
                         } else {
                             setChatMessages([]);
@@ -118,7 +118,7 @@ const ProductDetailPage = () => {
                 
                 // Setup WebSocket for chat if user is logged in
                 if (currentUser?.userId) {
-                    const socket = new SockJS('http://localhost:8080/ws');
+                    const socket = new SockJS(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/ws`);
                     const client = Stomp.over(socket);
                     activeClient = client;
                     client.connect({}, () => {
@@ -168,7 +168,7 @@ const ProductDetailPage = () => {
             return;
         }
         try {
-            const res = await axios.post(`http://localhost:8080/api/favorites`, {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/favorites`, {
                 userId: currentUser.userId,
                 productId: productId
             });
@@ -201,7 +201,7 @@ const ProductDetailPage = () => {
         }
         if (!reviewInput.trim()) return;
         try {
-            await axios.post(`http://localhost:8080/api/reviews`, {
+            await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/reviews`, {
                 userId: currentUser.userId,
                 productId: productId,
                 content: reviewInput.trim(),
@@ -210,11 +210,11 @@ const ProductDetailPage = () => {
             alert("Đã lưu đánh giá thành công!");
             
             // Reload reviews
-            const reviewRes = await axios.get(`http://localhost:8080/api/reviews/product/${productId}`);
+            const reviewRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/reviews/product/${productId}`);
             setReviews(reviewRes.data);
             
             // Reload eligibility
-            const eligibilityRes = await axios.get(`http://localhost:8080/api/reviews/eligibility?productId=${productId}&userId=${currentUser.userId}`);
+            const eligibilityRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/reviews/eligibility?productId=${productId}&userId=${currentUser.userId}`);
             const eligibilityData = eligibilityRes.data;
             if (eligibilityData.review) {
                 setEligibility({

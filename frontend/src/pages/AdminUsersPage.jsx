@@ -44,7 +44,7 @@ const AdminUsersPage = () => {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('http://localhost:8080/api/users');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/users`);
       setUsers(response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -62,7 +62,7 @@ const AdminUsersPage = () => {
 
   const handleToggleActive = async (userId) => {
     try {
-      const response = await axios.put(`http://localhost:8080/api/users/${userId}/toggle-active`);
+      const response = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/users/${userId}/toggle-active`);
       const updatedUser = response.data;
       setUsers(prev => prev.map(u => u.userId === userId ? { ...u, isActive: updatedUser.isActive } : u));
       showToast(`Tài khoản ${updatedUser.fullName} đã bị ${updatedUser.isActive ? 'KÍCH HOẠT' : 'KHÓA'} thành công.`, 'success');
@@ -85,7 +85,7 @@ const AdminUsersPage = () => {
     }
 
     try {
-      const response = await axios.put(`http://localhost:8080/api/users/${selectedUser.userId}/admin`, {
+      const response = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/users/${selectedUser.userId}/admin`, {
         fullName: editFullName,
         email: editEmail,
         phone: editPhone,
@@ -98,7 +98,7 @@ const AdminUsersPage = () => {
 
       // Nếu trạng thái active trong modal khác với trạng thái ban đầu của user, gọi toggle-active
       if (editIsActive !== selectedUser.isActive) {
-        const toggleResponse = await axios.put(`http://localhost:8080/api/users/${selectedUser.userId}/toggle-active`);
+        const toggleResponse = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/users/${selectedUser.userId}/toggle-active`);
         updatedUser = { ...updatedUser, isActive: toggleResponse.data.isActive };
       }
 
@@ -117,7 +117,7 @@ const AdminUsersPage = () => {
     triggerConfirm(
       async () => {
         try {
-          await axios.put(`http://localhost:8080/api/users/${selectedUser.userId}/reset-password`);
+          await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/users/${selectedUser.userId}/reset-password`);
           showToast(`Đã đặt lại mật khẩu cho thành viên ${selectedUser.fullName} về mặc định (Student123@) thành công!`, 'success');
         } catch (error) {
           console.error('Error resetting password:', error);

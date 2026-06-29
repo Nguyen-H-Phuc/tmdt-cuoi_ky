@@ -55,7 +55,7 @@ const MyReviewsCard = () => {
   const fetchReviews = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:8080/api/reviews/seller/${user.userId}`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/reviews/seller/${user.userId}`);
       setReviews(response.data);
       setError(null);
     } catch (err) {
@@ -101,7 +101,7 @@ const MyReviewsCard = () => {
       }
       setUploadError('');
 
-      const response = await axios.post('http://localhost:8080/api/reviews/upload-proof', formData, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/reviews/upload-proof`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -144,7 +144,7 @@ const MyReviewsCard = () => {
 
     try {
       setSubmittingReport(true);
-      const response = await axios.post(`http://localhost:8080/api/reviews/${selectedReview.reviewId}/report`, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/reviews/${selectedReview.reviewId}/report`, {
         reason: finalReason,
         reporterId: user.userId,
         proofImage: proofImageUrl || null,

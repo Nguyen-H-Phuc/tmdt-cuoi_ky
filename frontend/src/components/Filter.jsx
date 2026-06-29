@@ -30,7 +30,7 @@ const Filter = ({ filters, setFilters }) => {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const response = await axios.get('http://localhost:8080/api/categories');
+                const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/categories`);
                 setCategories(response.data);
             } catch (error) {
                 console.error("Lỗi lấy danh mục:", error);

@@ -16,7 +16,7 @@ const LoginForm = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post("http://localhost:8080/api/auth/login", {
+            const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/auth/login`, {
                 email: email,
                 password: password
             });
@@ -50,7 +50,7 @@ const LoginForm = () => {
                 {/* Nút Google: 400x48 */}
                 <button
                     type="button"
-                    onClick={() => window.location.href = "http://localhost:8080/oauth2/authorization/google"}
+                    onClick={() => window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/oauth2/authorization/google`}
                     className="w-[400px] h-[48px] flex items-center px-4 rounded-full border border-[#DADADA] hover:bg-gray-50 transition-all group"
                 >
                     <FcGoogle className="text-[24px]" />
@@ -62,7 +62,7 @@ const LoginForm = () => {
                 {/* Nút Facebook: 400x48 */}
                 <button
                     type="button"
-                    onClick={() => window.location.href = "http://localhost:8080/oauth2/authorization/facebook"}
+                    onClick={() => window.location.href = `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/oauth2/authorization/facebook`}
                     className="w-[400px] h-[48px] flex items-center px-4 rounded-full border border-[#DADADA] hover:bg-gray-50 transition-all"
                 >
                     <SiFacebook className="text-[#1877F2] text-[24px]" />
