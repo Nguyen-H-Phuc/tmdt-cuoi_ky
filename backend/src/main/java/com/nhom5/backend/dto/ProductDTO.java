@@ -21,8 +21,10 @@ public class ProductDTO {
     private String province;
     private String district;
     private String specificAddress;
+    private String imageUrl;
     private UserDTO seller;
     private List<String> images;
+    private String targetUniversity;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

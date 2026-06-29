@@ -51,7 +51,7 @@ const CartItem = ({ item }) => {
 
                     <div className="w-20 h-20 bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-100 cursor-pointer">
                         <img
-                            src={item.imageUrl ? (item.imageUrl.startsWith('http://') || item.imageUrl.startsWith('https://') ? item.imageUrl : `http://localhost:8080/uploads/${item.imageUrl}`) : 'https://placehold.co/150x150?text=Product'}
+                            src={item.imageUrl ? (item.imageUrl.startsWith('http://') || item.imageUrl.startsWith('https://') || item.imageUrl.startsWith('/') ? item.imageUrl : (!item.imageUrl.includes('/') ? `/${item.imageUrl}` : `http://localhost:8080/uploads/${item.imageUrl}`)) : 'https://placehold.co/150x150?text=Product'}
                             alt={item.title}
                             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                             onError={(e) => {
@@ -94,7 +94,9 @@ const CartItem = ({ item }) => {
                         </span>
                         <button
                             onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                            className="p-2 text-gray-600 hover:bg-gray-200 transition-colors"
+                            disabled={item.quantity >= (item.productQuantity !== undefined ? item.productQuantity : 9999)}
+                            className={`p-2 transition-colors ${item.quantity >= (item.productQuantity !== undefined ? item.productQuantity : 9999) ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-200'}`}
+                            title={item.quantity >= (item.productQuantity !== undefined ? item.productQuantity : 9999) ? "Đã đạt giới hạn số lượng có sẵn" : "Tăng số lượng"}
                         >
                             <Plus size={14} />
                         </button>

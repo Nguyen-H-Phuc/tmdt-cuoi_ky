@@ -6,10 +6,12 @@ import SockJS from 'sockjs-client/dist/sockjs';
 import { Stomp } from '@stomp/stompjs';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
+import { useToast } from '../context/ToastContext.jsx';
 
 const ProductDetailPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { showToast } = useToast();
     const productId = id || 1; // Default to 1 if no ID in URL
     
     const [product, setProduct] = useState(null);
@@ -267,7 +269,7 @@ const ProductDetailPage = () => {
 
     const handleBuyNow = () => {
         if (!currentUser?.userId) {
-            alert("Vui lòng đăng nhập để tiến hành mua hàng!");
+            showToast("Vui lòng đăng nhập để tiến hành mua hàng!", "warning");
             navigate('/login');
             return;
         }
@@ -278,11 +280,11 @@ const ProductDetailPage = () => {
         if (!product) return;
         try {
             await addToCart(product, 1);
-            alert("Đã thêm sản phẩm vào giỏ hàng thành công!");
+            showToast("Đã thêm sản phẩm vào giỏ hàng thành công!", "success");
         } catch (error) {
             console.error("Lỗi khi thêm vào giỏ hàng:", error);
             const errMsg = error.response?.data?.message || error.response?.data || error.message;
-            alert(`Không thể thêm vào giỏ hàng: ${errMsg}`);
+            showToast(`Không thể thêm vào giỏ hàng: ${errMsg}`, "error");
         }
     };
 
@@ -294,7 +296,9 @@ const ProductDetailPage = () => {
         return <div className="min-h-screen flex items-center justify-center">Sản phẩm không tồn tại.</div>;
     }
 
-    const images = product.images?.length > 0 ? product.images : ['/house_1.png'];
+    const images = product.images?.length > 0 
+        ? product.images.map(img => (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('/')) ? img : `/${img}`)
+        : ['/house_1.png'];
     const currentImageUrl = images[currentImageIndex];
 
     return (
@@ -668,9 +672,11 @@ const ProductDetailPage = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <button className="text-[10px] font-bold text-gray-800 hover:text-black border border-gray-300 hover:border-gray-500 rounded-lg px-2.5 py-1.5 transition-colors cursor-pointer">
-                                    Xem trang
-                                </button>
+                                <Link to={`/seller/${product.seller?.userId}`}>
+                                    <button className="text-[10px] font-bold text-gray-800 hover:text-black border border-gray-300 hover:border-gray-500 rounded-lg px-2.5 py-1.5 transition-colors cursor-pointer">
+                                        Xem trang
+                                    </button>
+                                </Link>
                             </div>
                             
                             {/* Action Buttons (Flat styling) */}
@@ -714,7 +720,7 @@ const ProductDetailPage = () => {
                                 <p className="text-gray-700 font-semibold">
                                     {product.specificAddress && `${product.specificAddress}, `}
                                     {product.district && `${product.district}, `}
-                                    {product.province || 'Huyện Tiền Hải, Thái Bình'}
+                                    {product.province || product.seller?.address || 'Toàn quốc'}
                                 </p>
                             </div>
                             <div className="relative rounded-xl overflow-hidden border border-gray-250 mt-3 shadow-inner">

@@ -67,6 +67,7 @@ public class ProductService {
         product.setApprovalStatus("pending");
         product.setIsDeleted(false);
         product.setIsHidden(false);
+        product.setTargetUniversity(request.getTargetUniversity());
         product.setCreatedAt(LocalDateTime.now());
 
         if (request.getImages() != null && !request.getImages().isEmpty()) {
@@ -105,6 +106,7 @@ public class ProductService {
         product.setQuantity(request.getQuantity());
         // Khi sửa bài đăng thì chuyển trạng thái duyệt về 'pending' để admin duyệt lại
         product.setApprovalStatus("pending");
+        product.setTargetUniversity(request.getTargetUniversity());
 
         if (request.getImages() != null && !request.getImages().isEmpty()) {
             product.setImageUrl(request.getImages().get(0));
@@ -161,7 +163,7 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProductDTO> getFilteredProducts(String location, Integer categoryId, Double priceMin, Double priceMax, String status, String sortBy) {
+    public List<ProductDTO> getFilteredProducts(String location, Integer categoryId, Double priceMin, Double priceMax, String status, String sortBy, String userUniversity) {
         Sort sort = Sort.unsorted();
         if (sortBy != null) {
             switch (sortBy) {
@@ -187,9 +189,27 @@ public class ProductService {
         }
 
         List<Product> products = productRepository.filterProducts(location, categoryId, priceMin, priceMax, status, sort);
-        return products.stream()
+        List<ProductDTO> dtos = products.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+
+        if (userUniversity != null && !userUniversity.trim().isEmpty()) {
+            String u = userUniversity.trim().toLowerCase();
+            return dtos.stream().sorted((p1, p2) -> {
+                boolean match1 = p1.getTargetUniversity() != null && (p1.getTargetUniversity().toLowerCase().contains(u) || p1.getTargetUniversity().equalsIgnoreCase("all") || p1.getTargetUniversity().equals("Tất cả"));
+                boolean match2 = p2.getTargetUniversity() != null && (p2.getTargetUniversity().toLowerCase().contains(u) || p2.getTargetUniversity().equalsIgnoreCase("all") || p2.getTargetUniversity().equals("Tất cả"));
+                
+                boolean specific1 = match1 && !p1.getTargetUniversity().equalsIgnoreCase("all") && !p1.getTargetUniversity().equals("Tất cả");
+                boolean specific2 = match2 && !p2.getTargetUniversity().equalsIgnoreCase("all") && !p2.getTargetUniversity().equals("Tất cả");
+
+                if (specific1 && !specific2) return -1;
+                if (!specific1 && specific2) return 1;
+                if (match1 && !match2) return -1;
+                if (!match1 && match2) return 1;
+                return 0;
+            }).collect(Collectors.toList());
+        }
+        return dtos;
     }
 
     @Transactional(readOnly = true)
@@ -232,9 +252,11 @@ public class ProductService {
         dto.setIsHidden(product.getIsHidden());
         dto.setViewCount(product.getViewCount());
         
-        dto.setProvince("");
+        dto.setProvince(product.getSeller() != null && product.getSeller().getAddress() != null ? product.getSeller().getAddress() : "");
         dto.setDistrict("");
         dto.setSpecificAddress("");
+        dto.setImageUrl(product.getImageUrl());
+        dto.setTargetUniversity(product.getTargetUniversity());
         
         dto.setCreatedAt(product.getCreatedAt());
 
@@ -245,8 +267,10 @@ public class ProductService {
             userDTO.setFullName(seller.getFullName());
             userDTO.setEmail(seller.getEmail());
             userDTO.setPhone(seller.getPhone());
+            userDTO.setAddress(seller.getAddress());
             userDTO.setAvatar(seller.getAvatar());
             userDTO.setIsActive(seller.getIsActive());
+            userDTO.setUniversity(seller.getUniversity());
             userDTO.setCreatedAt(seller.getCreatedAt());
             dto.setSeller(userDTO);
         }
