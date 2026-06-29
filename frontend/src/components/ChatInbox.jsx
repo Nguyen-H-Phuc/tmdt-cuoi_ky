@@ -10,7 +10,7 @@ const ChatInbox = () => {
 
     useEffect(() => {
         if (!currentUser?.userId) return;
-        axios.get(`http://localhost:8080/api/chat/conversations/${currentUser.userId}`)
+        axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/chat/conversations/${currentUser.userId}`)
             .then(res => setConversations(res.data))
             .catch(err => console.error("Error loading inbox", err));
     }, [currentUser?.userId]);

@@ -39,7 +39,7 @@ const AdminCategoriesPage = () => {
   const fetchCategories = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('http://localhost:8080/api/categories');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/categories`);
       setCategories(response.data);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -74,7 +74,7 @@ const AdminCategoriesPage = () => {
 
     try {
       setIsUploading(true);
-      const res = await axios.post('http://localhost:8080/api/products/upload-image', formData, {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/products/upload-image`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -115,7 +115,7 @@ const AdminCategoriesPage = () => {
 
     try {
       if (editMode && selectedCategory) {
-        const response = await axios.put(`http://localhost:8080/api/categories/${selectedCategory.categoryId}`, {
+        const response = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/categories/${selectedCategory.categoryId}`, {
           categoryName,
           categoryImage
         });
@@ -125,7 +125,7 @@ const AdminCategoriesPage = () => {
         );
         showToast('Đã cập nhật danh mục thành công!', 'success');
       } else {
-        const response = await axios.post('http://localhost:8080/api/categories', {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/categories`, {
           categoryName,
           categoryImage
         });
@@ -156,7 +156,7 @@ const AdminCategoriesPage = () => {
 
   const executeDelete = async (categoryId) => {
     try {
-      await axios.delete(`http://localhost:8080/api/categories/${categoryId}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/categories/${categoryId}`);
       setCategories(prev => prev.filter(c => c.categoryId !== categoryId));
       showToast('Đã xóa danh mục thành công.', 'info');
     } catch (error) {

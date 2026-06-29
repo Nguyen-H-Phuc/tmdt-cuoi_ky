@@ -30,7 +30,7 @@ const AdminOrdersPage = () => {
   const fetchOrders = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('http://localhost:8080/api/orders/admin');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/orders/admin`);
       setOrders(response.data);
     } catch (error) {
       console.error('Error fetching orders:', error);
@@ -53,7 +53,7 @@ const AdminOrdersPage = () => {
 
   const confirmForceCancel = async (orderId) => {
     try {
-      const response = await axios.put(`http://localhost:8080/api/orders/${orderId}/force-cancel`);
+      const response = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/orders/${orderId}/force-cancel`);
       const updatedOrder = response.data;
       setOrders(prev => prev.map(o => o.orderId === orderId ? updatedOrder : o));
       if (selectedOrder?.orderId === orderId) {
@@ -68,7 +68,7 @@ const AdminOrdersPage = () => {
 
   const handleAdminRefund = async (orderId, action) => {
     try {
-      const response = await axios.put(`http://localhost:8080/api/orders/${orderId}/admin-handle-refund?action=${action}`);
+      const response = await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/orders/${orderId}/admin-handle-refund?action=${action}`);
       const updatedOrder = response.data;
       setOrders(prev => prev.map(o => o.orderId === orderId ? updatedOrder : o));
       if (selectedOrder?.orderId === orderId) {

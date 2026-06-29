@@ -8,7 +8,7 @@ const CategoryGrid = () => {
 
     useEffect(() => {
         // Gọi API từ Spring Boot backend
-        fetch('http://localhost:8080/api/categories')
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/categories`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Lỗi khi tải dữ liệu');

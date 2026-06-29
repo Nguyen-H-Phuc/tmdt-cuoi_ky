@@ -35,7 +35,7 @@ const ChatPage = () => {
         if (!currentUser?.userId) return;
         try {
             setLoadingConvs(true);
-            const res = await axios.get(`http://localhost:8080/api/chat/conversations/${currentUser.userId}`);
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/chat/conversations/${currentUser.userId}`);
             setConversations(Array.isArray(res.data) ? res.data : []);
             setLoadingConvs(false);
         } catch (error) {
@@ -67,7 +67,7 @@ const ChatPage = () => {
     useEffect(() => {
         if (!currentUser?.userId) return;
         
-        const socket = new SockJS('http://localhost:8080/ws');
+        const socket = new SockJS(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/ws`);
         const client = Stomp.over(socket);
         // Turn off debug logging to keep console clean
         client.debug = () => {};
@@ -109,7 +109,7 @@ const ChatPage = () => {
         const fetchMessages = async () => {
             try {
                 setLoadingMessages(true);
-                const res = await axios.get(`http://localhost:8080/api/chat/messages/${selectedConv.conversationId}`);
+                const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/chat/messages/${selectedConv.conversationId}`);
                 setMessages(Array.isArray(res.data) ? res.data : []);
                 setLoadingMessages(false);
             } catch (error) {

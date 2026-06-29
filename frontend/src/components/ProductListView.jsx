@@ -42,7 +42,7 @@ const ProductListView = ({ filters }) => {
                 if (sortBy) params.sortBy = sortBy;
                 if (user?.university) params.userUniversity = user.university;
 
-                const response = await axios.get('http://localhost:8080/api/products', { params });
+                const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/products`, { params });
                 // Map the backend data to match the frontend expectations
                 const mappedProducts = response.data.map(p => ({
                     id: p.productId,

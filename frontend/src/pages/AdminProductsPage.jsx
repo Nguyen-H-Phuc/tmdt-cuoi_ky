@@ -54,7 +54,7 @@ const AdminProductsPage = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await axios.get('http://localhost:8080/api/products/admin');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/products/admin`);
       setProducts(response.data);
     } catch (err) {
       console.error('Error fetching products from backend:', err);
@@ -70,7 +70,7 @@ const AdminProductsPage = () => {
     fetchProducts();
     const fetchCategories = async () => {
       try {
-        const res = await axios.get('http://localhost:8080/api/categories');
+        const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/categories`);
         setCategories(res.data);
       } catch (err) {
         console.error("Lỗi lấy danh mục:", err);
@@ -82,7 +82,7 @@ const AdminProductsPage = () => {
   const handleToggleHide = async (productId, currentHidden) => {
     try {
       const newHidden = !currentHidden;
-      await axios.put(`http://localhost:8080/api/products/${productId}/hidden?hidden=${newHidden}`);
+      await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/products/${productId}/hidden?hidden=${newHidden}`);
       
       setProducts(prev => 
         prev.map(p => p.productId === productId ? { ...p, isHidden: newHidden } : p)
@@ -99,7 +99,7 @@ const AdminProductsPage = () => {
 
   const handleApprove = async (productId) => {
     try {
-      await axios.put(`http://localhost:8080/api/products/${productId}/approval`, null, { params: { status: 'approved' } });
+      await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/products/${productId}/approval`, null, { params: { status: 'approved' } });
       setProducts(prev => 
         prev.map(p => p.productId === productId ? { ...p, approvalStatus: 'approved', status: 'available' } : p)
       );
@@ -128,7 +128,7 @@ const AdminProductsPage = () => {
 
   const executeReject = async (productId) => {
     try {
-      await axios.put(`http://localhost:8080/api/products/${productId}/approval`, null, { params: { status: 'rejected' } });
+      await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/products/${productId}/approval`, null, { params: { status: 'rejected' } });
       setProducts(prev => 
         prev.map(p => p.productId === productId ? { ...p, approvalStatus: 'rejected' } : p)
       );
@@ -157,7 +157,7 @@ const AdminProductsPage = () => {
 
   const executeDelete = async (productId) => {
     try {
-      await axios.delete(`http://localhost:8080/api/products/${productId}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/products/${productId}`);
       setProducts(prev => prev.filter(p => p.productId !== productId));
       if (selectedProduct?.productId === productId) {
         setSelectedProduct(null);

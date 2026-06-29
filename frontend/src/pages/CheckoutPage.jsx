@@ -59,7 +59,7 @@ const CheckoutPage = () => {
         const fetchOrderDetails = async () => {
           try {
             setLoading(true);
-            const res = await axios.get(`http://localhost:8080/api/orders/code/${code}`);
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/orders/code/${code}`);
             const orderData = res.data;
             
             if (orderData.details && orderData.details.length > 0) {
@@ -110,7 +110,7 @@ const CheckoutPage = () => {
         } else {
           const fetchProduct = async () => {
             try {
-              const res = await axios.get(`http://localhost:8080/api/products/${productId}`);
+              const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/products/${productId}`);
               setCheckoutItems([{
                 ...res.data,
                 quantity: 1
@@ -133,7 +133,7 @@ const CheckoutPage = () => {
       } else {
         const fetchProduct = async () => {
           try {
-            const res = await axios.get(`http://localhost:8080/api/products/${productId}`);
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/products/${productId}`);
             setCheckoutItems([{
               ...res.data,
               quantity: 1
@@ -247,7 +247,7 @@ const CheckoutPage = () => {
         paymentMethod: paymentMethod
       };
 
-      const res = await axios.post('http://localhost:8080/api/orders', orderPayload);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/orders`, orderPayload);
       
       // Clear purchased items from cart on client side immediately
       for (const item of checkoutItems) {

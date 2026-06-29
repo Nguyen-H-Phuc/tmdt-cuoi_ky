@@ -41,7 +41,7 @@ const AdminReportsPage = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await axios.get('http://localhost:8080/api/reviews/reports');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/reviews/reports`);
       setReports(response.data);
     } catch (err) {
       console.error('Error fetching reports:', err);
@@ -71,7 +71,7 @@ const AdminReportsPage = () => {
   const executeApproveReport = async (reportId) => {
     try {
       setProcessingId(reportId);
-      await axios.post(`http://localhost:8080/api/reviews/reports/${reportId}/approve`);
+      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/reviews/reports/${reportId}/approve`);
       
       // Update local state
       setReports(prev => prev.map(r => r.reportId === reportId ? { ...r, status: 'APPROVED' } : r));
@@ -103,7 +103,7 @@ const AdminReportsPage = () => {
   const executeRejectReport = async (reportId) => {
     try {
       setProcessingId(reportId);
-      await axios.post(`http://localhost:8080/api/reviews/reports/${reportId}/reject`);
+      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/reviews/reports/${reportId}/reject`);
       
       // Update local state
       setReports(prev => prev.map(r => r.reportId === reportId ? { ...r, status: 'REJECTED' } : r));

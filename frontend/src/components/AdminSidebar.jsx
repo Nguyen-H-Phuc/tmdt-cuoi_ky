@@ -24,7 +24,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
   useEffect(() => {
     const fetchPendingCount = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/api/reviews/reports');
+        const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/reviews/reports`);
         const count = response.data.filter(r => r.status === 'PENDING').length;
         setPendingCount(count);
       } catch (error) {
