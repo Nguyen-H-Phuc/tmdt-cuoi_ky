@@ -132,6 +132,13 @@ const PopupProfile = ({ isOpen, onClose }) => {
                     />
 
                     <SectionHeader title="Khác" />
+                    {user?.role === 'admin' && (
+                        <MenuItem 
+                            label="Trang quản trị (Admin)" 
+                            icon={<ShieldCheck size={18} className="text-blue-600" />} 
+                            onClick={() => { navigate('/admin/dashboard'); onClose(); }} 
+                        />
+                    )}
                     <MenuItem label="Cài đặt tài khoản" icon={ICONS.HISTORY} onClick={() => { navigate('/profile'); onClose(); }} />
                     <MenuItem label="Đăng xuất" icon={ICONS.LOGOUT} isLogout onClick={handleLogout} />
                     {/* Padding bottom to ensure space */}

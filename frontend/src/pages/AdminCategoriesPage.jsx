@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import AdminTable from '../components/AdminTable';
 import AdminModal from '../components/AdminModal';
@@ -10,6 +10,8 @@ const AdminCategoriesPage = () => {
   const { showToast } = useToast();
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Form states for Add/Edit
   const [modalOpen, setModalOpen] = useState(false);
@@ -57,6 +59,36 @@ const AdminCategoriesPage = () => {
   useEffect(() => {
     fetchCategories();
   }, []);
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 3 * 1024 * 1024) {
+      showToast('Kích thước ảnh không được vượt quá 3MB.', 'error');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      setIsUploading(true);
+      const res = await axios.post('http://localhost:8080/api/products/upload-image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      setCategoryImage(res.data.imageUrl);
+      showToast('Đã tải hình ảnh lên thành công!', 'success');
+    } catch (err) {
+      console.error('Lỗi upload ảnh:', err);
+      const errMsg = err.response?.data?.message || err.message || 'Lỗi khi tải ảnh lên.';
+      showToast(errMsg, 'error');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleOpenAddModal = () => {
     setEditMode(false);
@@ -171,23 +203,27 @@ const AdminCategoriesPage = () => {
       key: 'categoryName',
       label: 'Tên danh mục',
       sortable: true,
-      render: (row) => (
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-150 text-gray-500 font-display shrink-0">
-            <Tag size={14} className="text-gray-400" />
+      render: (row) => {
+        const catImage = row.categoryImage?.startsWith('http') || row.categoryImage?.startsWith('/')
+          ? row.categoryImage
+          : `/assets/category/${row.categoryImage || 'default.png'}`;
+        return (
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-150 overflow-hidden shrink-0">
+              <img 
+                src={catImage} 
+                alt={row.categoryName} 
+                className="w-full h-full object-contain p-1"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = 'https://placehold.co/32x32?text=No+Img';
+                }}
+              />
+            </div>
+            <span className="font-bold text-gray-900">{row.categoryName}</span>
           </div>
-          <span className="font-bold text-gray-900">{row.categoryName}</span>
-        </div>
-      )
-    },
-    {
-      key: 'categoryImage',
-      label: 'Ảnh icon đính kèm',
-      render: (row) => (
-        <code className="px-2 py-1 rounded bg-gray-100 border border-gray-200 text-[10px] text-gray-650 font-mono">
-          {row.categoryImage || 'default.png'}
-        </code>
-      )
+        );
+      }
     },
     {
       key: 'actions',
@@ -301,28 +337,51 @@ const AdminCategoriesPage = () => {
             />
           </div>
 
-          {/* Icon/Image File Identifier Mock */}
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">Tên tệp biểu tượng (Icon file)</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="default.png"
-                value={categoryImage}
-                onChange={(e) => setCategoryImage(e.target.value)}
-                className="flex-1 px-3 py-2.5 text-xs font-medium border border-gray-250 rounded-xl focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent transition-all text-gray-800"
-              />
-              <button 
-                type="button"
-                className="px-3 border border-gray-250 hover:bg-gray-50 rounded-xl text-gray-500 hover:text-gray-850 flex items-center justify-center shrink-0 cursor-pointer"
-                title="Tải ảnh lên"
-              >
-                <Upload size={14} />
-              </button>
+          {/* Icon/Image File Upload */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block">Hình ảnh biểu tượng (Icon)</label>
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0 relative">
+                {categoryImage ? (
+                  <img 
+                    src={categoryImage.startsWith('http') || categoryImage.startsWith('/') ? categoryImage : `/assets/category/${categoryImage}`} 
+                    alt="Category Preview" 
+                    className="w-full h-full object-contain p-1.5"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://placehold.co/64x64?text=No+Img';
+                    }}
+                  />
+                ) : (
+                  <span className="text-gray-400 text-xs">Chưa có</span>
+                )}
+                {isUploading && (
+                  <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                    <div className="w-5 h-5 border-2 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 space-y-1.5">
+                <input 
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  accept="image/jpeg,image/png,image/webp"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="px-4 py-2 border border-gray-250 hover:bg-gray-50 text-gray-750 hover:text-gray-950 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Upload size={14} /> Tải ảnh lên
+                </button>
+                <span className="block text-[10px] text-gray-400">
+                  Hỗ trợ định dạng JPG, PNG, WEBP tối đa 3MB.
+                </span>
+              </div>
             </div>
-            <span className="block text-[10px] text-gray-400 mt-1">
-              Nhập tên tệp biểu tượng hiển thị ngoài trang chủ (ví dụ: electronic.png, book.png).
-            </span>
           </div>
 
         </form>
