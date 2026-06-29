@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Phone, Mail, MapPin, Camera, Save, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { User, Phone, Mail, MapPin, Camera, Save, Loader2, AlertCircle, CheckCircle2, GraduationCap } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -11,6 +11,7 @@ const ProfileSettingsCard = () => {
         email: '',
         address: '',
         bio: '',
+        university: '',
         avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Default'
     });
     
@@ -37,6 +38,7 @@ const ProfileSettingsCard = () => {
                     email: data.email || '',
                     address: data.address || '',
                     bio: data.bio || '',
+                    university: data.university || '',
                     avatar: fetchedAvatar
                 });
                 
@@ -48,7 +50,8 @@ const ProfileSettingsCard = () => {
                     phone: data.phone,
                     avatar: data.avatar,
                     address: data.address,
-                    bio: data.bio
+                    bio: data.bio,
+                    university: data.university
                 });
             } catch (error) {
                 console.error("Lỗi fetch thông tin người dùng:", error);
@@ -138,6 +141,7 @@ const ProfileSettingsCard = () => {
                 email: profile.email,
                 address: profile.address,
                 bio: profile.bio,
+                university: profile.university,
                 avatar: profile.avatar
             });
             
@@ -149,7 +153,8 @@ const ProfileSettingsCard = () => {
                 phone: updatedUser.phone,
                 avatar: updatedUser.avatar,
                 address: updatedUser.address,
-                bio: updatedUser.bio
+                bio: updatedUser.bio,
+                university: updatedUser.university
             });
             
             setMessage({ type: 'success', text: 'Cập nhật thông tin cá nhân thành công!' });
@@ -307,6 +312,22 @@ const ProfileSettingsCard = () => {
                                 value={profile.address}
                                 onChange={handleChange}
                                 placeholder="Nhập địa chỉ"
+                                className="w-full h-10 px-3 border border-[#DADADA] rounded-lg outline-none focus:border-brand-accent transition-all bg-white text-xs text-[#222222]"
+                            />
+                        </div>
+
+                        {/* Trường học */}
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-semibold text-[#222222] flex items-center gap-2">
+                                <GraduationCap size={14} className="text-gray-400" />
+                                Trường học (Đại học / Cao đẳng)
+                            </label>
+                            <input
+                                type="text"
+                                name="university"
+                                value={profile.university}
+                                onChange={handleChange}
+                                placeholder="Ví dụ: Đại học Bách Khoa Hà Nội"
                                 className="w-full h-10 px-3 border border-[#DADADA] rounded-lg outline-none focus:border-brand-accent transition-all bg-white text-xs text-[#222222]"
                             />
                         </div>

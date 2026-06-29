@@ -53,6 +53,7 @@ public class UserController {
         dto.setBio(user.getBio());
         dto.setIsActive(user.getIsActive());
         dto.setRole(user.getRole() != null ? user.getRole().name() : null);
+        dto.setUniversity(user.getUniversity());
         dto.setCreatedAt(user.getCreatedAt());
         return dto;
     }
@@ -91,6 +92,7 @@ public class UserController {
         user.setEmail(request.getEmail());
         user.setAddress(request.getAddress());
         user.setBio(request.getBio());
+        user.setUniversity(request.getUniversity());
         if (request.getAvatar() != null && !request.getAvatar().isBlank()) {
             user.setAvatar(request.getAvatar());
         }
@@ -168,6 +170,7 @@ public class UserController {
         user.setPhone(request.getPhone());
         user.setAddress(request.getAddress());
         user.setBio(request.getBio());
+        user.setUniversity(request.getUniversity());
         
         try {
             user.setRole(User.Role.valueOf(request.getRole().toLowerCase()));

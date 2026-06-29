@@ -1,18 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ProductListItem from './ProductListItem';
 import ProductCard from './ProductCard';
-import { ChevronDown, Grid, List } from 'lucide-react';
+import { ChevronDown, Grid, List, ChevronLeft, ChevronRight } from 'lucide-react';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const ProductListView = ({ filters }) => {
+    const { user } = useAuth();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     
-    // States for sorting & layout
+    // States for sorting, layout & pagination
     const [sortBy, setSortBy] = useState('relevance');
     const [showSortDropdown, setShowSortDropdown] = useState(false);
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'grid'
+    const [currentPage, setCurrentPage] = useState(1);
     
     const dropdownRef = useRef(null);
     
@@ -37,6 +40,7 @@ const ProductListView = ({ filters }) => {
                 if (filters?.priceMax !== '') params.priceMax = filters.priceMax;
                 if (filters?.status) params.status = filters.status;
                 if (sortBy) params.sortBy = sortBy;
+                if (user?.university) params.userUniversity = user.university;
 
                 const response = await axios.get('http://localhost:8080/api/products', { params });
                 // Map the backend data to match the frontend expectations
@@ -53,16 +57,19 @@ const ProductListView = ({ filters }) => {
                     viewCount: p.viewCount || 0,
                     isPriority: false,
                     imageCount: p.imageUrl ? 1 : 0,
-                    imageUrl: p.imageUrl || "https://placehold.co/400x400/eeeeee/333333?text=No+Image",
+                    imageUrl: p.imageUrl ? ((p.imageUrl.startsWith('http://') || p.imageUrl.startsWith('https://') || p.imageUrl.startsWith('/')) ? p.imageUrl : `/${p.imageUrl}`) : "https://placehold.co/400x400/eeeeee/333333?text=No+Image",
                     sellerName: p.seller?.fullName || "Người bán ẩn danh",
                     sellerAvatar: p.seller?.avatar || "https://placehold.co/100x100/333333/FFFFFF?text=U",
                     isProSeller: p.seller?.role === 'admin',
                     category: typeof p.category === 'object' ? p.category : { categoryName: p.category },
                     categoryId: p.categoryId,
                     status: p.status,
+                    seller: p.seller,
+                    targetUniversity: p.targetUniversity,
                     user: p.seller
                 }));
                 setProducts(mappedProducts);
+                setCurrentPage(1);
                 setLoading(false);
             } catch (err) {
                 console.error("Error fetching products:", err);
@@ -87,8 +94,46 @@ const ProductListView = ({ filters }) => {
         };
     }, []);
 
-    // Products are already filtered and sorted by the backend
     const sortedProducts = products;
+
+    // Pagination configuration
+    const itemsPerPage = 12;
+    const totalPages = Math.ceil(sortedProducts.length / itemsPerPage) || 1;
+    const activePage = Math.min(currentPage, totalPages);
+
+    const startIndex = (activePage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedProducts = sortedProducts.slice(startIndex, endIndex);
+
+    const fromItem = sortedProducts.length === 0 ? 0 : startIndex + 1;
+    const toItem = Math.min(endIndex, sortedProducts.length);
+
+    const getPageNumbers = () => {
+        const pages = [];
+        const maxVisible = 5;
+        if (totalPages <= maxVisible) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i);
+        } else {
+            if (activePage <= 3) {
+                for (let i = 1; i <= 4; i++) pages.push(i);
+                pages.push('...');
+                pages.push(totalPages);
+            } else if (activePage >= totalPages - 2) {
+                pages.push(1);
+                pages.push('...');
+                for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+            } else {
+                pages.push(1);
+                pages.push('...');
+                pages.push(activePage - 1);
+                pages.push(activePage);
+                pages.push(activePage + 1);
+                pages.push('...');
+                pages.push(totalPages);
+            }
+        }
+        return pages;
+    };
 
     return (
         <div className="w-full max-w-4xl mx-auto bg-white rounded-md shadow-sm border border-gray-100 mt-6">
@@ -169,7 +214,7 @@ const ProductListView = ({ filters }) => {
                         <span className="text-gray-500">Không có sản phẩm nào</span>
                     </div>
                 ) : (
-                    sortedProducts.map(product => (
+                    paginatedProducts.map(product => (
                         viewMode === 'grid' ? (
                             <ProductCard key={product.id} product={product} />
                         ) : (
@@ -178,6 +223,64 @@ const ProductListView = ({ filters }) => {
                     ))
                 )}
             </div>
+
+            {/* Pagination Controls */}
+            {sortedProducts.length > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between border-t border-gray-200 px-4 py-4 md:px-6 gap-4">
+                    <div className="text-xs md:text-sm text-gray-500 font-medium order-2 sm:order-1">
+                        Hiển thị <span className="font-semibold text-gray-800">{fromItem}-{toItem}</span> trong số <span className="font-semibold text-gray-800">{sortedProducts.length}</span> sản phẩm
+                    </div>
+
+                    <div className="flex items-center gap-1 order-1 sm:order-2">
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={activePage === 1}
+                            className={`p-1.5 rounded-md border text-gray-600 hover:bg-gray-50 transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+                                activePage === 1 ? 'border-gray-200 bg-gray-50/50' : 'border-gray-300 bg-white hover:text-black'
+                            }`}
+                            aria-label="Trang trước"
+                        >
+                            <ChevronLeft size={18} />
+                        </button>
+
+                        {getPageNumbers().map((page, idx) => {
+                            if (page === '...') {
+                                return (
+                                    <span key={`ellipsis-${idx}`} className="px-3 py-1.5 text-xs md:text-sm text-gray-400 font-medium cursor-default">
+                                        ...
+                                    </span>
+                                );
+                            }
+
+                            const isActive = page === activePage;
+                            return (
+                                <button
+                                    key={`page-${page}`}
+                                    onClick={() => setCurrentPage(page)}
+                                    className={`px-3 py-1.5 text-xs md:text-sm font-semibold rounded-md border transition-all duration-200 focus:outline-none ${
+                                        isActive
+                                            ? 'bg-yellow-500 border-yellow-500 text-white shadow-sm shadow-yellow-100'
+                                            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-black'
+                                    }`}
+                                >
+                                    {page}
+                                </button>
+                            );
+                        })}
+
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={activePage === totalPages}
+                            className={`p-1.5 rounded-md border text-gray-600 hover:bg-gray-50 transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${
+                                activePage === totalPages ? 'border-gray-200 bg-gray-50/50' : 'border-gray-300 bg-white hover:text-black'
+                            }`}
+                            aria-label="Trang sau"
+                        >
+                            <ChevronRight size={18} />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

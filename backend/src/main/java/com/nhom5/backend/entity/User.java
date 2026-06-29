@@ -25,6 +25,7 @@ public class User {
     private String address;
     private String avatar;
     private String bio;
+    private String university;
 
     @Enumerated(EnumType.STRING)
     private Role role = Role.member;

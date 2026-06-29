@@ -25,4 +25,6 @@ public class AdminUserUpdateRequest {
 
     @NotBlank(message = "Vai trò không được để trống")
     private String role;
+
+    private String university;
 }

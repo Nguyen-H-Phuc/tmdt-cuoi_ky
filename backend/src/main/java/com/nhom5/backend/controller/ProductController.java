@@ -39,8 +39,9 @@ public class ProductController {
             @RequestParam(value = "priceMin", required = false) Double priceMin,
             @RequestParam(value = "priceMax", required = false) Double priceMax,
             @RequestParam(value = "status", required = false) String status,
-            @RequestParam(value = "sortBy", required = false) String sortBy) {
-        List<ProductDTO> dtos = productService.getFilteredProducts(location, categoryId, priceMin, priceMax, status, sortBy);
+            @RequestParam(value = "sortBy", required = false) String sortBy,
+            @RequestParam(value = "userUniversity", required = false) String userUniversity) {
+        List<ProductDTO> dtos = productService.getFilteredProducts(location, categoryId, priceMin, priceMax, status, sortBy, userUniversity);
         return ResponseEntity.ok(dtos);
     }
 
@@ -49,6 +50,15 @@ public class ProductController {
     public ResponseEntity<ProductDTO> getProduct(@PathVariable Integer id) {
         ProductDTO product = productService.getProductById(id);
         return ResponseEntity.ok(product);
+    }
+
+    @GetMapping("/seller/{sellerId}")
+    public ResponseEntity<List<ProductDTO>> getSellerPublicProducts(@PathVariable Integer sellerId) {
+        List<Product> products = productRepository.findBySeller_UserIdAndApprovalStatusAndIsDeletedFalseAndIsHiddenFalseOrderByCreatedAtDesc(sellerId, "approved");
+        List<ProductDTO> dtos = products.stream()
+                .map(productService::convertToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     // 3. Sản phẩm mới nhất (đã duyệt, chưa bị ẩn, chưa bị xóa)

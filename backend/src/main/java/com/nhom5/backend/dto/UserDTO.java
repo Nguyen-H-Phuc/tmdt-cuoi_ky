@@ -14,6 +14,7 @@ public class UserDTO {
     private String bio;
     private String role;
     private Boolean isActive;
+    private String university;
     private LocalDateTime createdAt;
     // can add more fields like active status, years joined, post count later if needed
 }

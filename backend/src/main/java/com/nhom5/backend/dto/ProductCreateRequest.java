@@ -31,4 +31,6 @@ public class ProductCreateRequest {
 
     @Size(max = 5, message = "Tải tối đa 5 hình ảnh")
     private List<String> images;
+
+    private String targetUniversity;
 }
