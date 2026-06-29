@@ -22,4 +22,5 @@ public class ProfileUpdateRequest {
     private String address;
     private String bio;
     private String avatar;
+    private String university;
 }

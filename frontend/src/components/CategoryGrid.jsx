@@ -41,8 +41,11 @@ const CategoryGrid = () => {
                             <CategoryCard 
                                 key={cat.categoryId} 
                                 category={{
+                                    categoryId: cat.categoryId,
                                     name: cat.categoryName,
-                                    imageUrl: `/assets/category/${cat.categoryImage}`
+                                    imageUrl: cat.categoryImage?.startsWith('http') || cat.categoryImage?.startsWith('/')
+                                        ? cat.categoryImage
+                                        : `/assets/category/${cat.categoryImage || 'default.png'}`
                                 }} 
                             />
                         ))}

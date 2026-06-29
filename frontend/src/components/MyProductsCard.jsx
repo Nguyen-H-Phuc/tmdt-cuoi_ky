@@ -35,6 +35,7 @@ const MyProductsCard = () => {
   const [description, setDescription] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [targetUniversity, setTargetUniversity] = useState('Tất cả');
   const [uploadedImages, setUploadedImages] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -131,6 +132,7 @@ const MyProductsCard = () => {
     setDescription('');
     setCategoryId('');
     setQuantity(1);
+    setTargetUniversity('Tất cả');
     setUploadedImages([]);
     setIsModalOpen(true);
   };
@@ -145,6 +147,7 @@ const MyProductsCard = () => {
     const cat = categories.find(c => c.categoryName === product.category);
     setCategoryId(cat ? cat.categoryId : '');
     setQuantity(product.quantity || 1);
+    setTargetUniversity(product.targetUniversity || 'Tất cả');
     setUploadedImages(product.images || []);
     setIsModalOpen(true);
   };
@@ -238,6 +241,7 @@ const MyProductsCard = () => {
           description,
           categoryId: Number(categoryId),
           quantity: Number(quantity),
+          targetUniversity: targetUniversity || 'Tất cả',
           images: uploadedImages
         };
 
@@ -256,6 +260,7 @@ const MyProductsCard = () => {
           categoryId: Number(categoryId),
           sellerId: user.userId,
           quantity: Number(quantity),
+          targetUniversity: targetUniversity || 'Tất cả',
           images: uploadedImages
         };
 
@@ -664,6 +669,40 @@ const MyProductsCard = () => {
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 font-medium"
                 />
+              </div>
+
+              {/* Target University Selection */}
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-bold text-gray-600 uppercase tracking-wider">Ưu tiên hiển thị cho trường học</label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <select
+                    value={targetUniversity === 'Tất cả' || targetUniversity === 'all' || !targetUniversity ? 'all' : 'custom'}
+                    onChange={(e) => {
+                      if (e.target.value === 'all') {
+                        setTargetUniversity('Tất cả');
+                      } else {
+                        setTargetUniversity(user?.university || '');
+                      }
+                    }}
+                    className="px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 font-medium bg-white text-gray-700"
+                  >
+                    <option value="all">Hiển thị cho tất cả mọi người (Không ưu tiên)</option>
+                    <option value="custom">Ưu tiên cho sinh viên trường cụ thể</option>
+                  </select>
+                  
+                  {targetUniversity !== 'Tất cả' && targetUniversity !== 'all' && (
+                    <input 
+                      type="text"
+                      placeholder="Nhập tên trường học cần ưu tiên"
+                      value={targetUniversity}
+                      onChange={(e) => setTargetUniversity(e.target.value)}
+                      className="flex-1 px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 font-medium"
+                    />
+                  )}
+                </div>
+                <p className="text-[9px] text-gray-400">
+                  Lựa chọn này giúp sản phẩm xuất hiện ưu tiên ở vị trí đầu tiên đối với các bạn sinh viên học cùng trường với bạn.
+                </p>
               </div>
 
               {/* Product Images (Max 5) */}

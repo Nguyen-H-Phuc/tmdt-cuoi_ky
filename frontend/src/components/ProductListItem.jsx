@@ -1,8 +1,12 @@
 import React from 'react';
-import { Heart, Image as ImageIcon, MapPin } from 'lucide-react';
+import { ShoppingCart, Image as ImageIcon, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
+import { useToast } from '../context/ToastContext';
 
 const ProductListItem = ({ product }) => {
+    const { addToCart } = useCart();
+    const { showToast } = useToast();
     // Fallback data if product is not provided
     const {
         productId = 1,
@@ -18,6 +22,20 @@ const ProductListItem = ({ product }) => {
         sellerAvatar = "https://placehold.co/100x100/333333/FFFFFF?text=CH",
         isProSeller = true
     } = product || {};
+
+    const handleAddToCart = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+            const itemToCart = product || { productId, title, price, imageUrl };
+            await addToCart(itemToCart, 1);
+            showToast("Đã thêm sản phẩm vào giỏ hàng thành công!", "success");
+        } catch (error) {
+            console.error("Lỗi khi thêm vào giỏ hàng:", error);
+            const errMsg = error.response?.data?.message || error.response?.data || error.message;
+            showToast(`Không thể thêm vào giỏ hàng: ${errMsg}`, "error");
+        }
+    };
 
     return (
         <Link to={`/product/${productId}`} className="flex w-full gap-4 py-4 border-b border-gray-100 bg-white hover:bg-gray-50 transition-colors cursor-pointer group">
@@ -89,15 +107,13 @@ const ProductListItem = ({ product }) => {
                             </div>
                         </div>
                         
-                        {/* Heart Button */}
+                        {/* Add to Cart Button */}
                         <button 
-                            className="text-gray-400 hover:text-[#e51c24] transition-colors p-1" 
-                            onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                            }}
+                            className="text-gray-400 hover:text-[#38699F] transition-colors p-1.5 hover:bg-gray-100 rounded-full" 
+                            onClick={handleAddToCart}
+                            title="Thêm vào giỏ hàng"
                         >
-                            <Heart size={20} strokeWidth={1.5} />
+                            <ShoppingCart size={20} strokeWidth={2} />
                         </button>
                     </div>
                 </div>

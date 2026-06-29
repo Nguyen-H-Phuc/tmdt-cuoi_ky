@@ -47,6 +47,8 @@ public class Product {
 
     private Boolean isHidden = false;
 
+    private String targetUniversity;
+
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public enum Status {

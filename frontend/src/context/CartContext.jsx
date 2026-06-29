@@ -65,6 +65,16 @@ export const CartProvider = ({ children }) => {
     }, [cart, user]);
 
     const addToCart = useCallback(async (product, quantity = 1) => {
+        const existingItem = cart.find(item => item.productId === product.productId);
+        const currentQty = existingItem ? existingItem.quantity : 0;
+        const targetQty = currentQty + quantity;
+
+        const stock = product.quantity !== undefined ? product.quantity : (product.productQuantity !== undefined ? product.productQuantity : 9999);
+        if (targetQty > stock) {
+            alert(`Không thể thêm vào giỏ hàng. Chỉ còn ${stock} sản phẩm có sẵn.`);
+            throw new Error(`Out of stock. Max ${stock}`);
+        }
+
         if (user && user.userId) {
             try {
                 const response = await apiClient.post('/api/cart', {
@@ -80,7 +90,8 @@ export const CartProvider = ({ children }) => {
                         newCart[existingItemIndex] = {
                             ...newCart[existingItemIndex],
                             cartId: serverItem.cartId,
-                            quantity: serverItem.quantity
+                            quantity: serverItem.quantity,
+                            productQuantity: serverItem.productQuantity
                         };
                         return newCart;
                     } else {
@@ -97,7 +108,7 @@ export const CartProvider = ({ children }) => {
                 const existingItemIndex = prevCart.findIndex(item => item.productId === product.productId);
                 if (existingItemIndex > -1) {
                     const newCart = [...prevCart];
-                    newCart[existingItemIndex].quantity += quantity;
+                    newCart[existingItemIndex].quantity = targetQty;
                     return newCart;
                 } else {
                     return [...prevCart, {
@@ -106,6 +117,7 @@ export const CartProvider = ({ children }) => {
                         imageUrl: product.imageUrl || product.image_url,
                         price: product.price,
                         quantity: quantity,
+                        productQuantity: stock,
                         selected: true,
                         seller: product.seller || {
                             userId: product.userId || product.user_id,
@@ -115,7 +127,7 @@ export const CartProvider = ({ children }) => {
                 }
             });
         }
-    }, [user]);
+    }, [user, cart]);
 
     const removeFromCart = useCallback(async (productId) => {
         if (user && user.userId) {
@@ -135,14 +147,24 @@ export const CartProvider = ({ children }) => {
 
     const updateQuantity = useCallback(async (productId, quantity) => {
         if (quantity < 1) return;
+        const item = cart.find(i => i.productId === productId);
+        if (!item) return;
+
+        const stock = item.productQuantity !== undefined ? item.productQuantity : 9999;
+        if (quantity > stock) {
+            alert(`Chỉ còn ${stock} sản phẩm có sẵn.`);
+            return;
+        }
+
         if (user && user.userId) {
             try {
-                const item = cart.find(i => i.productId === productId);
-                if (item && item.cartId) {
+                if (item.cartId) {
                     await apiClient.put(`/api/cart/${item.cartId}`, { quantity });
                 }
             } catch (error) {
                 console.error("Lỗi cập nhật số lượng giỏ hàng:", error);
+                alert(error.response?.data?.message || "Lỗi cập nhật số lượng.");
+                return;
             }
         }
         // Update local state in both cases

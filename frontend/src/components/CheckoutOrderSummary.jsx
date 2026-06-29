@@ -12,6 +12,12 @@ const CheckoutOrderSummary = ({
 }) => {
   const itemsSubtotal = checkoutItems.reduce((sum, item) => sum + item.price * (item.quantity || 1), 0);
 
+  const resolveImageUrl = (url) => {
+    if (!url) return '/house_1.png';
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) return url;
+    return `/${url}`;
+  };
+
   return (
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-neutral-100 sticky top-20">
       <h3 className="font-bold text-sm text-gray-800 mb-4 pb-2 border-b border-neutral-100">Chi tiết sản phẩm</h3>
@@ -19,7 +25,8 @@ const CheckoutOrderSummary = ({
       {/* Product list */}
       <div className="space-y-3 mb-4 max-h-60 overflow-y-auto pr-1 scrollbar-thin">
         {checkoutItems.map((item, idx) => {
-          const itemImage = item.images?.length > 0 ? item.images[0] : (item.imageUrl || '/house_1.png');
+          const rawImage = item.images?.length > 0 ? item.images[0] : item.imageUrl;
+          const itemImage = resolveImageUrl(rawImage);
           return (
             <div key={item.productId || idx} className="flex gap-3 pb-3 border-b border-neutral-50 last:border-0 last:pb-0">
               <img src={itemImage} alt={item.title} className="w-12 h-12 rounded-lg object-cover bg-neutral-100 border border-neutral-100 shrink-0" />

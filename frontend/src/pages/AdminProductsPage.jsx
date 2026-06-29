@@ -4,7 +4,7 @@ import AdminTable from '../components/AdminTable';
 import AdminModal from '../components/AdminModal';
 import AdminConfirmModal from '../components/AdminConfirmModal';
 import { useToast } from '../context/ToastContext';
-import { Eye, Check, X, Trash2, Tag, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Check, X, Trash2, Tag, AlertCircle } from 'lucide-react';
 
 const AdminProductsPage = () => {
   const { showToast } = useToast();
@@ -12,15 +12,28 @@ const AdminProductsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const resolveImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) return url;
+    return `/${url}`;
+  };
+
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState('');
   const [filterApproval, setFilterApproval] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [categories, setCategories] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: '', direction: '' });
 
   // Modal details state
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+  }, [selectedProduct]);
 
   // Confirm Modal states
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -55,7 +68,34 @@ const AdminProductsPage = () => {
 
   useEffect(() => {
     fetchProducts();
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get('http://localhost:8080/api/categories');
+        setCategories(res.data);
+      } catch (err) {
+        console.error("Lỗi lấy danh mục:", err);
+      }
+    };
+    fetchCategories();
   }, []);
+
+  const handleToggleHide = async (productId, currentHidden) => {
+    try {
+      const newHidden = !currentHidden;
+      await axios.put(`http://localhost:8080/api/products/${productId}/hidden?hidden=${newHidden}`);
+      
+      setProducts(prev => 
+        prev.map(p => p.productId === productId ? { ...p, isHidden: newHidden } : p)
+      );
+      if (selectedProduct?.productId === productId) {
+        setSelectedProduct(prev => ({ ...prev, isHidden: newHidden }));
+      }
+      showToast(newHidden ? 'Đã ẩn sản phẩm thành công!' : 'Đã hiển thị sản phẩm trở lại!', 'success');
+    } catch (error) {
+      console.error("Lỗi khi thay đổi trạng thái ẩn:", error);
+      showToast("Không thể thay đổi trạng thái ẩn của sản phẩm.", "error");
+    }
+  };
 
   const handleApprove = async (productId) => {
     try {
@@ -179,7 +219,13 @@ const AdminProductsPage = () => {
                           product.seller?.fullName?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesApproval = filterApproval === 'all' || product.approvalStatus === filterApproval;
     const matchesStatus = filterStatus === 'all' || product.status === filterStatus;
-    return matchesSearch && matchesApproval && matchesStatus;
+    const matchesCategory = filterCategory === 'all' || 
+                            product.categoryId === parseInt(filterCategory, 10) ||
+                            (product.category && (
+                              (typeof product.category === 'object' && product.category.categoryId === parseInt(filterCategory, 10)) ||
+                              (typeof product.category === 'string' && product.category === categories.find(c => c.categoryId === parseInt(filterCategory, 10))?.categoryName)
+                            ));
+    return matchesSearch && matchesApproval && matchesStatus && matchesCategory;
   });
 
   // Sort Logic
@@ -216,15 +262,19 @@ const AdminProductsPage = () => {
     {
       key: 'image',
       label: 'Ảnh',
-      render: (row) => (
-        <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center shrink-0">
-          <img 
-            src={row.images?.[0] || 'https://placehold.co/100x100?text=No+Img'} 
-            alt={row.title} 
-            className="w-full h-full object-cover"
-          />
-        </div>
-      )
+      render: (row) => {
+        const rawImage = row.images?.[0] || row.imageUrl;
+        const itemImage = resolveImageUrl(rawImage) || 'https://placehold.co/100x100?text=No+Img';
+        return (
+          <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center shrink-0">
+            <img 
+              src={itemImage} 
+              alt={row.title} 
+              className="w-full h-full object-cover"
+            />
+          </div>
+        );
+      }
     },
     {
       key: 'title',
@@ -235,9 +285,16 @@ const AdminProductsPage = () => {
           <span className="font-bold text-gray-900 block truncate hover:text-yellow-600 transition-colors">
             {row.title}
           </span>
-          <span className="text-[10px] text-gray-400 block mt-0.5">
-            Mã sản phẩm: #{row.productId}
-          </span>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className="text-[10px] text-gray-400">
+              Mã sản phẩm: #{row.productId}
+            </span>
+            {row.isHidden && (
+              <span className="bg-amber-100 text-amber-700 text-[8px] font-extrabold px-1 py-0.5 rounded uppercase tracking-wider">
+                Đã ẩn
+              </span>
+            )}
+          </div>
         </div>
       )
     },
@@ -308,6 +365,18 @@ const AdminProductsPage = () => {
             title="Xem chi tiết"
           >
             <Eye size={13} />
+          </button>
+
+          <button
+            onClick={() => handleToggleHide(row.productId, row.isHidden)}
+            className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+              row.isHidden 
+                ? 'bg-amber-50 hover:bg-amber-100 border-amber-100 text-amber-600 hover:text-amber-700' 
+                : 'bg-white border-gray-200 hover:bg-gray-50 text-gray-500 hover:text-gray-950'
+            }`}
+            title={row.isHidden ? "Hiện sản phẩm" : "Ẩn sản phẩm"}
+          >
+            {row.isHidden ? <EyeOff size={13} /> : <Eye size={13} />}
           </button>
           
           {row.approvalStatus === 'pending' && (
@@ -403,6 +472,22 @@ const AdminProductsPage = () => {
               { value: 'available', label: 'Đang bán' },
               { value: 'sold', label: 'Đã bán' }
             ]
+          },
+          {
+            key: 'categoryId',
+            label: 'Danh mục',
+            value: filterCategory,
+            onChange: (val) => {
+              setFilterCategory(val);
+              setCurrentPage(1);
+            },
+            options: [
+              { value: 'all', label: 'Tất cả danh mục' },
+              ...categories.map(cat => ({
+                value: cat.categoryId.toString(),
+                label: cat.categoryName
+              }))
+            ]
           }
         ]}
       />
@@ -465,13 +550,42 @@ const AdminProductsPage = () => {
             {/* Upper: Images and quick meta */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               
-              {/* Product Image */}
-              <div className="w-full h-56 rounded-xl overflow-hidden border border-gray-150 bg-gray-50 flex items-center justify-center shrink-0">
-                <img 
-                  src={selectedProduct.images?.[0] || 'https://placehold.co/300x200?text=No+Image'} 
-                  alt={selectedProduct.title} 
-                  className="w-full h-full object-cover"
-                />
+              {/* Product Image Gallery */}
+              <div className="space-y-3">
+                <div className="w-full h-56 rounded-xl overflow-hidden border border-gray-150 bg-gray-50 flex items-center justify-center shrink-0 relative">
+                  <img 
+                    src={resolveImageUrl(selectedProduct.images?.[activeImageIndex] || selectedProduct.imageUrl) || 'https://placehold.co/300x200?text=No+Image'} 
+                    alt={selectedProduct.title} 
+                    className="w-full h-full object-cover"
+                  />
+                  {selectedProduct.images?.length > 1 && (
+                    <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full select-none">
+                      {activeImageIndex + 1} / {selectedProduct.images.length}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Thumbnails */}
+                {selectedProduct.images?.length > 1 && (
+                  <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                    {selectedProduct.images.map((img, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setActiveImageIndex(idx)}
+                        className={`w-12 h-12 rounded-lg border-2 overflow-hidden shrink-0 transition-all cursor-pointer ${
+                          activeImageIndex === idx ? 'border-brand-primary bg-neutral-100 scale-95' : 'border-transparent bg-neutral-50 hover:border-gray-250'
+                        }`}
+                      >
+                        <img 
+                          src={resolveImageUrl(img)} 
+                          alt={`Thumbnail ${idx + 1}`} 
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Quick Details */}

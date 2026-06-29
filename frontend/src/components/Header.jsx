@@ -35,9 +35,6 @@ const Header = () => {
 
           {/* LEFT: Logo & Menu Icon */}
           <div className="flex items-center gap-2 md:gap-3 shrink-0">
-            <button className="p-1.5 hover:bg-gray-100 rounded-full transition-colors">
-              <Menu size={20} className="text-gray-800" />
-            </button>
             <img
                 src={logo}
                 alt="Chợ Sinh Viên"
@@ -77,7 +74,6 @@ const Header = () => {
             {/* RIGHT: Actions */}
           <div className="flex items-center gap-2 shrink-0">
             <div className="hidden lg:flex items-center gap-1">
-              <HeaderButton icon={<Heart size={18} />} />
               <HeaderButton icon={<Bell size={18} />} />
               <HeaderButton 
                 icon={<MessageCircle size={18} />} 

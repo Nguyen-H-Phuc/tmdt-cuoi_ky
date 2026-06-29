@@ -46,10 +46,16 @@ public class CartService {
         Optional<CartItem> existingItem = cartItemRepository.findByUser_UserIdAndProduct_ProductId(
                 request.getUserId(), request.getProductId());
 
+        int currentInCart = existingItem.map(CartItem::getQuantity).orElse(0);
+        int targetQty = currentInCart + request.getQuantity();
+        if (targetQty > product.getQuantity()) {
+            throw new IllegalArgumentException("Số lượng sản phẩm vượt quá số lượng hiện có (" + product.getQuantity() + " sản phẩm)");
+        }
+
         CartItem cartItem;
         if (existingItem.isPresent()) {
             cartItem = existingItem.get();
-            cartItem.setQuantity(cartItem.getQuantity() + request.getQuantity());
+            cartItem.setQuantity(targetQty);
         } else {
             cartItem = CartItem.builder()
                     .user(user)
@@ -67,6 +73,10 @@ public class CartService {
     public CartItemDTO updateCartItem(Integer cartItemId, CartUpdateRequest request) {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new IllegalArgumentException("Cart item not found"));
+        Product product = cartItem.getProduct();
+        if (request.getQuantity() > product.getQuantity()) {
+            throw new IllegalArgumentException("Số lượng sản phẩm vượt quá số lượng hiện có (" + product.getQuantity() + " sản phẩm)");
+        }
         cartItem.setQuantity(request.getQuantity());
         CartItem saved = cartItemRepository.save(cartItem);
         return convertToDTO(saved);
@@ -96,6 +106,7 @@ public class CartService {
         dto.setPrice(item.getProduct().getPrice());
         dto.setImageUrl(item.getProduct().getImageUrl());
         dto.setQuantity(item.getQuantity());
+        dto.setProductQuantity(item.getProduct().getQuantity());
         dto.setAddedAt(item.getAddedAt());
 
         if (item.getProduct().getSeller() != null) {

@@ -28,11 +28,11 @@ const CheckoutPage = () => {
   
   // Checkout Form States
   const [fullName, setFullName] = useState(currentUser?.fullName || '');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(currentUser?.phone || '');
   const [university, setUniversity] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState('campus'); // 'campus' or 'home'
   const [dormInfo, setDormInfo] = useState('');
-  const [specificAddress, setSpecificAddress] = useState('');
+  const [specificAddress, setSpecificAddress] = useState(currentUser?.address || '');
   const [notes, setNotes] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('vnpay'); // 'vnpay' or 'cod'
   const [appliedVoucher, setAppliedVoucher] = useState(true); // Default voucher for students: -10k
@@ -148,6 +148,14 @@ const CheckoutPage = () => {
       }
     }
   }, [productId]);
+
+  useEffect(() => {
+    if (currentUser) {
+      if (!fullName) setFullName(currentUser.fullName || '');
+      if (!phone) setPhone(currentUser.phone || '');
+      if (!specificAddress) setSpecificAddress(currentUser.address || '');
+    }
+  }, [currentUser, fullName, phone, specificAddress]);
 
   if (loading) {
     return (
@@ -270,9 +278,15 @@ const CheckoutPage = () => {
     }
   };
 
+  const resolveImageUrl = (url) => {
+    if (!url) return '/house_1.png';
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) return url;
+    return `/${url}`;
+  };
+
   const coverImage = checkoutItems[0]?.images?.length > 0 
-    ? checkoutItems[0].images[0] 
-    : (checkoutItems[0]?.imageUrl || '/house_1.png');
+    ? resolveImageUrl(checkoutItems[0].images[0]) 
+    : resolveImageUrl(checkoutItems[0]?.imageUrl);
 
   return (
     <div className="bg-[#F4F4F4] min-h-screen py-6">
