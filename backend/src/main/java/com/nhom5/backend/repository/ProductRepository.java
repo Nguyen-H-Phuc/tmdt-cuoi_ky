@@ -49,6 +49,8 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     // 4. Lấy tất cả bài đăng chưa xóa của một người bán
     List<Product> findBySellerUserIdAndIsDeletedFalseOrderByCreatedAtDesc(Integer userId);
 
+    List<Product> findBySeller_UserIdAndApprovalStatusAndIsDeletedFalseAndIsHiddenFalseOrderByCreatedAtDesc(Integer userId, String approvalStatus);
+
     // 5. Lấy tất cả bài đăng chưa xóa cho admin
     List<Product> findByIsDeletedFalseOrderByCreatedAtDesc();
 
