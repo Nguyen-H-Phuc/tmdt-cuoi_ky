@@ -24,9 +24,14 @@ apiClient.interceptors.request.use(
 );
 
 export const getImageUrl = (imageUrl) => {
-  if (!imageUrl) return 'https://placehold.co/100x100?text=No+Image';
+  if (!imageUrl) return 'https://placehold.co/100x150?text=No+Image';
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('/')) {
     return imageUrl;
+  }
+  // Tự động fallback: nếu đang chạy online (deploy) mà API_BASE_URL lại trỏ về localhost
+  // (do chưa cấu hình VITE_API_URL), dùng ảnh từ public của frontend để hiển thị ảnh mẫu.
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && API_BASE_URL.includes('localhost')) {
+    return `/${imageUrl}`;
   }
   return `${API_BASE_URL}/uploads/${imageUrl}`;
 };
