@@ -24,6 +24,7 @@ public class SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
     private final JwtAuthenticationFilter jwtAuthFilter;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
@@ -66,8 +67,9 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth -> oauth
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-                        .defaultSuccessUrl("/api/auth/oauth2-success", true)
-                        // ✅ Khi OAuth2 lỗi (thiếu env var), redirect về frontend thay vì vòng lặp
+                        // ✅ Dùng successHandler để có principal ngay trong luồng OAuth2
+                        // (tránh principal = null với STATELESS session)
+                        .successHandler(oAuth2SuccessHandler)
                         .failureUrl(frontendUrl + "/login?error=oauth2_failed")
                 );
         return http.build();
