@@ -3,6 +3,7 @@ import { ShoppingCart, Image as ImageIcon, MapPin, MoreVertical } from 'lucide-r
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
+import { getImageUrl } from '../api/apiClient';
 
 const ProductCard = ({ product }) => {
     const { addToCart } = useCart();
@@ -22,10 +23,7 @@ const ProductCard = ({ product }) => {
     } = product || {};
 
     const getProductImageUrl = (url) => {
-        if (!url) return "https://placehold.co/217x217?text=No+Image";
-        if (url.startsWith('http://') || url.startsWith('https://')) return url;
-        if (url.startsWith('/')) return url;
-        return `/${url}`;
+        return getImageUrl(url);
     };
 
     const formattedPrice = typeof price === 'number' 
