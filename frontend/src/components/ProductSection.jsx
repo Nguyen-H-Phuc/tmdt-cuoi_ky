@@ -11,13 +11,23 @@ const ProductSection = ({ title, apiEndpoint }) => {
     useEffect(() => {
         apiClient.get(apiEndpoint)
             .then(response => {
-                if (Array.isArray(response.data)) {
-                    setProducts(response.data);
-                } else if (response.data && Array.isArray(response.data.content)) {
-                    setProducts(response.data.content);
-                } else {
-                    setProducts([]);
-                }
+                const raw = Array.isArray(response.data)
+                    ? response.data
+                    : Array.isArray(response.data?.content)
+                        ? response.data.content
+                        : [];
+
+                // Map imageUrl giống ProductListView để đảm bảo hiển thị ảnh đúng cả trên deploy
+                const mapped = raw.map(p => ({
+                    ...p,
+                    imageUrl: p.imageUrl
+                        ? ((p.imageUrl.startsWith('http://') || p.imageUrl.startsWith('https://') || p.imageUrl.startsWith('/'))
+                            ? p.imageUrl
+                            : `/${p.imageUrl}`)
+                        : null,
+                }));
+
+                setProducts(mapped);
                 setLoading(false);
             })
             .catch(error => {
@@ -25,10 +35,10 @@ const ProductSection = ({ title, apiEndpoint }) => {
                 setProducts([]);
                 setLoading(false);
             });
-    }, [apiEndpoint, title]);
+    }, [apiEndpoint]);
 
     if (loading) return <div className="py-8 text-center text-gray-500">Đang tải {title}...</div>;
-    if (!products || !Array.isArray(products) || products.length === 0) return null; // Không hiện section nếu không có data
+    if (!products.length) return null;
 
     return (
         <section className="w-full bg-[#F4F4F4] py-4 flex justify-center">
@@ -38,15 +48,15 @@ const ProductSection = ({ title, apiEndpoint }) => {
                     <h2 className="text-lg font-bold text-gray-800 uppercase border-b-2 border-brand-accent inline-block pb-1">
                         {title}
                     </h2>
-                    <Link 
-                        to="/products" 
+                    <Link
+                        to="/products"
                         className="text-[13px] md:text-sm font-bold text-[#38699F] hover:underline flex items-center gap-1 transition-all"
                     >
                         Xem tất cả <ChevronRight size={16} />
                     </Link>
                 </div>
 
-                {/* Grid hiển thị sản phẩm - Tối ưu lại khoảng cách */}
+                {/* Grid hiển thị sản phẩm */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4 justify-items-center">
                     {products.map(product => (
                         <ProductCard key={product.productId} product={product} />
