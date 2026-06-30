@@ -25,7 +25,16 @@ const SellerPage = () => {
 
                 // 2. Fetch seller's public products
                 const productsRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/products/seller/${sellerId}`);
-                setProducts(productsRes.data || []);
+                const rawProducts = productsRes.data || [];
+                const mappedProducts = rawProducts.map(p => ({
+                    ...p,
+                    imageUrl: p.imageUrl
+                        ? ((p.imageUrl.startsWith('http://') || p.imageUrl.startsWith('https://') || p.imageUrl.startsWith('/'))
+                            ? p.imageUrl
+                            : `/${p.imageUrl}`)
+                        : null,
+                }));
+                setProducts(mappedProducts);
 
                 // 3. Fetch seller's reviews
                 const reviewsRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/reviews/seller/${sellerId}`);
