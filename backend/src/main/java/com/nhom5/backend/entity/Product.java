@@ -49,6 +49,12 @@ public class Product {
 
     private String targetUniversity;
 
+    private Boolean isBoosted = false;
+
+    private LocalDateTime boostedAt;
+
+    private LocalDateTime boostExpiresAt;
+
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public enum Status {

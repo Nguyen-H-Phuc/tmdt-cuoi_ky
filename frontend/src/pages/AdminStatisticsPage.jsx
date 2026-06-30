@@ -20,6 +20,7 @@ const AdminStatisticsPage = () => {
   const [revenueData, setRevenueData] = useState([]);
   const [productsData, setProductsData] = useState([]);
   const [usersData, setUsersData] = useState([]);
+  const [boostTransactions, setBoostTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Time Filter States per Chart
@@ -47,21 +48,6 @@ const AdminStatisticsPage = () => {
     totalUsers: 0
   });
 
-  // Mock push-post transactions to compute daily boost revenues
-  const mockTransactions = useMemo(() => [
-    { createdAt: '2026-06-01T10:00:00', amount: 150000, status: 'SUCCESS' },
-    { createdAt: '2026-06-02T12:30:00', amount: 70000, status: 'SUCCESS' },
-    { createdAt: '2026-06-05T09:15:00', amount: 30000, status: 'SUCCESS' },
-    { createdAt: '2026-06-10T15:45:00', amount: 150000, status: 'SUCCESS' },
-    { createdAt: '2026-06-12T11:20:00', amount: 70000, status: 'SUCCESS' },
-    { createdAt: '2026-06-15T18:00:00', amount: 30000, status: 'SUCCESS' },
-    { createdAt: '2026-06-20T10:30:00', amount: 150000, status: 'SUCCESS' },
-    { createdAt: '2026-06-21T14:22:00', amount: 70000, status: 'SUCCESS' },
-    { createdAt: '2026-06-22T08:11:00', amount: 30000, status: 'SUCCESS' },
-    { createdAt: '2026-06-24T16:45:00', amount: 150000, status: 'SUCCESS' },
-    { createdAt: '2026-06-27T19:00:00', amount: 30000, status: 'SUCCESS' },
-  ], []);
-
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -78,9 +64,13 @@ const AdminStatisticsPage = () => {
       const userRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/users`);
       setUsersData(userRes.data);
 
+      // 4. Fetch Boost Transactions
+      const boostRes = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/boosts/transactions`);
+      setBoostTransactions(boostRes.data || []);
+
       // Calculate overall stats
       const totalRev = revRes.data.reduce((sum, item) => sum + item.revenue, 0);
-      const totalBoost = mockTransactions.filter(t => t.status === 'SUCCESS').reduce((sum, t) => sum + t.amount, 0);
+      const totalBoost = (boostRes.data || []).filter(t => t.status === 'SUCCESS').reduce((sum, t) => sum + t.amount, 0);
 
       setStats({
         totalRevenue: totalRev,
@@ -111,7 +101,7 @@ const AdminStatisticsPage = () => {
   };
 
   const formatYAxis = (value) => {
-    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000000) return `${Number((value / 1000000).toFixed(1))}Tr`;
     if (value >= 1000) return `${(value / 1000).toFixed(0)}k`;
     return value;
   };
@@ -136,10 +126,10 @@ const AdminStatisticsPage = () => {
     return result;
   }, [revenueData, revenuePeriod, revenueStartDate, revenueEndDate]);
 
-  // 2. Process Boost Revenue Data (from mock VIP transactions)
+  // 2. Process Boost Revenue Data (from VIP transactions)
   const processedBoost = useMemo(() => {
     const counts = {};
-    mockTransactions.forEach(t => {
+    boostTransactions.forEach(t => {
       if (t.status !== 'SUCCESS') return;
       const dateStr = t.createdAt.split('T')[0];
       counts[dateStr] = (counts[dateStr] || 0) + t.amount;
@@ -162,7 +152,7 @@ const AdminStatisticsPage = () => {
       result = result.filter(item => item.date >= limitStr);
     }
     return result;
-  }, [mockTransactions, boostPeriod, boostStartDate, boostEndDate]);
+  }, [boostTransactions, boostPeriod, boostStartDate, boostEndDate]);
 
   // 3. Process Products Data (group by creation date)
   const processedProducts = useMemo(() => {
@@ -294,7 +284,7 @@ const AdminStatisticsPage = () => {
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-5">
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-green-50 text-green-600 flex items-center justify-center shrink-0">
-            <DollarSign size={20} className="stroke-[2]" />
+            <DollarSign size={20} className="stroke-2" />
           </div>
           <div>
             <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider block">Doanh thu đã bán</span>
@@ -304,7 +294,7 @@ const AdminStatisticsPage = () => {
 
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-            <Landmark size={20} className="stroke-[2]" />
+            <Landmark size={20} className="stroke-2" />
           </div>
           <div>
             <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider block">Doanh thu đẩy bài</span>
@@ -314,7 +304,7 @@ const AdminStatisticsPage = () => {
 
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-            <Package size={20} className="stroke-[2]" />
+            <Package size={20} className="stroke-2" />
           </div>
           <div>
             <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider block">Tổng tin đăng bán</span>
@@ -324,7 +314,7 @@ const AdminStatisticsPage = () => {
 
         <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-            <Users size={20} className="stroke-[2]" />
+            <Users size={20} className="stroke-2" />
           </div>
           <div>
             <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider block">Tổng số thành viên</span>
@@ -390,7 +380,7 @@ const AdminStatisticsPage = () => {
             <div className="lg:col-span-3 h-[300px]">
               {processedRevenue.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={processedRevenue} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <BarChart data={processedRevenue} margin={{ top: 10, right: 10, left: 15, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                     <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} dy={10} />
                     <YAxis tickFormatter={formatYAxis} axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} dx={-5} />
@@ -498,7 +488,7 @@ const AdminStatisticsPage = () => {
             <div className="lg:col-span-3 h-[300px]">
               {processedBoost.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={processedBoost} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <BarChart data={processedBoost} margin={{ top: 10, right: 10, left: 15, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                     <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} dy={10} />
                     <YAxis tickFormatter={formatYAxis} axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 11 }} dx={-5} />
@@ -602,7 +592,7 @@ const AdminStatisticsPage = () => {
             <div className="h-[250px] w-full">
               {processedProducts.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={processedProducts} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                  <AreaChart data={processedProducts} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
                     <defs>
                       <linearGradient id="colorProd" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
@@ -693,7 +683,7 @@ const AdminStatisticsPage = () => {
             <div className="h-[250px] w-full">
               {processedUsers.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={processedUsers} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                  <LineChart data={processedUsers} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                     <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} dy={8} />
                     <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 10 }} dx={-5} />

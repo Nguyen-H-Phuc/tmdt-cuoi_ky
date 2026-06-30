@@ -3,26 +3,15 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
 import { 
     Pencil, 
-    Heart, 
-    Bookmark, 
-    History, 
-    Star, 
-    Coins, 
     ShieldCheck, 
     LogOut, 
     ChevronRight,
-    MessageCircle
+    ShoppingBag,
+    User
 } from 'lucide-react';
 
-// Sử dụng Lucide icons thay thế cho SVG cũ
 const ICONS = {
     EDIT: <Pencil size={14} className="text-white" />,
-    SAVED_POSTS: <Heart size={18} className="text-gray-400" />,
-    SAVED_SEARCH: <Bookmark size={18} className="text-gray-400" />,
-    HISTORY: <History size={18} className="text-gray-400" />,
-    RATINGS: <Star size={18} className="text-gray-400" />,
-    CHOTOT_COIN: <Coins size={18} className="text-amber-500" />,
-    PRO: <ShieldCheck size={18} className="text-rose-500" />,
     LOGOUT: <LogOut size={18} className="text-rose-500" />,
     ARROW_RIGHT: <ChevronRight size={16} className="text-gray-400" />,
 };
@@ -45,14 +34,6 @@ const MenuItem = ({ icon, label, extra, isLogout, onClick }) => (
     </div>
 );
 
-const SectionHeader = ({ title }) => (
-    <div className="w-full px-3 py-1.5 bg-neutral-100">
-        <h3 className="text-neutral-400 text-[10px] font-bold leading-4 uppercase tracking-tight">
-            {title}
-        </h3>
-    </div>
-);
-
 const PopupProfile = ({ isOpen, onClose }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
@@ -67,9 +48,6 @@ const PopupProfile = ({ isOpen, onClose }) => {
     const handleLogout = (e) => {
         e.stopPropagation();
         logout(); 
-        // Thay vì dùng navigate của React Router, ta ép trình duyệt tải lại trang luôn
-        // Điều này đảm bảo toàn bộ state, URL params, và bộ nhớ đệm được dọn sạch 100%
-        // Chuyển hướng về trang chủ thay vì trang login
         window.location.href = "/";
     };
 
@@ -98,50 +76,33 @@ const PopupProfile = ({ isOpen, onClose }) => {
                             <span className="text-[10px] text-neutral-400">Following <b className="text-neutral-800 font-medium">0</b></span>
                         </div>
                     </div>
-
-                    {/* Wallet Info */}
-                    <div className="w-full bg-white p-3 rounded-xl space-y-3 shadow-sm border border-neutral-100">
-                        <div className="flex justify-between items-center">
-                            <span className="text-neutral-400 text-[10px] font-medium uppercase">Đồng Tốt</span>
-                            <div className="flex items-center gap-1">
-                                <span className="text-neutral-800 text-xs font-bold">0</span>
-                                <div className="w-4 h-4 flex items-center justify-center scale-90">{ICONS.CHOTOT_COIN}</div>
-                            </div>
-                        </div>
-                        <button className="w-full h-7 bg-brand-primary hover:bg-brand-hover rounded-lg text-neutral-800 text-xs font-bold transition-all active:scale-[0.98]">
-                            Nạp ngay
-                        </button>
-                    </div>
                 </div>
 
-                {/* Menu List (Scrollable) */}
+                {/* Menu List */}
                 <div className="flex-1 overflow-y-auto">
-                    <SectionHeader title="Tiện ích" />
-                    <MenuItem label="Hộp thư nhắn tin" icon={<MessageCircle size={18} className="text-gray-400" />} onClick={() => { navigate('/chat'); onClose(); }} />
-                    <MenuItem label="Tin đăng đã lưu" icon={ICONS.SAVED_POSTS} />
-                    <MenuItem label="Tìm kiếm đã lưu" icon={ICONS.SAVED_SEARCH} />
-                    <MenuItem label="Lịch sử xem tin" icon={ICONS.HISTORY} />
-                    <MenuItem label="Đánh giá từ tôi" icon={ICONS.RATINGS} />
-
-                    <SectionHeader title="Dịch vụ trả phí" />
-                    <MenuItem label="Đồng Tốt" icon={ICONS.CHOTOT_COIN} />
-                    <MenuItem label="Gói PRO" icon={ICONS.PRO} />
-                    <MenuItem
-                        label="Cửa hàng / chuyên trang"
-                        icon={ICONS.HISTORY}
-                    />
-
-                    <SectionHeader title="Khác" />
                     {user?.role === 'admin' && (
                         <MenuItem 
-                            label="Trang quản trị (Admin)" 
+                            label="Trang Quản trị" 
                             icon={<ShieldCheck size={18} className="text-blue-600" />} 
                             onClick={() => { navigate('/admin/dashboard'); onClose(); }} 
                         />
                     )}
-                    <MenuItem label="Cài đặt tài khoản" icon={ICONS.HISTORY} onClick={() => { navigate('/profile'); onClose(); }} />
-                    <MenuItem label="Đăng xuất" icon={ICONS.LOGOUT} isLogout onClick={handleLogout} />
-                    {/* Padding bottom to ensure space */}
+                    <MenuItem 
+                        label="Cửa hàng" 
+                        icon={<ShoppingBag size={18} className="text-emerald-500" />} 
+                        onClick={() => { navigate(`/seller/${user?.userId}`); onClose(); }} 
+                    />
+                    <MenuItem 
+                        label="Cài đặt tài khoản" 
+                        icon={<User size={18} className="text-gray-400" />} 
+                        onClick={() => { navigate('/profile'); onClose(); }} 
+                    />
+                    <MenuItem 
+                        label="Đăng xuất" 
+                        icon={ICONS.LOGOUT} 
+                        isLogout 
+                        onClick={handleLogout} 
+                    />
                     <div className="h-4"></div>
                 </div>
             </div>

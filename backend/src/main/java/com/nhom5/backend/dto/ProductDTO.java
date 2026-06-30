@@ -25,6 +25,9 @@ public class ProductDTO {
     private UserDTO seller;
     private List<String> images;
     private String targetUniversity;
+    private Boolean isBoosted;
+    private LocalDateTime boostedAt;
+    private LocalDateTime boostExpiresAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

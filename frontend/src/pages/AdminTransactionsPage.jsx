@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import apiClient from '../api/apiClient';
 import AdminTable from '../components/AdminTable';
 import AdminStatCard from '../components/AdminStatCard';
 import { Landmark, ArrowUpRight, TrendingUp, DollarSign, Calendar, Search } from 'lucide-react';
@@ -20,17 +20,8 @@ const AdminTransactionsPage = () => {
     const fetchTransactions = async () => {
       try {
         setIsLoading(true);
-        // Mock transaction logs representing the push-post boosts business model
-        const mockTransactions = [
-          { transactionId: 'TX1001', sellerName: 'Xe Máy Cũ Hải Nguyễn', productTitle: 'Ex xuống áo 2010 vàng đen siêu đẹp nợ xấu đưa 8tr5', packageName: 'Đẩy tin 7 ngày (VIP)', amount: 150000, paymentMethod: 'VNPay', status: 'SUCCESS', createdAt: '2026-05-20T10:30:00' },
-          { transactionId: 'TX1002', sellerName: 'Nhơn', productTitle: 'Nghỉ bán thanh lý đồ Nam shop', packageName: 'Đẩy tin 3 ngày', amount: 70000, paymentMethod: 'Momo', status: 'SUCCESS', createdAt: '2026-05-21T14:22:00' },
-          { transactionId: 'TX1003', sellerName: 'Cửa Hàng Xưởng Thành Phát', productTitle: 'Tủ quần áo nhựa lắp ghép đa năng', packageName: 'Đẩy tin 1 ngày', amount: 30000, paymentMethod: 'VNPay', status: 'SUCCESS', createdAt: '2026-05-22T08:11:00' },
-          { transactionId: 'TX1004', sellerName: 'Nội Thất Diễn Phát', productTitle: 'Tủ gỗ mdf thanh lý sale 50%', packageName: 'Đẩy tin 7 ngày (VIP)', amount: 150000, paymentMethod: 'Bank Transfer', status: 'SUCCESS', createdAt: '2026-05-24T16:45:00' },
-          { transactionId: 'TX1005', sellerName: 'Xe Máy Cũ Hải Nguyễn', productTitle: 'Ex xuống áo 2010 xanh trắng spark nợ xấu đưa 10tr', packageName: 'Đẩy tin 3 ngày', amount: 70000, paymentMethod: 'Momo', status: 'FAILED', createdAt: '2026-05-25T11:30:00' },
-          { transactionId: 'TX1006', sellerName: 'Trần Văn Hoàng', productTitle: 'Sách Giải Tích 1 + 2 Bách Khoa', packageName: 'Đẩy tin 1 ngày', amount: 30000, paymentMethod: 'VNPay', status: 'SUCCESS', createdAt: '2026-05-27T19:00:00' },
-          { transactionId: 'TX1007', sellerName: 'Nguyễn Minh Thuận', productTitle: 'Xe đạp địa hình Asama cũ', packageName: 'Đẩy tin 3 ngày', amount: 70000, paymentMethod: 'VNPay', status: 'PENDING', createdAt: '2026-05-30T09:15:00' }
-        ];
-        setTransactions(mockTransactions);
+        const res = await apiClient.get('/api/boosts/transactions');
+        setTransactions(res.data || []);
       } catch (error) {
         console.error('Error fetching transactions:', error);
       } finally {
@@ -51,9 +42,13 @@ const AdminTransactionsPage = () => {
 
   // Filter Logic
   const filteredTransactions = transactions.filter(t => {
-    const matchesSearch = t.sellerName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          t.productTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          t.transactionId.toLowerCase().includes(searchTerm.toLowerCase());
+    const seller = t.sellerName || '';
+    const title = t.productTitle || '';
+    const id = t.transactionId || '';
+    
+    const matchesSearch = seller.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesMethod = filterMethod === 'all' || t.paymentMethod === filterMethod;
     const matchesStatus = filterStatus === 'all' || t.status === filterStatus;
     return matchesSearch && matchesMethod && matchesStatus;

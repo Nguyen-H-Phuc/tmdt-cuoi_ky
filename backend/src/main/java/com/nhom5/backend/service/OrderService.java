@@ -44,6 +44,10 @@ public class OrderService {
     @Autowired
     private VNPayConfig vnPayConfig;
 
+    @Autowired
+    @org.springframework.context.annotation.Lazy
+    private BoostService boostService;
+
     @org.springframework.beans.factory.annotation.Value("${app.frontend-url}")
     private String frontendUrl;
 
@@ -297,8 +301,12 @@ public class OrderService {
 
     @Transactional
     public String processVNPayCallback(Map<String, String> params) {
-        String vnp_SecureHash = params.get("vnp_SecureHash");
         String vnp_TxnRef = params.get("vnp_TxnRef"); // Order Code (can be combined like DH111111_DH222222)
+        if (vnp_TxnRef != null && vnp_TxnRef.startsWith("BST_")) {
+            return boostService.processBoostCallback(params);
+        }
+        
+        String vnp_SecureHash = params.get("vnp_SecureHash");
         String vnp_ResponseCode = params.get("vnp_ResponseCode");
 
         // Verify Signature
@@ -515,6 +523,20 @@ public class OrderService {
         response.setNotes(order.getNotes());
         response.setOrderDate(order.getOrderDate());
         response.setStatusDate(order.getStatusDate());
+
+        if ("PENDING_PAYMENT".equalsIgnoreCase(order.getStatus()) && "vnpay".equalsIgnoreCase(order.getPaymentMethod())) {
+            try {
+                org.springframework.web.context.request.ServletRequestAttributes attributes = 
+                    (org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+                if (attributes != null) {
+                    jakarta.servlet.http.HttpServletRequest request = attributes.getRequest();
+                    String paymentUrl = generateCombinedVNPayUrl(order.getOrderCode(), order.getTotalPrice(), request);
+                    response.setPaymentUrl(paymentUrl);
+                }
+            } catch (Exception e) {
+                // Ignore if request context is not available (e.g. background tasks or tests)
+            }
+        }
 
         if (order.getBuyer() != null) {
             response.setBuyer(convertToUserDTO(order.getBuyer()));

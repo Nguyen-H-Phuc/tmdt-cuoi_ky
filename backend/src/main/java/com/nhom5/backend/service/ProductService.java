@@ -164,6 +164,7 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public List<ProductDTO> getFilteredProducts(String location, Integer categoryId, Double priceMin, Double priceMax, String status, String sortBy, String userUniversity) {
+        Sort boostSort = Sort.by(Sort.Order.desc("isBoosted"), Sort.Order.desc("boostedAt"));
         Sort sort = Sort.unsorted();
         if (sortBy != null) {
             switch (sortBy) {
@@ -187,6 +188,7 @@ public class ProductService {
         } else {
             sort = Sort.by(Sort.Direction.DESC, "productId");
         }
+        sort = boostSort.and(sort);
 
         List<Product> products = productRepository.filterProducts(location, categoryId, priceMin, priceMax, status, sort);
         List<ProductDTO> dtos = products.stream()
@@ -257,6 +259,9 @@ public class ProductService {
         dto.setSpecificAddress("");
         dto.setImageUrl(product.getImageUrl());
         dto.setTargetUniversity(product.getTargetUniversity());
+        dto.setIsBoosted(product.getIsBoosted() != null ? product.getIsBoosted() : false);
+        dto.setBoostedAt(product.getBoostedAt());
+        dto.setBoostExpiresAt(product.getBoostExpiresAt());
         
         dto.setCreatedAt(product.getCreatedAt());
 

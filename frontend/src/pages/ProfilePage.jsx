@@ -8,6 +8,7 @@ import OrderHistoryCard from '../components/OrderHistoryCard';
 import MyProductsCard from '../components/MyProductsCard';
 import MyReviewsCard from '../components/MyReviewsCard';
 import StoreDashboard from '../components/StoreDashboard';
+import MyBoostsCard from '../components/MyBoostsCard';
 
 const ProfilePage = () => {
     const [activeTab, setActiveTab] = useState('profile');
@@ -24,6 +25,7 @@ const ProfilePage = () => {
                 {activeTab === 'security' && <ProfileSecurityCard />}
                 {activeTab === 'orders' && <OrderHistoryCard />}
                 {activeTab === 'my-products' && <MyProductsCard />}
+                {activeTab === 'my-boosts' && <MyBoostsCard />}
                 {activeTab === 'my-reviews' && <MyReviewsCard />}
                 {activeTab === 'analytics' && <StoreDashboard sellerId={user?.userId} />}
                 {activeTab === 'chat' && <ChatInbox />}
@@ -33,6 +35,7 @@ const ProfilePage = () => {
                  activeTab !== 'security' && 
                  activeTab !== 'orders' && 
                  activeTab !== 'my-products' && 
+                 activeTab !== 'my-boosts' && 
                  activeTab !== 'my-reviews' && 
                  activeTab !== 'analytics' && 
                  activeTab !== 'chat' && (
