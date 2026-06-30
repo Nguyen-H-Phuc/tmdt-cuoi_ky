@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
-import axios from 'axios';
+import apiClient from '../api/apiClient';
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 
@@ -9,7 +9,7 @@ const ProductSection = ({ title, apiEndpoint }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        axios.get(`http://localhost:8080${apiEndpoint}`)
+        apiClient.get(apiEndpoint)
             .then(response => {
                 if (Array.isArray(response.data)) {
                     setProducts(response.data);
