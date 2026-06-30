@@ -44,6 +44,13 @@ public class OrderService {
     @Autowired
     private VNPayConfig vnPayConfig;
 
+    @Autowired
+    @org.springframework.context.annotation.Lazy
+    private BoostService boostService;
+
+    @org.springframework.beans.factory.annotation.Value("${app.frontend-url}")
+    private String frontendUrl;
+
     @Transactional
     public OrderResponse createOrder(OrderRequest request, HttpServletRequest httpRequest) {
         List<OrderItemRequest> items = request.getItems();
@@ -294,26 +301,24 @@ public class OrderService {
 
     @Transactional
     public String processVNPayCallback(Map<String, String> params) {
-        String vnp_SecureHash = params.get("vnp_SecureHash");
         String vnp_TxnRef = params.get("vnp_TxnRef"); // Order Code (can be combined like DH111111_DH222222)
+        if (vnp_TxnRef != null && vnp_TxnRef.startsWith("BST_")) {
+            return boostService.processBoostCallback(params);
+        }
+        
+        String vnp_SecureHash = params.get("vnp_SecureHash");
         String vnp_ResponseCode = params.get("vnp_ResponseCode");
 
         // Verify Signature
         boolean isSignatureValid = verifyVNPaySignature(params, vnp_SecureHash);
 
-        String[] orderCodes = vnp_TxnRef.split("_");
-        
-        // Find first order to determine product redirect page
-        Order firstOrder = orderRepository.findByOrderCode(orderCodes[0])
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng tương ứng với mã giao dịch VNPay."));
+        // Cú pháp vnp_TxnRef: orderCode1_orderCode2_productId
+        String[] parts = vnp_TxnRef.split("_");
+        String productId = parts[parts.length - 1]; // Phần tử cuối luôn là productId (hoặc 'cart')
+        String[] orderCodes = Arrays.copyOf(parts, parts.length - 1);
 
-        List<OrderDetail> firstDetails = orderDetailRepository.findByOrder_OrderId(firstOrder.getOrderId());
-        Integer productId = (firstDetails != null && !firstDetails.isEmpty()) 
-                ? firstDetails.get(0).getProduct().getProductId() 
-                : 1;
-
-        if (isSignatureValid && "00".equals(vnp_ResponseCode)) {
-            // Payment success: Set status to PAID and mark products as sold
+        if ("00".equals(vnp_ResponseCode)) {
+            // Payment success: Set status to PAID and set statusDate
             for (String code : orderCodes) {
                 Order order = orderRepository.findByOrderCode(code).orElse(null);
                 if (order != null) {
@@ -321,6 +326,7 @@ public class OrderService {
                     order.setStatusDate(LocalDateTime.now());
                     orderRepository.save(order);
 
+                    // Update product status to sold
                     List<OrderDetail> details = orderDetailRepository.findByOrder_OrderId(order.getOrderId());
                     if (details != null) {
                         for (OrderDetail detail : details) {
@@ -333,9 +339,9 @@ public class OrderService {
             }
 
             if (orderCodes.length > 1) {
-                return "http://localhost:5173/checkout/cart?status=success&orderCode=" + vnp_TxnRef;
+                return frontendUrl + "/checkout/cart?status=success&orderCode=" + vnp_TxnRef;
             } else {
-                return "http://localhost:5173/checkout/" + productId + "?status=success&orderCode=" + vnp_TxnRef;
+                return frontendUrl + "/checkout/" + productId + "?status=success&orderCode=" + vnp_TxnRef;
             }
         } else {
             // Payment failed or cancelled: Set status to CANCELLED
@@ -349,9 +355,9 @@ public class OrderService {
             }
 
             if (orderCodes.length > 1) {
-                return "http://localhost:5173/checkout/cart?status=fail&orderCode=" + vnp_TxnRef;
+                return frontendUrl + "/checkout/cart?status=fail&orderCode=" + vnp_TxnRef;
             } else {
-                return "http://localhost:5173/checkout/" + productId + "?status=fail&orderCode=" + vnp_TxnRef;
+                return frontendUrl + "/checkout/" + productId + "?status=fail&orderCode=" + vnp_TxnRef;
             }
         }
     }
@@ -517,6 +523,20 @@ public class OrderService {
         response.setNotes(order.getNotes());
         response.setOrderDate(order.getOrderDate());
         response.setStatusDate(order.getStatusDate());
+
+        if ("PENDING_PAYMENT".equalsIgnoreCase(order.getStatus()) && "vnpay".equalsIgnoreCase(order.getPaymentMethod())) {
+            try {
+                org.springframework.web.context.request.ServletRequestAttributes attributes = 
+                    (org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+                if (attributes != null) {
+                    jakarta.servlet.http.HttpServletRequest request = attributes.getRequest();
+                    String paymentUrl = generateCombinedVNPayUrl(order.getOrderCode(), order.getTotalPrice(), request);
+                    response.setPaymentUrl(paymentUrl);
+                }
+            } catch (Exception e) {
+                // Ignore if request context is not available (e.g. background tasks or tests)
+            }
+        }
 
         if (order.getBuyer() != null) {
             response.setBuyer(convertToUserDTO(order.getBuyer()));

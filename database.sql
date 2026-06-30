@@ -2,6 +2,7 @@ DROP DATABASE IF EXISTS tmdt_db;
 CREATE DATABASE tmdt_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE tmdt_db;
 SET foreign_key_checks = 0;
+
 CREATE TABLE users (
    user_id INT PRIMARY KEY AUTO_INCREMENT,
    full_name VARCHAR(100) NOT NULL,
@@ -12,7 +13,7 @@ CREATE TABLE users (
    avatar VARCHAR(255) NULL,
    bio TEXT NULL,
    role ENUM('admin', 'member') DEFAULT 'member',
-   is_active BOOLEAN DEFAULT FALSE, -- Mặc định false cho đến khi verify email
+   is_active BOOLEAN DEFAULT FALSE,
    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -57,7 +58,7 @@ CREATE TABLE products (
     category_id INT,
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    price DECIMAL(10, 2) DEFAULT 0, -- Giá (có thể để 0 nếu là tặng đồ)
+    price DECIMAL(15, 2) DEFAULT 0, -- Giá (có thể để 0 nếu là tặng đồ)
     image_url VARCHAR(255),
     view_count INT DEFAULT 0, -- Phục vụ chức năng "Xem nhiều nhất"
     status ENUM('available', 'sold') DEFAULT 'available',
@@ -66,6 +67,9 @@ CREATE TABLE products (
     is_deleted BOOLEAN DEFAULT FALSE,
     is_hidden BOOLEAN DEFAULT FALSE,
     target_university VARCHAR(255) NULL,
+    is_boosted BOOLEAN DEFAULT FALSE,
+    boosted_at TIMESTAMP NULL,
+    boost_expires_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (category_id) REFERENCES categories(category_id)
@@ -81,7 +85,7 @@ CREATE TABLE product_images (
 
 CREATE TABLE cart_items (
     cart_id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT, -- Người chủ giỏ hàng
+    user_id INT,
     product_id INT,
     quantity INT DEFAULT 1,
     added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -180,16 +184,17 @@ CREATE TABLE messages (
     INDEX (sent_at)
 );
 
-
-
-
-CREATE TABLE favorites (
-    favorite_id INT PRIMARY KEY AUTO_INCREMENT,
+CREATE TABLE boost_transactions (
+    transaction_id VARCHAR(50) PRIMARY KEY,
     user_id INT NOT NULL,
     product_id INT NOT NULL,
+    package_name VARCHAR(100) NOT NULL,
+    amount DECIMAL(15, 2) NOT NULL,
+    payment_method VARCHAR(50) DEFAULT 'VNPay',
+    status VARCHAR(20) DEFAULT 'PENDING',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(user_id),
-    FOREIGN KEY (product_id) REFERENCES products(product_id)
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(product_id) ON DELETE CASCADE
 );
 
 -- ==============================================
@@ -197,21 +202,21 @@ CREATE TABLE favorites (
 -- ==============================================
 
 -- 1. Thêm danh mục
-INSERT INTO categories (category_name, category_image) VALUES
-    ('Bất động sản', 'home.png'),
-    ('Xe cộ', 'vehicle.png'),
-    ('Thú cưng', 'pet.png'),
-    ('Đồ gia dụng, nội thất, cây cảnh', 'appliance.png'),
-    ('Giải trí, Thể thao, Sở thích', 'entertainment.png'),
-    ('Mẹ và bé', 'mom-and-baby.png'),
-    ('Dịch vụ, Du lịch', 'tourism.png'),
-    ('Cho tặng miễn phí', 'gift.png'),
-    ('Việc làm', 'job.png'),
-    ('Đồ điện tử', 'electronic.png'),
-    ('Tủ lạnh, máy lạnh, máy giặt', 'household-electronics.png'),
-    ('Thời trang, Đồ dùng cá nhân', 'fashion.png'),
-    ('Đồ ăn, thực phẩm và các loại khác', 'food.png'),
-    ('Dịch vụ chăm sóc nhà cửa', 'service.png');
+INSERT INTO categories (category_id, category_name, category_image) VALUES
+    (1, 'Bất động sản', 'home.png'),
+    (2, 'Xe cộ', 'vehicle.png'),
+    (3, 'Thú cưng', 'pet.png'),
+    (4, 'Đồ gia dụng, nội thất, cây cảnh', 'appliance.png'),
+    (5, 'Giải trí, Thể thao, Sở thích', 'entertainment.png'),
+    (6, 'Mẹ và bé', 'mom-and-baby.png'),
+    (7, 'Dịch vụ, Du lịch', 'tourism.png'),
+    (8, 'Cho tặng miễn phí', 'gift.png'),
+    (9, 'Việc làm', 'job.png'),
+    (10, 'Đồ điện tử', 'electronic.png'),
+    (11, 'Tủ lạnh, máy lạnh, máy giặt', 'household-electronics.png'),
+    (12, 'Thời trang, Đồ dùng cá nhân', 'fashion.png'),
+    (13, 'Đồ ăn, thực phẩm và các loại khác', 'food.png'),
+    (14, 'Dịch vụ chăm sóc nhà cửa', 'service.png');
 
 -- 2. Thêm người dùng (User)
 INSERT INTO users (user_id, full_name, email, phone, address, avatar, role, is_active) VALUES 

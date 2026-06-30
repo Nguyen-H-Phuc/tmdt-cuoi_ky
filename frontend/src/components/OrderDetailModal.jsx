@@ -6,6 +6,15 @@ const OrderDetailModal = ({ isOpen, onClose, order, onCancelOrder, onPayNow, onA
   const navigate = useNavigate();
   if (!isOpen || !order) return null;
 
+  // Resolve Image Url helper (public frontend assets)
+  const resolveImageUrl = (url) => {
+    if (!url) return 'https://placehold.co/100x100?text=No+Image';
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
+      return url;
+    }
+    return `/${url}`;
+  };
+
   // Format currency helper
   const formatPrice = (price) => {
     if (price === undefined || price === null) return '0đ';
@@ -26,7 +35,9 @@ const OrderDetailModal = ({ isOpen, onClose, order, onCancelOrder, onPayNow, onA
   };
 
   // Calculate pricing
-  const productPrice = order.product?.price || 0;
+  const productPrice = order.details && order.details.length > 0
+    ? order.details.reduce((sum, d) => sum + (d.unitPrice * d.quantity), 0)
+    : (order.product?.price || 0);
   const shippingFee = order.deliveryMethod === 'home' ? 20000 : 0;
   // Backend OrderService has standard 10,000đ discount
   const voucherDiscount = 10000;
@@ -251,10 +262,43 @@ const OrderDetailModal = ({ isOpen, onClose, order, onCancelOrder, onPayNow, onA
               <ShoppingBag size={14} className="text-brand-accent" />
               Sản phẩm mua
             </h4>
-            {order.product ? (
+            {order.details && order.details.length > 0 ? (
+              <div className="space-y-3">
+                {order.details.map((detail) => (
+                  <div key={detail.orderDetailId} className="flex gap-4 p-3 border border-gray-100 rounded-xl hover:bg-gray-50/50 transition-colors">
+                    <img 
+                      src={resolveImageUrl(detail.product?.imageUrl)} 
+                      alt={detail.product?.title || 'Sản phẩm'} 
+                      className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                    />
+                    <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                      <div>
+                        <h5 className="text-xs font-bold text-gray-800 line-clamp-1">{detail.product?.title || 'Sản phẩm không tồn tại'}</h5>
+                        <div className="flex justify-between items-center mt-1">
+                          <p className="text-[10px] text-gray-500">Đăng bán bởi: <span className="font-semibold text-gray-700">{order.seller?.fullName || 'Người bán'}</span></p>
+                          <p className="text-[10px] text-gray-500 font-medium">Số lượng: <span className="font-semibold">{detail.quantity}</span></p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-brand-accent">{formatPrice(detail.unitPrice)}</span>
+                        {!isAdminView && (
+                          <button
+                            onClick={handleChatWithSeller}
+                            className="text-[10px] font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 border border-gray-200"
+                          >
+                            <MessageSquare size={12} />
+                            Chat với người bán
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : order.product ? (
               <div className="flex gap-4 p-3 border border-gray-100 rounded-xl hover:bg-gray-50/50 transition-colors">
                 <img 
-                  src={order.product.imageUrl || 'https://placehold.co/100'} 
+                  src={resolveImageUrl(order.product.imageUrl)} 
                   alt={order.product.title} 
                   className="w-20 h-20 object-cover rounded-lg border border-gray-200"
                 />

@@ -45,7 +45,7 @@ const RevenueChart = ({ isAdmin = false, sellerId = 1 }) => {
 
     // Hàm định dạng trục Y
     const formatYAxis = (value) => {
-        if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+        if (value >= 1000000) return `${Number((value / 1000000).toFixed(1))}Tr`;
         if (value >= 1000) return `${(value / 1000).toFixed(0)}k`;
         return value;
     };
@@ -144,7 +144,7 @@ const RevenueChart = ({ isAdmin = false, sellerId = 1 }) => {
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart
                             data={data}
-                            margin={{ top: 10, right: 0, left: -20, bottom: 0 }}
+                            margin={{ top: 10, right: 10, left: 15, bottom: 20 }}
                             onMouseMove={(state) => {
                                 if (state.isTooltipActive) setActiveIndex(state.activeTooltipIndex);
                                 else setActiveIndex(-1);

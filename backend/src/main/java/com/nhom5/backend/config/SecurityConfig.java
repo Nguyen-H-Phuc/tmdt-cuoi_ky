@@ -44,7 +44,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/login/**", "/oauth2/**",
                                 "/api/products/**", "/api/reviews/**", "/api/favorites/**", "/ws/**",
                                 "/api/statistics/**", "/api/categories/**", "/api/chat/**", "/api/orders/**",
-                                "/api/cart/**", "/api/users/**", "/uploads/**")
+                                "/api/cart/**", "/api/users/**", "/uploads/**", "/api/boosts/**")
                         .permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)) // Không dùng Session

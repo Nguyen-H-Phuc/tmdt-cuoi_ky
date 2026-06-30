@@ -5,7 +5,7 @@ import apiClient from '../api/apiClient';
 import { 
   Edit, Trash2, Eye, PlusCircle, CheckCircle, X, Loader2, 
   Upload, Search, Filter, AlertCircle, ShoppingBag, FileText, Image as ImageIcon,
-  EyeOff
+  EyeOff, Zap
 } from 'lucide-react';
 
 const MyProductsCard = () => {
@@ -28,6 +28,9 @@ const MyProductsCard = () => {
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [isBoostModalOpen, setIsBoostModalOpen] = useState(false);
+  const [boostingProduct, setBoostingProduct] = useState(null);
+  const [selectedPackage, setSelectedPackage] = useState('Cơ Bản');
   
   // Form states
   const [title, setTitle] = useState('');
@@ -67,6 +70,18 @@ const MyProductsCard = () => {
   useEffect(() => {
     fetchData();
   }, [user]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status');
+    if (status === 'boost_success') {
+      showBanner('success', 'Thanh toán thành công! Tin đăng của bạn đã được đẩy lên đầu trang.');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (status === 'boost_fail') {
+      showBanner('error', 'Thanh toán đẩy tin thất bại hoặc đã bị huỷ.');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   // Helper to show temporary alert banner
   const showBanner = (type, text) => {
@@ -121,6 +136,32 @@ const MyProductsCard = () => {
     } catch (error) {
       console.error('Error deleting product:', error);
       showBanner('error', 'Lỗi khi xóa bài đăng.');
+    }
+  };
+
+  // Open boost modal
+  const handleOpenBoostModal = (product) => {
+    setBoostingProduct(product);
+    setSelectedPackage('Cơ Bản');
+    setIsBoostModalOpen(true);
+  };
+
+  // Confirm and buy boost
+  const handleConfirmBoost = async () => {
+    if (!boostingProduct) return;
+    try {
+      const res = await apiClient.get('/api/boosts/payment-url', {
+        params: {
+          productId: boostingProduct.productId,
+          packageName: selectedPackage
+        }
+      });
+      if (res.data && res.data.paymentUrl) {
+        window.location.href = res.data.paymentUrl;
+      }
+    } catch (err) {
+      console.error('Error getting boost payment url:', err);
+      alert('Không thể tạo liên kết thanh toán. Vui lòng thử lại sau.');
     }
   };
 
@@ -508,6 +549,13 @@ const MyProductsCard = () => {
                           Đang ẩn
                         </span>
                       )}
+
+                      {/* Boost Status Badge */}
+                      {product.isBoosted && (
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-yellow-50 text-yellow-700 border border-yellow-100 flex items-center gap-0.5 animate-pulse">
+                          <Zap size={8} className="fill-yellow-600 text-yellow-600" /> Đang đẩy
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -522,6 +570,21 @@ const MyProductsCard = () => {
                   </div>
 
                   <div className="flex items-center gap-1.5">
+                    {/* Boost Post Button */}
+                    {product.approvalStatus === 'approved' && product.status === 'available' && (
+                      <button 
+                        onClick={() => handleOpenBoostModal(product)}
+                        className={`p-1.5 rounded-lg border transition cursor-pointer ${
+                          product.isBoosted
+                            ? 'text-yellow-600 bg-yellow-50 border-yellow-100 hover:bg-yellow-100'
+                            : 'text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 border-gray-100 hover:border-yellow-100'
+                        }`}
+                        title="Đẩy bài đăng lên đầu trang"
+                      >
+                        <Zap size={13.5} className={product.isBoosted ? 'fill-yellow-500' : ''} />
+                      </button>
+                    )}
+
                     {/* Mark Sold Button */}
                     <button 
                       onClick={() => handleToggleStatus(product.productId, product.status)}
@@ -795,6 +858,147 @@ const MyProductsCard = () => {
               </div>
 
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* BOOST MODAL */}
+      {isBoostModalOpen && boostingProduct && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col">
+            
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
+              <div>
+                <h3 className="font-bold text-sm text-[#222222] flex items-center gap-1.5">
+                  <Zap size={16} className="text-yellow-500 fill-yellow-500" />
+                  Đẩy tin đăng lên đầu trang
+                </h3>
+                <p className="text-[10px] text-gray-400 mt-0.5">
+                  Sản phẩm của bạn sẽ luôn hiển thị ưu tiên hàng đầu tại kết quả tìm kiếm.
+                </p>
+              </div>
+              <button 
+                onClick={() => setIsBoostModalOpen(false)}
+                className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-200 transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-4">
+              <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3.5 flex items-start gap-3">
+                <img 
+                  src={(boostingProduct.images && boostingProduct.images.length > 0) ? boostingProduct.images[0] : 'https://placehold.co/100x100?text=Product'} 
+                  alt={boostingProduct.title}
+                  className="w-12 h-12 rounded-lg object-cover border border-gray-100"
+                />
+                <div className="min-w-0">
+                  <h4 className="text-xs font-bold text-gray-800 truncate">{boostingProduct.title}</h4>
+                  <p className="text-[10px] text-blue-600 font-extrabold mt-1">{formatVND(boostingProduct.price)}</p>
+                </div>
+              </div>
+
+              {/* Package Options */}
+              <div className="space-y-2.5">
+                <span className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">Chọn gói dịch vụ</span>
+                
+                {/* Basic Package */}
+                <label className={`flex items-center justify-between p-3 border rounded-xl cursor-pointer transition-all ${
+                  selectedPackage === 'Cơ Bản'
+                    ? 'border-yellow-450 bg-yellow-50/30'
+                    : 'border-gray-100 hover:border-gray-200 bg-white'
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="radio" 
+                      name="boostPackage" 
+                      value="Cơ Bản"
+                      checked={selectedPackage === 'Cơ Bản'}
+                      onChange={() => setSelectedPackage('Cơ Bản')}
+                      className="text-yellow-500 focus:ring-yellow-400"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-gray-800 block">Gói Cơ Bản (3 ngày)</span>
+                      <span className="text-[10px] text-gray-400">Đẩy tin trong vòng 72 giờ</span>
+                    </div>
+                  </div>
+                  <span className="text-xs font-black text-gray-800 font-display">5.000đ</span>
+                </label>
+
+                {/* Standard Package */}
+                <label className={`flex items-center justify-between p-3 border rounded-xl cursor-pointer transition-all ${
+                  selectedPackage === 'Tiêu Chuẩn'
+                    ? 'border-yellow-450 bg-yellow-50/30'
+                    : 'border-gray-100 hover:border-gray-200 bg-white'
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="radio" 
+                      name="boostPackage" 
+                      value="Tiêu Chuẩn"
+                      checked={selectedPackage === 'Tiêu Chuẩn'}
+                      onChange={() => setSelectedPackage('Tiêu Chuẩn')}
+                      className="text-yellow-500 focus:ring-yellow-400"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-gray-800 block">Gói Tiêu Chuẩn (7 ngày)</span>
+                      <span className="text-[10px] text-gray-400">Tiết kiệm hơn, đẩy tin trong 7 ngày</span>
+                    </div>
+                  </div>
+                  <span className="text-xs font-black text-gray-800 font-display">15.000đ</span>
+                </label>
+
+                {/* Premium Package */}
+                <label className={`flex items-center justify-between p-3 border rounded-xl cursor-pointer transition-all ${
+                  selectedPackage === 'Premium'
+                    ? 'border-yellow-500 bg-yellow-50/30'
+                    : 'border-gray-100 hover:border-gray-200 bg-white'
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="radio" 
+                      name="boostPackage" 
+                      value="Premium"
+                      checked={selectedPackage === 'Premium'}
+                      onChange={() => setSelectedPackage('Premium')}
+                      className="text-yellow-500 focus:ring-yellow-500"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-gray-800 block flex items-center gap-1">
+                        Gói Premium (14 ngày)
+                        <span className="text-[8px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-extrabold uppercase tracking-wider">Hot</span>
+                      </span>
+                      <span className="text-[10px] text-gray-400">Ưu tiên tối đa trong vòng 2 tuần</span>
+                    </div>
+                  </div>
+                  <span className="text-xs font-black text-gray-800 font-display">30.000đ</span>
+                </label>
+              </div>
+
+              <div className="text-[10px] text-gray-400 italic bg-gray-50 p-3 rounded-lg border border-gray-100 leading-normal">
+                * Sau khi xác nhận, hệ thống sẽ kết nối trực tiếp đến cổng thanh toán VNPay Sandbox để bạn hoàn thành giao dịch an toàn.
+              </div>
+            </div>
+
+            {/* Modal Actions Footer */}
+            <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-2.5 bg-gray-50 rounded-b-2xl">
+              <button
+                onClick={() => setIsBoostModalOpen(false)}
+                className="px-4 py-2 border border-gray-200 hover:border-gray-350 text-gray-505 hover:text-gray-700 text-xs font-bold rounded-xl transition duration-150 cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={handleConfirmBoost}
+                className="px-5 py-2 bg-yellow-500 hover:bg-yellow-600 text-gray-900 text-xs font-bold rounded-xl flex items-center gap-1.5 transition duration-150 cursor-pointer shadow-sm"
+              >
+                <Zap size={12} className="fill-gray-900" />
+                Thanh toán & Đẩy bài
+              </button>
+            </div>
+
           </div>
         </div>
       )}

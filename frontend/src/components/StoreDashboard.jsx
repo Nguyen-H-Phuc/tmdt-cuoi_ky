@@ -4,7 +4,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, BarChart, Bar
 } from 'recharts';
-import { Calendar, DollarSign, Tag, TrendingUp, AlertCircle, RefreshCw } from 'lucide-react';
+import { Calendar, DollarSign, Tag, TrendingUp, AlertCircle, RefreshCw, Zap } from 'lucide-react';
 
 const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#6B7280'];
 
@@ -24,22 +24,60 @@ const StoreDashboard = ({ sellerId = 1 }) => {
   const [categoryData, setCategoryData] = useState([]);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [boostExpenses, setBoostExpenses] = useState(0);
 
   // Fetch dữ liệu doanh thu theo ngày
   const fetchRevenue = async () => {
     setIsLoading(true);
     try {
+      // 1. Fetch sales revenue
       const response = await apiClient.get(`/api/store/reports/revenue-period`, {
         params: { sellerId, startDate, endDate }
       });
+      
+      // 2. Fetch boost history
+      const boostResponse = await apiClient.get(`/api/boosts/user?userId=${sellerId}`);
+      const boosts = boostResponse.data || [];
+
+      // Calculate total boosts in this period
+      const sDate = new Date(startDate);
+      const eDate = new Date(endDate);
+      eDate.setHours(23, 59, 59, 999);
+
+      const periodBoosts = boosts.filter(tx => {
+        if (tx.status !== 'SUCCESS') return false;
+        const txDate = new Date(tx.createdAt);
+        return txDate >= sDate && txDate <= eDate;
+      });
+
+      const totalBoostSpend = periodBoosts.reduce((sum, tx) => sum + tx.amount, 0);
+      setBoostExpenses(totalBoostSpend);
+
+      // Create a map for boost costs grouped by date format DD/MM
+      const boostMap = {};
+      periodBoosts.forEach(tx => {
+        const dateKey = new Date(tx.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+        boostMap[dateKey] = (boostMap[dateKey] || 0) + tx.amount;
+      });
+
       if (response.data && response.data.length > 0) {
-        const formatted = response.data.map(item => ({
-          date: new Date(item.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }),
-          'Doanh thu': item.revenue
-        }));
+        const formatted = response.data.map(item => {
+          const dateKey = new Date(item.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+          return {
+            date: dateKey,
+            'Doanh thu': item.revenue,
+            'Chi phí đẩy tin': boostMap[dateKey] || 0
+          };
+        });
         setRevenueData(formatted);
       } else {
-        setRevenueData([]);
+        const allDates = new Set(Object.keys(boostMap));
+        const formatted = Array.from(allDates).map(dateKey => ({
+          date: dateKey,
+          'Doanh thu': 0,
+          'Chi phí đẩy tin': boostMap[dateKey] || 0
+        }));
+        setRevenueData(formatted.sort((a,b) => a.date.localeCompare(b.date)));
       }
     } catch (error) {
       console.error("Lỗi fetch doanh thu thật:", error);
@@ -101,14 +139,24 @@ const StoreDashboard = ({ sellerId = 1 }) => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl border border-gray-100 bg-gradient-to-br from-blue-50/50 to-white flex items-center justify-between">
           <div className="space-y-1">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Doanh thu kỳ này</span>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Doanh thu bán hàng</span>
             <h3 className="text-lg font-extrabold text-blue-600">{formatVND(totalRevenue)}</h3>
           </div>
           <div className="p-3 bg-blue-50 text-blue-500 rounded-xl">
             <DollarSign size={20} />
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl border border-gray-100 bg-gradient-to-br from-amber-50/50 to-white flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Chi phí đẩy tin</span>
+            <h3 className="text-lg font-extrabold text-amber-600">{formatVND(boostExpenses)}</h3>
+          </div>
+          <div className="p-3 bg-amber-50 text-amber-500 rounded-xl">
+            <Zap size={20} />
           </div>
         </div>
 
@@ -122,7 +170,7 @@ const StoreDashboard = ({ sellerId = 1 }) => {
           </div>
         </div>
 
-        <div className="p-4 rounded-xl border border-gray-100 bg-gradient-to-br from-purple-50/50 to-white flex items-center justify-between sm:col-span-2 lg:col-span-1">
+        <div className="p-4 rounded-xl border border-gray-100 bg-gradient-to-br from-purple-50/50 to-white flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Danh mục bán tốt nhất</span>
             <h3 className="text-lg font-extrabold text-purple-600">
@@ -163,21 +211,35 @@ const StoreDashboard = ({ sellerId = 1 }) => {
 
         <div className="h-[250px] w-full mt-2">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
                   <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.0}/>
                 </linearGradient>
+                <linearGradient id="colorBoost" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.0}/>
+                </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
               <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
-              <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} tickFormatter={(val) => `${val/1000}k`} />
+              <YAxis 
+                tickLine={false} 
+                axisLine={false} 
+                tick={{ fontSize: 10, fill: '#9CA3AF' }} 
+                tickFormatter={(val) => {
+                  if (val >= 1000000) return `${val / 1000000}Tr`;
+                  if (val >= 1000) return `${val / 1000}k`;
+                  return val;
+                }} 
+              />
               <Tooltip 
-                formatter={(value) => [formatVND(value), 'Doanh thu']}
+                formatter={(value, name) => [formatVND(value), name]}
                 contentStyle={{ backgroundColor: '#fff', border: 'none', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}
               />
               <Area type="monotone" dataKey="Doanh thu" stroke="#3B82F6" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRevenue)" />
+              <Area type="monotone" dataKey="Chi phí đẩy tin" stroke="#F59E0B" strokeWidth={2.5} fillOpacity={1} fill="url(#colorBoost)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>

@@ -1,7 +1,10 @@
 server:
   port: ${PORT:8080}
+  forward-headers-strategy: framework
 
 spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   security:
     oauth2:
       client:
@@ -9,18 +12,20 @@ spring:
           google:
             client-id: ${GOOGLE_CLIENT_ID:YOUR_GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET:YOUR_GOOGLE_CLIENT_SECRET}
+            redirect-uri: "${APP_BACKEND_URL:http://localhost:8080}/login/oauth2/code/google"
             scope:
               - email
               - profile
           facebook:
             client-id: ${FACEBOOK_CLIENT_ID:YOUR_FACEBOOK_CLIENT_ID}
             client-secret: ${FACEBOOK_CLIENT_SECRET:YOUR_FACEBOOK_CLIENT_SECRET}
+            redirect-uri: "${APP_BACKEND_URL:http://localhost:8080}/login/oauth2/code/facebook"
             scope:
               - email
               - public_profile
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:tmdt_db}?useUnicode=true&characterEncoding=UTF-8}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:tmdt1_db}?useUnicode=true&characterEncoding=UTF-8}
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:${MYSQL_ROOT_PASSWORD:root}}
 
@@ -52,7 +57,7 @@ spring:
 
 vnpay:
   pay-url: ${VNPAY_PAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
-  return-url: ${VNPAY_RETURN_URL:http://localhost:8080/api/orders/vnpay-callback}
+  return-url: ${VNPAY_RETURN_URL:${APP_BACKEND_URL:http://localhost:8080}/api/orders/vnpay-callback}
   tmn-code: ${VNPAY_TMN_CODE:YOUR_VNPAY_TMN_CODE}
   hash-secret: ${VNPAY_HASH_SECRET:YOUR_VNPAY_HASH_SECRET}
   version: "2.1.0"
@@ -62,3 +67,6 @@ cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME:YOUR_CLOUDINARY_CLOUD_NAME}
   api-key: ${CLOUDINARY_API_KEY:YOUR_CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_API_SECRET:YOUR_CLOUDINARY_API_SECRET}
+
+app:
+  frontend-url: ${APP_FRONTEND_URL:http://localhost:5173}

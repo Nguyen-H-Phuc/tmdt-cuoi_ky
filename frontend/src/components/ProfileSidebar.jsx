@@ -10,7 +10,8 @@ import {
     Package,
     Star,
     BarChart3,
-    MessageCircle
+    MessageCircle,
+    Zap
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -23,6 +24,7 @@ const ProfileSidebar = ({ activeTab, setActiveTab }) => {
         { id: 'chat', icon: <MessageCircle size={18} />, label: 'Tin nhắn' },
         { id: 'orders', icon: <ShoppingBag size={18} />, label: 'Quản lý đơn hàng' },
         { id: 'my-products', icon: <Package size={18} />, label: 'Quản lý bài đăng' },
+        { id: 'my-boosts', icon: <Zap size={18} />, label: 'Lịch sử đẩy tin' },
         { id: 'my-reviews', icon: <Star size={18} />, label: 'Quản lý đánh giá' },
         { id: 'analytics', icon: <BarChart3 size={18} />, label: 'Thống kê doanh thu' },
         // { id: 'favorites', icon: <Heart size={18} />, label: 'Sản phẩm yêu thích' },
